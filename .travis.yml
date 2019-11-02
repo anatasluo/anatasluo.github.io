@@ -8,7 +8,6 @@ branches:
     - master
 before install:
   - npm install
-  - git clone https://github.com/yelog/hexo-theme-3-hexo.git themes/3-hexo
 script:
   - hexo generate # generate static files
 deploy:
