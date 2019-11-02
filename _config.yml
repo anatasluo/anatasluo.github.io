@@ -3,9 +3,11 @@
 ## Source: https://github.com/hexojs/hexo/
 
 # Site
-title: anatas
+title: Anatas Blog
 subtitle: 'anatas blog'
-description: 'personal blog'
+SEOTitle: anatasluo的博客 | anatasluo's Blog
+email: luolongjuna@gmail.com
+description: 又是胡思乱想的一天
 keywords: anatasluo
 author: anatasluo
 language: en
@@ -87,10 +89,20 @@ include:
 exclude:
 ignore:
 
+sidebar-avatar: img/avatar.jpg  
+
+comment:
+   type: disqus
+   script: 'https://anatasluo.disqus.com/embed.js'
+
 # Extensions
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
-theme: 3-hexo
+theme: aircloud
+
+search:
+  path: search.json
+  field: post
 
 deploy:
   type: git
