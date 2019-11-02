@@ -2,7 +2,6 @@
 layout: "about"
 title: "About"
 date: 2019-11-02 23:41:12
-comments: true
 ---
 
 

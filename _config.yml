@@ -89,7 +89,10 @@ include:
 exclude:
 ignore:
 
-sidebar-avatar: img/avatar.jpg  
+sidebar-avatar: img/avatar.jpg
+avatar_style:
+  radius: true
+
 
 comment:
    type: disqus
