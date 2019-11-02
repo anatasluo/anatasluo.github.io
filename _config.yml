@@ -42,7 +42,7 @@ external_link:
   exclude: ''
 filename_case: 0
 render_drafts: false
-post_asset_folder: false
+post_asset_folder: true
 relative_link: false
 future: true
 highlight:
@@ -61,7 +61,7 @@ index_generator:
   order_by: -date
 
 # Category & Tag
-default_category: uncategorized
+default_category: blog
 category_map:
 tag_map:
 
@@ -89,7 +89,7 @@ include:
 exclude:
 ignore:
 
-sidebar-avatar: img/avatar.jpg
+sidebar-avatar: https://avatars3.githubusercontent.com/u/41671456
 avatar_style:
   radius: true
 
