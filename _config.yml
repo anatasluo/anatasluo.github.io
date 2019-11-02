@@ -89,7 +89,7 @@ include:
 exclude:
 ignore:
 
-sidebar-avatar: https://avatars3.githubusercontent.com/u/41671456
+sidebar-avatar: about/img/avatar.jpg
 avatar_style:
   radius: true
 
