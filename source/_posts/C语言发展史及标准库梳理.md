@@ -1,7 +1,9 @@
 ---
 title: C语言发展史及标准库梳理
 date: 2019-12-02 22:48:00
-tags: Linux, C
+tags:
+    - Linux
+    - C
 ---
 
 ## 前言

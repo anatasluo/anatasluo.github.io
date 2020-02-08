@@ -1,7 +1,11 @@
 ---
 title: 一行打印引出的Linux信号知识
 date: 2020-01-03 23:31:50
-tags: Linux, Shell, Signal, Glibc
+tags:
+    - Linux
+    - Shell
+    - Signal
+    - Glibc
 ---
 
 ## 引发问题的打印

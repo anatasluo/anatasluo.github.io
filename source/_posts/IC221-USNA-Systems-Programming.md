@@ -1,11 +1,18 @@
 ---
-title: '[IC112]USNA/Systems Programming'
+title: '[IC221]USNA/Systems Programming'
 date: 2020-01-09 00:52:41
-tags: usna, IC112, unix, linux, C, OS, shell
+tags:
+    - USNA
+    - IC221
+    - UNIX
+    - Linux
+    - C
+    - OS
+    - Shell
 ---
 
 
-偶然找到一门unix课程，是由usna(美国海军学院)开设的，课程编号是IC112，质量非常高。本来是准备翻译整个系列的，但是精力有限，计划按照授课大纲写成几篇总结。
+偶然找到一门unix课程，是由usna(美国海军学院)开设的，课程编号是IC221，质量非常高。本来是准备翻译整个系列的，但是精力有限，计划按照授课大纲写成几篇总结。
 
 [课程主页](https://www.usna.edu/Users/cs/aviv/classes/ic221/s16/cal.html)
 

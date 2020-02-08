@@ -2,7 +2,12 @@
 layout: generate
 title: 嵌入式设备中的Linux引导方式
 date: 2019-11-03 00:28:28
-tags: Linux, Uboot, Bootloader, Bios, Arm
+tags:
+    - Linux
+    - Uboot
+    - Bootloader
+    - Bios
+    - Arm
 ---
 
 ## 概述
