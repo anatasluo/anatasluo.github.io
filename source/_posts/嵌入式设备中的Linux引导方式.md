@@ -44,7 +44,7 @@ tags:
 
 对于这一过程的概述，嵌入式设备和一般的桌面PC设备稍有差别，也可以说是ARM世界和x86世界的差别。
 
-在一般的桌面PC系统中，通电之后，Bios立刻接管了设备，在完成硬件自检等工作后，跳转，将控制权交给Bootloader，如果硬盘里不只安装了一个系统，在Bootloader这一步可以决定启动哪一个操作系统。在这个语境中，Bios被称为“first-stage boot loader”，bootloader被称为“first-stage boot loader”。主流的Bootloader包括bootmgr, grub等等。
+在一般的桌面PC系统中，通电之后，Bios立刻接管了设备，在完成硬件自检等工作后，跳转，将控制权交给Bootloader，如果硬盘里不只安装了一个系统，在Bootloader这一步可以决定启动哪一个操作系统。在这个语境中，Bios被称为“first-stage boot loader”，bootloader被称为“second-stage boot loader”。主流的Bootloader包括bootmgr, grub等等。
 
 在嵌入式设备中，通常不会有多个系统的情况，因此，不需要将整个引导过程拆成两步进行。所以，嵌入式设备中，很少使用bios的概念，而是直接将两个步骤统称为 bootloader，本文以下内容涉及到的bootloader，除非特别说明，都是指嵌入式开发中的概念。
 
