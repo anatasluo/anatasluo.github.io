@@ -13,6 +13,10 @@ author: anatasluo
 language: en
 timezone: ''
 
+# indent style
+post_style:
+  indent: 0
+
 # URL
 ## If your site is put in a subdirectory, set url as 'http://yoursite.com/child' and root as '/child/'
 url: https://anatasluo.github.io/
