@@ -9,11 +9,11 @@ date: 2019-11-02 23:41:12
 
 ## 自我介绍
 
-非典型程序员，希望活得自由且简单。
+做过前端，写过nodejs，打过ACM，懂一些CTF，工作做的是内核。
 
 ## 关于Blog内容
 
-主要是一些平常的学习笔记，博客编写的原则会遵从：系统, 简洁。
+主要是一些平常的学习笔记，以及一些杂七杂八的想法。
 
 内容包括但不限于：
 + 读书笔记
@@ -21,6 +21,13 @@ date: 2019-11-02 23:41:12
 + 对计算机科学的想法
 + ...
 
+## PROJECT LIST
 
-Have fun!
++ [ant](https://github.com/anatasluo/ant)
+
+## PACTH LIST
+
++ [toybox](https://github.com/landley/toybox/commit/896fa846b1ec8cd4895f6320b56942f129e54bc9)
+
+
 
