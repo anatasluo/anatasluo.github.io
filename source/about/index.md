@@ -4,14 +4,11 @@ title: "About"
 date: 2019-11-02 23:41:12
 ---
 
-
-# 关于Blog以及作者
-
-## 自我介绍
+## INTRODUCTION
 
 做过前端，写过nodejs，打过ACM，懂一些CTF，工作做的是内核。
 
-## 关于Blog内容
+## ABOUT BLOG
 
 主要是一些平常的学习笔记，以及一些杂七杂八的想法。
 
