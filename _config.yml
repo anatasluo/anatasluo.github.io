@@ -113,5 +113,5 @@ search:
 
 deploy:
   type: git
-  repo: https://github.com/anatasluo/anatasluo.github.io
+  repo: git@github.com:anatasluo/blog.git
   branch: gh-pages
