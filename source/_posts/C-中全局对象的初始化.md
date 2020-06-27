@@ -202,9 +202,9 @@ _GLOBAL__sub_I_g_al -> _Z41__static_initialization_and_destruction_0ii -> _ZN1AC
 	.section	.note.GNU-stack,"",@progbits
 ```
 
-可以发现，_GLOBAL__sub_I_g_al存在一个单独的，名为"init_array"的段中。
+可以发现，_GLOBAL__sub_I_g_al存在一个单独的，名为"init_array"的section中。
 
-关于这个段，ARM的官方文档中，描述如下:
+关于这个section，ARM的官方文档中，描述如下:
 
 > The C++ Standard places certain requirements on the construction and destruction of objects with static storage duration.
 
