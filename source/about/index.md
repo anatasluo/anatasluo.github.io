@@ -4,11 +4,26 @@ title: "About"
 date: 2019-11-02 23:41:12
 ---
 
-## INTRODUCTION
+#### Introduction
 
-做过前端，写过nodejs，打过ACM，懂一些CTF，工作做的是内核。
+做过前端，打过ACM，懂一些CTF，内核工程师
 
-## ABOUT BLOG
+#### Experience
+
+前端(nodejs+angular/vue):
+
++ 邮件模板渲染
++ p2p下载器
+
+内核(FreeBSD/Linux):
+
++ 基于share memory的通信传输机制
++ VFS实现
++ 异常管理和符号表生成(ARM)
++ kexec相关(x86)
+
+
+#### Blog
 
 主要是一些平常的学习笔记，以及一些杂七杂八的想法。
 
@@ -18,13 +33,14 @@ date: 2019-11-02 23:41:12
 + 对计算机科学的想法
 + ...
 
-## PROJECT LIST
+#### Project
 
 + [ant](https://github.com/anatasluo/ant)
 
-## PACTH LIST
+#### Patch
 
-+ [toybox](https://github.com/landley/toybox/commit/896fa846b1ec8cd4895f6320b56942f129e54bc9)
++ [toybox-ping](https://github.com/landley/toybox/commit/896fa846b1ec8cd4895f6320b56942f129e54bc9)
++ [nuttx-vfs](https://github.com/apache/incubator-nuttx/commit/ee51525f0d1065bca36aa0cbb641131462190cd2)
 
 
 
