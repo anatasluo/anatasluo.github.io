@@ -39,8 +39,18 @@ date: 2019-11-02 23:41:12
 
 #### Patch
 
-+ [toybox-ping](https://github.com/landley/toybox/commit/896fa846b1ec8cd4895f6320b56942f129e54bc9)
-+ [nuttx-vfs](https://github.com/apache/incubator-nuttx/commit/ee51525f0d1065bca36aa0cbb641131462190cd2)
+#### OPTIMIZATION
 
++ [linux-x86(in debate)](https://lkml.org/lkml/2020/12/15/486)
+
+##### IMPLEMENTATION
+
++ [toybox-ping](https://github.com/landley/toybox/commit/896fa846b1ec8cd4895f6320b56942f129e54bc9)
+
+##### BUG FIX
+
++ [nuttx-vfs](https://github.com/apache/incubator-nuttx/commit/ab37b149729639fc96a9987f711d18f5286c5541)
+
++ [criu-asm](https://github.com/checkpoint-restore/criu/commit/e0da8b895ede46e197e9813dc87b55f4b1a7e93c)
 
 

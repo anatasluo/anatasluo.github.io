@@ -1,9 +1,9 @@
 ---
-title: '[读书笔记]逆向工程权威指南'
+title: '[note]逆向工程权威指南'
 date: 2020-10-01 12:51:05
 tags:
     - Cyber Security
-    - Notes
+    - Note
 ---
 
 ## 前言

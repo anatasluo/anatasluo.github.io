@@ -1,9 +1,9 @@
 ---
-title: '[读书笔记]高效程序员的45个习惯'
+title: '[note]高效程序员的45个习惯'
 date: 2020-09-25 21:08:06
 tags:
     - Programmer
-    - Notes
+    - Note
 ---
 
 ## 前言
