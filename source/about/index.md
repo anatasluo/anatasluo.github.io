@@ -6,31 +6,31 @@ date: 2019-11-02 23:41:12
 
 #### Introduction
 
-做过前端，打过ACM，懂一些CTF，内核工程师
+A guy who is interested in computer science.
 
 #### Experience
 
-前端(nodejs+angular/vue):
+Front-end(nodejs+angular/vue):
 
-+ 邮件模板渲染
-+ p2p下载器
++ Email Template
++ P2P Downloader
 
-内核(FreeBSD/Linux):
+OS Kernel(FreeBSD/Linux):
 
-+ 基于share memory的通信传输机制
-+ VFS实现
-+ 异常管理和符号表生成(ARM)
-+ kexec相关(x86)
++ Share Memory
++ VFS
++ Exception, Symbol and arch related(ARM)
++ kexec(x86)
++ criu
 
 
 #### Blog
 
-主要是一些平常的学习笔记，以及一些杂七杂八的想法。
+Some ordinary learning notes, including
 
-内容包括但不限于：
-+ 读书笔记
-+ 操作系统/内核/嵌入式/编程语言 知识总结
-+ 对计算机科学的想法
++ Reading notes
++ Materials Summary
++ Thoughts about computer science
 + ...
 
 #### Project
@@ -53,4 +53,4 @@ date: 2019-11-02 23:41:12
 
 + [criu-asm](https://github.com/checkpoint-restore/criu/commit/e0da8b895ede46e197e9813dc87b55f4b1a7e93c)
 
-
++ [openssh-log](https://github.com/openssh/openssh-portable/commit/1050109b4b2884bf50fd1b3aa084c7fd0a42ae90)
