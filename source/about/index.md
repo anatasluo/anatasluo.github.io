@@ -52,5 +52,7 @@ Some ordinary learning notes, including
 + [nuttx-vfs](https://github.com/apache/incubator-nuttx/commit/ab37b149729639fc96a9987f711d18f5286c5541)
 
 + [criu-asm](https://github.com/checkpoint-restore/criu/commit/e0da8b895ede46e197e9813dc87b55f4b1a7e93c)
+  
++ [criu-arch](https://github.com/checkpoint-restore/criu/commit/2cb1156e6afba4baeab5b945b0c15036af3b3a8c)
 
 + [openssh-log](https://github.com/openssh/openssh-portable/commit/1050109b4b2884bf50fd1b3aa084c7fd0a42ae90)
