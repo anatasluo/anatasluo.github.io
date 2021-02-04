@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="又是胡思乱想的一天">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>
+        
+        C++中全局对象的初始化 - anatasluo的博客 | anatasluo&#39;s Blog
+        
+    </title>
+
+    <!-- Custom CSS -->
+    
+<link rel="stylesheet" href="/css/aircloud.css">
+
+    
+<link rel="stylesheet" href="/css/gitment.css">
+
+    <!--<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">-->
+    <link href="//at.alicdn.com/t/font_620856_pl6z7sid89qkt9.css" rel="stylesheet" type="text/css">
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+
+<div class="site-nav-toggle" id="site-nav-toggle">
+    <button>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+    </button>
+</div>
+
+<div class="index-about">
+    <i> anatas blog </i>
+</div>
+
+<div class="index-container">
+    
+    <div class="index-left">
+        
+<div class="nav" id="nav">
+    <div class="avatar-name">
+        <div class="avatar radius">
+            <img src="/about/img/avatar.jpg" />
+        </div>
+        <div class="name">
+            <i>anatasluo</i>
+        </div>
+    </div>
+    <div class="contents" id="nav-content">
+        <ul>
+            <li >
+                <a href="/">
+                    <i class="iconfont icon-shouye1"></i>
+                    <span>HOME</span>
+                </a>
+            </li>
+            <li >
+                <a href="/tags">
+                    <i class="iconfont icon-biaoqian1"></i>
+                    <span>TAGS</span>
+                </a>
+            </li>
+            <li >
+                <a href="/archives">
+                    <i class="iconfont icon-guidang2"></i>
+                    <span>ARCHIVES</span>
+                </a>
+            </li>
+            <li >
+                <a href="/about/">
+                    <i class="iconfont icon-guanyu2"></i>
+                    <span>ABOUT</span>
+                </a>
+            </li>
+            
+            <li>
+                <a id="search">
+                    <i class="iconfont icon-sousuo1"></i>
+                    <span>SEARCH</span>
+                </a>
+            </li>
+            
+        </ul>
+    </div>
+    
+        <div id="toc" class="toc-article">
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#全局对象初始化"><span class="toc-text">全局对象初始化</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#查看init-array里的信息"><span class="toc-text">查看init_array里的信息</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-text">参考</span></a></li></ol>
+</div>
+    
+</div>
+
+
+<div class="search-field" id="search-field">
+    <div class="search-container">
+        <div class="search-input">
+            <span id="esc-search"> <i class="icon-fanhui iconfont"></i></span>
+            <input id="search-input"/>
+            <span id="begin-search">search</span>
+        </div>
+        <div class="search-result-container" id="search-result-container">
+
+        </div>
+    </div>
+</div>
+
+        <div class="index-about-mobile">
+            <i> anatas blog </i>
+        </div>
+    </div>
+    
+    <div class="index-middle">
+        <!-- Main Content -->
+        
+
+
+<div class="post-container">
+    <div class="post-title">
+        C++中全局对象的初始化
+    </div>
+
+    <div class="post-meta">
+        <span class="attr">Post：<span>2020-06-25 04:10:28</span></span>
+        
+        <span class="attr">Tags：/
+        
+        <a class="tag" href="/tags/#C++" title="C++">C++</a>
+        <span>/</span>
+        
+        <a class="tag" href="/tags/#Class" title="Class">Class</a>
+        <span>/</span>
+        
+        
+        </span>
+        <span class="attr">Visit：<span id="busuanzi_value_page_pv"></span>
+</span>
+</span>
+    </div>
+    <div class="post-content no-indent">
+        <h2 id="全局对象初始化"><a href="#全局对象初始化" class="headerlink" title="全局对象初始化"></a>全局对象初始化</h2><p>查看如下C++代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;cstdio&gt;</span><br><span class="line"></span><br><span class="line">class A &#123;</span><br><span class="line">public:</span><br><span class="line">    int val;</span><br><span class="line">    A() &#123;</span><br><span class="line">        printf(&quot;construct ok \n&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">A g_al;</span><br><span class="line"></span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这段代码的运行结果是对象A的构造函数被调用，串口输出”construct ok”。根据全局对象的初始化规则，这个调用是发生在main函数之前的，而且可以是多个函数依次调用。那么，这种调用时如何实现的？</p>
+<p>通过gcc生成arm64汇编，汇编代码如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br></pre></td><td class="code"><pre><span class="line">	.arch armv8-a</span><br><span class="line">	.file	&quot;main.cpp&quot;</span><br><span class="line">	.text</span><br><span class="line">	.section	.rodata</span><br><span class="line">	.align	3</span><br><span class="line">.LC0:</span><br><span class="line">	.string	&quot;construct ok &quot;</span><br><span class="line">	.section	.text._ZN1AC2Ev,&quot;axG&quot;,@progbits,_ZN1AC5Ev,comdat</span><br><span class="line">	.align	2</span><br><span class="line">	.weak	_ZN1AC2Ev</span><br><span class="line">	.type	_ZN1AC2Ev, %function</span><br><span class="line">_ZN1AC2Ev:</span><br><span class="line">.LFB1:</span><br><span class="line">	.cfi_startproc</span><br><span class="line">	stp	x29, x30, [sp, -32]!</span><br><span class="line">	.cfi_def_cfa_offset 32</span><br><span class="line">	.cfi_offset 29, -32</span><br><span class="line">	.cfi_offset 30, -24</span><br><span class="line">	add	x29, sp, 0</span><br><span class="line">	.cfi_def_cfa_register 29</span><br><span class="line">	str	x0, [x29, 24]</span><br><span class="line">	adrp	x0, .LC0</span><br><span class="line">	add	x0, x0, :lo12:.LC0</span><br><span class="line">	bl	puts</span><br><span class="line">	nop</span><br><span class="line">	ldp	x29, x30, [sp], 32</span><br><span class="line">	.cfi_restore 30</span><br><span class="line">	.cfi_restore 29</span><br><span class="line">	.cfi_def_cfa 31, 0</span><br><span class="line">	ret</span><br><span class="line">	.cfi_endproc</span><br><span class="line">.LFE1:</span><br><span class="line">	.size	_ZN1AC2Ev, .-_ZN1AC2Ev</span><br><span class="line">	.weak	_ZN1AC1Ev</span><br><span class="line">	.set	_ZN1AC1Ev,_ZN1AC2Ev</span><br><span class="line">	.global	g_al</span><br><span class="line">	.bss</span><br><span class="line">	.align	3</span><br><span class="line">	.type	g_al, %object</span><br><span class="line">	.size	g_al, 4</span><br><span class="line">g_al:</span><br><span class="line">	.zero	4</span><br><span class="line">	.text</span><br><span class="line">	.align	2</span><br><span class="line">	.global	main</span><br><span class="line">	.type	main, %function</span><br><span class="line">main:</span><br><span class="line">.LFB3:</span><br><span class="line">	.cfi_startproc</span><br><span class="line">	mov	w0, 0</span><br><span class="line">	ret</span><br><span class="line">	.cfi_endproc</span><br><span class="line">.LFE3:</span><br><span class="line">	.size	main, .-main</span><br><span class="line">	.align	2</span><br><span class="line">	.type	_Z41__static_initialization_and_destruction_0ii, %function</span><br><span class="line">_Z41__static_initialization_and_destruction_0ii:</span><br><span class="line">.LFB4:</span><br><span class="line">	.cfi_startproc</span><br><span class="line">	stp	x29, x30, [sp, -32]!</span><br><span class="line">	.cfi_def_cfa_offset 32</span><br><span class="line">	.cfi_offset 29, -32</span><br><span class="line">	.cfi_offset 30, -24</span><br><span class="line">	add	x29, sp, 0</span><br><span class="line">	.cfi_def_cfa_register 29</span><br><span class="line">	str	w0, [x29, 28]</span><br><span class="line">	str	w1, [x29, 24]</span><br><span class="line">	ldr	w0, [x29, 28]</span><br><span class="line">	cmp	w0, 1</span><br><span class="line">	bne	.L6</span><br><span class="line">	ldr	w1, [x29, 24]</span><br><span class="line">	mov	w0, 65535</span><br><span class="line">	cmp	w1, w0</span><br><span class="line">	bne	.L6</span><br><span class="line">	adrp	x0, g_al</span><br><span class="line">	add	x0, x0, :lo12:g_al</span><br><span class="line">	bl	_ZN1AC1Ev</span><br><span class="line">.L6:</span><br><span class="line">	nop</span><br><span class="line">	ldp	x29, x30, [sp], 32</span><br><span class="line">	.cfi_restore 30</span><br><span class="line">	.cfi_restore 29</span><br><span class="line">	.cfi_def_cfa 31, 0</span><br><span class="line">	ret</span><br><span class="line">	.cfi_endproc</span><br><span class="line">.LFE4:</span><br><span class="line">	.size	_Z41__static_initialization_and_destruction_0ii, .-_Z41__static_initialization_and_destruction_0ii</span><br><span class="line">	.align	2</span><br><span class="line">	.type	_GLOBAL__sub_I_g_al, %function</span><br><span class="line">_GLOBAL__sub_I_g_al:</span><br><span class="line">.LFB5:</span><br><span class="line">	.cfi_startproc</span><br><span class="line">	stp	x29, x30, [sp, -16]!</span><br><span class="line">	.cfi_def_cfa_offset 16</span><br><span class="line">	.cfi_offset 29, -16</span><br><span class="line">	.cfi_offset 30, -8</span><br><span class="line">	add	x29, sp, 0</span><br><span class="line">	.cfi_def_cfa_register 29</span><br><span class="line">	mov	w1, 65535</span><br><span class="line">	mov	w0, 1</span><br><span class="line">	bl	_Z41__static_initialization_and_destruction_0ii</span><br><span class="line">	ldp	x29, x30, [sp], 16</span><br><span class="line">	.cfi_restore 30</span><br><span class="line">	.cfi_restore 29</span><br><span class="line">	.cfi_def_cfa 31, 0</span><br><span class="line">	ret</span><br><span class="line">	.cfi_endproc</span><br><span class="line">.LFE5:</span><br><span class="line">	.size	_GLOBAL__sub_I_g_al, .-_GLOBAL__sub_I_g_al</span><br><span class="line">	.section	.init_array,&quot;aw&quot;,%init_array</span><br><span class="line">	.align	3</span><br><span class="line">	.xword	_GLOBAL__sub_I_g_al</span><br><span class="line">	.ident	&quot;GCC: (Ubuntu&#x2F;Linaro 7.5.0-3ubuntu1~18.04) 7.5.0&quot;</span><br><span class="line">	.section	.note.GNU-stack,&quot;&quot;,@progbits</span><br></pre></td></tr></table></figure>
+
+<p>关键的汇编代码是以下几部分；</p>
+<p>构造函数的具体实现如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">.LC0:</span><br><span class="line">	.string	&quot;construct ok &quot;</span><br><span class="line">	.section	.text._ZN1AC2Ev,&quot;axG&quot;,@progbits,_ZN1AC5Ev,comdat</span><br><span class="line">	.align	2</span><br><span class="line">	.weak	.</span><br><span class="line">	.type	_ZN1AC2Ev, %function</span><br><span class="line">_ZN1AC2Ev:</span><br><span class="line">.LFB1:</span><br><span class="line">	.cfi_startproc</span><br><span class="line">	stp	x29, x30, [sp, -32]!</span><br><span class="line">	.cfi_def_cfa_offset 32</span><br><span class="line">	.cfi_offset 29, -32</span><br><span class="line">	.cfi_offset 30, -24</span><br><span class="line">	add	x29, sp, 0</span><br><span class="line">	.cfi_def_cfa_register 29</span><br><span class="line">	str	x0, [x29, 24]</span><br><span class="line">	adrp	x0, .LC0</span><br><span class="line">	add	x0, x0, :lo12:.LC0</span><br><span class="line">	bl	puts</span><br><span class="line">	nop</span><br><span class="line">	ldp	x29, x30, [sp], 32</span><br><span class="line">	.cfi_restore 30</span><br><span class="line">	.cfi_restore 29</span><br><span class="line">	.cfi_def_cfa 31, 0</span><br><span class="line">	ret</span><br><span class="line">	.cfi_endproc</span><br></pre></td></tr></table></figure>
+
+<p>梳理汇编中的bl指令，可以得出以下的调用过程：</p>
+<p>_GLOBAL__sub_I_g_al -&gt; _Z41__static_initialization_and_destruction_0ii -&gt; _ZN1AC1Ev(_ZN1AC2Ev)</p>
+<p>其中_ZN1AC1Ev是一个弱符号，最终解析成_ZN1AC2Ev，即class A的构造函数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">.weak	_ZN1AC1Ev</span><br><span class="line">.set	_ZN1AC1Ev,_ZN1AC2Ev</span><br></pre></td></tr></table></figure>
+
+<p>那现在问题就变成_GLOBAL__sub_I_g_al是谁调用的，查看汇编里的相关信息，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">.LFE5:</span><br><span class="line">	.size	_GLOBAL__sub_I_g_al, .-_GLOBAL__sub_I_g_al</span><br><span class="line">	.section	.init_array,&quot;aw&quot;,%init_array</span><br><span class="line">	.align	3</span><br><span class="line">	.xword	_GLOBAL__sub_I_g_al</span><br><span class="line">	.ident	&quot;GCC: (Ubuntu&#x2F;Linaro 7.5.0-3ubuntu1~18.04) 7.5.0&quot;</span><br><span class="line">	.section	.note.GNU-stack,&quot;&quot;,@progbits</span><br></pre></td></tr></table></figure>
+
+<p>可以发现，_GLOBAL__sub_I_g_al存在一个单独的，名为”init_array”的section中。</p>
+<p>关于这个section，ARM的官方文档中，描述如下:</p>
+<blockquote>
+<p>The C++ Standard places certain requirements on the construction and destruction of objects with static storage duration.</p>
+</blockquote>
+<blockquote>
+<p>The ARM C++ compiler uses the .init_array area to achieve this. This is a const data array of self-relative pointers to functions.</p>
+</blockquote>
+<blockquote>
+<p>The linker collects each .init_array from the various translation units together. It is important that the .init_array is accumulated in the same order.</p>
+</blockquote>
+<blockquote>
+<p>The library routine <strong>cpp_initialize</strong>aeabi_ is called from the C library startup code, <strong>rt_lib_init, before main. __cpp_initialize</strong>aeabi_ walks through the .init_array calling each function in turn. On exit, __rt_lib_shutdown calls __cxa_finalize.</p>
+</blockquote>
+<blockquote>
+<p>Usually, there is at most one function for T::T(), mangled name <em>ZN1TC1Ev, one function for T::~T(), mangled name <em>ZN1TD1Ev, one __sti</em></em> function, and four bytes of .init_array for each translation unit. The mangled name for the function f() is _Z1fv. There is no way to determine the initialization order between translation units.</p>
+</blockquote>
+<blockquote>
+<p>Function-local static objects with destructors are also handled using __aeabi_atexit.</p>
+</blockquote>
+<blockquote>
+<p>.init_array sections must be placed contiguously within the same region for their base and limit symbols to be accessible. If they are not, the linker generates an error.</p>
+</blockquote>
+<h2 id="查看init-array里的信息"><a href="#查看init-array里的信息" class="headerlink" title="查看init_array里的信息"></a>查看init_array里的信息</h2><p>通过以下命令，可以解析出具体调用的函数信息：</p>
+<blockquote>
+<p>objdump -D -j .init_array <your-application></p>
+</blockquote>
+<p>在我的环境中，输出如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">a.out:     file format elf64-littleaarch64</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">Disassembly of section .init_array:</span><br><span class="line"></span><br><span class="line">0000000000010d78 &lt;__frame_dummy_init_array_entry&gt;:</span><br><span class="line">   10d78:	00000770 	.word	0x00000770</span><br><span class="line">   10d7c:	00000000 	.word	0x00000000</span><br><span class="line">   10d80:	000007c0 	.word	0x000007c0</span><br><span class="line">   10d84:	00000000 	.word	0x00000000</span><br></pre></td></tr></table></figure>
+
+<p>通过以下命令，将具体的地址，解析成相应的函数符号:</p>
+<blockquote>
+<p>addr2line 0xc1000a68 -e <your-application></p>
+</blockquote>
+<p>在我的环境中，输出如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;tmp&#x2F;tmp.KS3wdL1X4n&#x2F;main.cpp:16</span><br></pre></td></tr></table></figure>
+
+<p>需要注意的是，这部分信息属于调试信息，编译的时候，加上”-g”，编译器才会生成这些额外信息。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ol>
+<li><a href="https://stackoverflow.com/questions/21386125/what-goes-to-the-init-array" target="_blank" rel="noopener">What goes to the __init_array?(StackOverflow)</a></li>
+<li><a href="http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0475c/Chdfiffc.html" target="_blank" rel="noopener">C++ initialization, construction and destruction(Arm)</a></li>
+</ol>
+
+        
+        <br />
+        <div id="comment-container">
+        </div>
+        <div id="disqus_thread"></div>
+
+        <div id="lv-container">
+        </div>
+
+    </div>
+</div>
+
+    </div>
+</div>
+
+
+<footer class="footer">
+    <ul class="list-inline text-center">
+        
+        
+
+        
+
+        
+
+        
+
+        
+
+    </ul>
+    
+    <p>
+        All Rights Reserved By Nobody.
+    </p>
+</footer>
+
+
+
+
+</body>
+
+<script>
+    // We expose some of the variables needed by the front end
+    window.hexo_search_path = "search.json"
+    window.hexo_root = "/"
+    window.isPost = true
+</script>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+
+<script src="/js/index.js"></script>
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+    <script>
+        /**
+         *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+         *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables
+        */
+        if( '' || '')
+        var disqus_config = function () {
+            this.page.url = '';  // Replace PAGE_URL with your page's canonical URL variable
+            this.page.identifier = ''; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+        };
+
+        (function() { // DON'T EDIT BELOW THIS LINE
+            var d = document, s = d.createElement('script');
+            s.src = 'https://anatasluo.disqus.com/embed.js';
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+        })();
+    </script>
+
+
+
+</html>

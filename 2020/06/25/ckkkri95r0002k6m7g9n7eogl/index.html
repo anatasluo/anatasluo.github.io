@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="又是胡思乱想的一天">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>
+        
+        C/C++中的内存泄露检测 - anatasluo的博客 | anatasluo&#39;s Blog
+        
+    </title>
+
+    <!-- Custom CSS -->
+    
+<link rel="stylesheet" href="/css/aircloud.css">
+
+    
+<link rel="stylesheet" href="/css/gitment.css">
+
+    <!--<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">-->
+    <link href="//at.alicdn.com/t/font_620856_pl6z7sid89qkt9.css" rel="stylesheet" type="text/css">
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+
+<div class="site-nav-toggle" id="site-nav-toggle">
+    <button>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+    </button>
+</div>
+
+<div class="index-about">
+    <i> anatas blog </i>
+</div>
+
+<div class="index-container">
+    
+    <div class="index-left">
+        
+<div class="nav" id="nav">
+    <div class="avatar-name">
+        <div class="avatar radius">
+            <img src="/about/img/avatar.jpg" />
+        </div>
+        <div class="name">
+            <i>anatasluo</i>
+        </div>
+    </div>
+    <div class="contents" id="nav-content">
+        <ul>
+            <li >
+                <a href="/">
+                    <i class="iconfont icon-shouye1"></i>
+                    <span>HOME</span>
+                </a>
+            </li>
+            <li >
+                <a href="/tags">
+                    <i class="iconfont icon-biaoqian1"></i>
+                    <span>TAGS</span>
+                </a>
+            </li>
+            <li >
+                <a href="/archives">
+                    <i class="iconfont icon-guidang2"></i>
+                    <span>ARCHIVES</span>
+                </a>
+            </li>
+            <li >
+                <a href="/about/">
+                    <i class="iconfont icon-guanyu2"></i>
+                    <span>ABOUT</span>
+                </a>
+            </li>
+            
+            <li>
+                <a id="search">
+                    <i class="iconfont icon-sousuo1"></i>
+                    <span>SEARCH</span>
+                </a>
+            </li>
+            
+        </ul>
+    </div>
+    
+        <div id="toc" class="toc-article">
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#内存泄露"><span class="toc-text">内存泄露</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#实现自己的malloc-new-free接口"><span class="toc-text">实现自己的malloc&#x2F;new&#x2F;free接口</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用虚拟机来检测内存泄露"><span class="toc-text">使用虚拟机来检测内存泄露</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#常见的内存泄露场景"><span class="toc-text">常见的内存泄露场景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-text">参考</span></a></li></ol>
+</div>
+    
+</div>
+
+
+<div class="search-field" id="search-field">
+    <div class="search-container">
+        <div class="search-input">
+            <span id="esc-search"> <i class="icon-fanhui iconfont"></i></span>
+            <input id="search-input"/>
+            <span id="begin-search">search</span>
+        </div>
+        <div class="search-result-container" id="search-result-container">
+
+        </div>
+    </div>
+</div>
+
+        <div class="index-about-mobile">
+            <i> anatas blog </i>
+        </div>
+    </div>
+    
+    <div class="index-middle">
+        <!-- Main Content -->
+        
+
+
+<div class="post-container">
+    <div class="post-title">
+        C/C++中的内存泄露检测
+    </div>
+
+    <div class="post-meta">
+        <span class="attr">Post：<span>2020-06-25 04:06:24</span></span>
+        
+        <span class="attr">Tags：/
+        
+        <a class="tag" href="/tags/#C" title="C">C</a>
+        <span>/</span>
+        
+        <a class="tag" href="/tags/#C++" title="C++">C++</a>
+        <span>/</span>
+        
+        <a class="tag" href="/tags/#Memory" title="Memory">Memory</a>
+        <span>/</span>
+        
+        
+        </span>
+        <span class="attr">Visit：<span id="busuanzi_value_page_pv"></span>
+</span>
+</span>
+    </div>
+    <div class="post-content no-indent">
+        <h2 id="内存泄露"><a href="#内存泄露" class="headerlink" title="内存泄露"></a>内存泄露</h2><p>在理解内存泄露前，先简要讲下C/C++的内存模型。可执行文件使用的内存，粗略的可以分为由开发者主动支配以及由程序被动分配。举个简单的例子，全局变量以及局部变量的存储，就是由编译器编译器时候规划好的，通过malloc/new接口获得的内存则是从堆中获得的，由开发者来通过free接口释放。</p>
+<p>内存泄露，即开发者从堆中获得的内存，用完之后没有还给系统，从而引起了有效内存减少。</p>
+<p>检测内存的泄露的思路大致有两种，他们之间的区别，在于检查的层面。</p>
+<h2 id="实现自己的malloc-new-free接口"><a href="#实现自己的malloc-new-free接口" class="headerlink" title="实现自己的malloc/new/free接口"></a>实现自己的malloc/new/free接口</h2><p>通过宏定义或者GCC的wrapper参数，可以取代系统的相关实现。在自己的实现中，记录下malloc/new/free接口的调用信息，比如指向内存的指针数量，分配内存的大小，是否被释放，接口的调用位置等等。依据这一原理实现的关键在于，能正确计算出什么时候应该释放内存，比如已经没有有效指针指向内存，比如释放内存的大小与申请内存大小不一等等。</p>
+<p>使用这一原理的工具，有<a href="https://dmalloc.com/" target="_blank" rel="noopener">Dmalloc</a></p>
+<h2 id="使用虚拟机来检测内存泄露"><a href="#使用虚拟机来检测内存泄露" class="headerlink" title="使用虚拟机来检测内存泄露"></a>使用虚拟机来检测内存泄露</h2><p>另一个更加行之有效，也更加耗费大的方法，则是通过虚拟机。即通过专门的虚拟机程序，在程序的实际运行过程中，实时检测内存的使用情况。</p>
+<p>使用这一原理的工具，有<a href="https://www.valgrind.org/" target="_blank" rel="noopener">valgrind</a></p>
+<p>无论哪种办法，本质都是通过记录额外信息来实现的，区别在于记录信息的层面，是可执行程序本身，或者由系统来记录。<br>，</p>
+<h2 id="常见的内存泄露场景"><a href="#常见的内存泄露场景" class="headerlink" title="常见的内存泄露场景"></a>常见的内存泄露场景</h2><ol>
+<li>未释放内存，又申请了新内存<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">char* str &#x3D; new char[100];</span><br><span class="line"></span><br><span class="line">str &#x3D; new char [150];</span><br><span class="line"></span><br><span class="line">delete[] str;</span><br></pre></td></tr></table></figure></li>
+<li>局部变量被销毁后，指向的内存未被释放</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">void test()</span><br><span class="line">&#123;</span><br><span class="line">    char* lo &#x3D; new char[100];</span><br><span class="line">    return;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li><p><a href="https://stackoverflow.com/questions/28446850/memory-leak-detectors-working-principle#:~:text=The%20basic%20implementation%20is%20actually,allocation%20should%20have%20been%20freed." target="_blank" rel="noopener">Memory Leak Detectors Working Principle(StackOverFlow)</a></p>
+</li>
+<li><p><a href="https://stackoverflow.com/questions/6261201/how-to-find-memory-leak-in-a-c-code-project" target="_blank" rel="noopener">How to find memory leak in a C++ code/project?(StackOverFlow)</a></p>
+</li>
+</ul>
+
+        
+        <br />
+        <div id="comment-container">
+        </div>
+        <div id="disqus_thread"></div>
+
+        <div id="lv-container">
+        </div>
+
+    </div>
+</div>
+
+    </div>
+</div>
+
+
+<footer class="footer">
+    <ul class="list-inline text-center">
+        
+        
+
+        
+
+        
+
+        
+
+        
+
+    </ul>
+    
+    <p>
+        All Rights Reserved By Nobody.
+    </p>
+</footer>
+
+
+
+
+</body>
+
+<script>
+    // We expose some of the variables needed by the front end
+    window.hexo_search_path = "search.json"
+    window.hexo_root = "/"
+    window.isPost = true
+</script>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+
+<script src="/js/index.js"></script>
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+    <script>
+        /**
+         *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+         *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables
+        */
+        if( '' || '')
+        var disqus_config = function () {
+            this.page.url = '';  // Replace PAGE_URL with your page's canonical URL variable
+            this.page.identifier = ''; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+        };
+
+        (function() { // DON'T EDIT BELOW THIS LINE
+            var d = document, s = d.createElement('script');
+            s.src = 'https://anatasluo.disqus.com/embed.js';
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+        })();
+    </script>
+
+
+
+</html>

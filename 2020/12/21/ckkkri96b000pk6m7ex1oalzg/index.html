@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="又是胡思乱想的一天">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>
+        
+        [note]计算机体系结构:量化研究方法 - anatasluo的博客 | anatasluo&#39;s Blog
+        
+    </title>
+
+    <!-- Custom CSS -->
+    
+<link rel="stylesheet" href="/css/aircloud.css">
+
+    
+<link rel="stylesheet" href="/css/gitment.css">
+
+    <!--<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">-->
+    <link href="//at.alicdn.com/t/font_620856_pl6z7sid89qkt9.css" rel="stylesheet" type="text/css">
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+
+<div class="site-nav-toggle" id="site-nav-toggle">
+    <button>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+    </button>
+</div>
+
+<div class="index-about">
+    <i> anatas blog </i>
+</div>
+
+<div class="index-container">
+    
+    <div class="index-left">
+        
+<div class="nav" id="nav">
+    <div class="avatar-name">
+        <div class="avatar radius">
+            <img src="/about/img/avatar.jpg" />
+        </div>
+        <div class="name">
+            <i>anatasluo</i>
+        </div>
+    </div>
+    <div class="contents" id="nav-content">
+        <ul>
+            <li >
+                <a href="/">
+                    <i class="iconfont icon-shouye1"></i>
+                    <span>HOME</span>
+                </a>
+            </li>
+            <li >
+                <a href="/tags">
+                    <i class="iconfont icon-biaoqian1"></i>
+                    <span>TAGS</span>
+                </a>
+            </li>
+            <li >
+                <a href="/archives">
+                    <i class="iconfont icon-guidang2"></i>
+                    <span>ARCHIVES</span>
+                </a>
+            </li>
+            <li >
+                <a href="/about/">
+                    <i class="iconfont icon-guanyu2"></i>
+                    <span>ABOUT</span>
+                </a>
+            </li>
+            
+            <li>
+                <a id="search">
+                    <i class="iconfont icon-sousuo1"></i>
+                    <span>SEARCH</span>
+                </a>
+            </li>
+            
+        </ul>
+    </div>
+    
+        <div id="toc" class="toc-article">
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#chapter-1-量化设计与分析基础"><span class="toc-text">chapter 1: 量化设计与分析基础</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#appendix-A-指令集基本原理"><span class="toc-text">appendix A: 指令集基本原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#appendix-C-流水线基础与中级概念"><span class="toc-text">appendix C: 流水线基础与中级概念</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#reference"><span class="toc-text">reference</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#problem"><span class="toc-text">problem</span></a></li></ol>
+</div>
+    
+</div>
+
+
+<div class="search-field" id="search-field">
+    <div class="search-container">
+        <div class="search-input">
+            <span id="esc-search"> <i class="icon-fanhui iconfont"></i></span>
+            <input id="search-input"/>
+            <span id="begin-search">search</span>
+        </div>
+        <div class="search-result-container" id="search-result-container">
+
+        </div>
+    </div>
+</div>
+
+        <div class="index-about-mobile">
+            <i> anatas blog </i>
+        </div>
+    </div>
+    
+    <div class="index-middle">
+        <!-- Main Content -->
+        
+
+
+<div class="post-container">
+    <div class="post-title">
+        [note]计算机体系结构:量化研究方法
+    </div>
+
+    <div class="post-meta">
+        <span class="attr">Post：<span>2020-12-21 13:49:11</span></span>
+        
+        <span class="attr">Tags：/
+        
+        <a class="tag" href="/tags/#Computer Architecture" title="Computer Architecture">Computer Architecture</a>
+        <span>/</span>
+        
+        <a class="tag" href="/tags/#Note" title="Note">Note</a>
+        <span>/</span>
+        
+        
+        </span>
+        <span class="attr">Visit：<span id="busuanzi_value_page_pv"></span>
+</span>
+</span>
+    </div>
+    <div class="post-content no-indent">
+        <h2 id="chapter-1-量化设计与分析基础"><a href="#chapter-1-量化设计与分析基础" class="headerlink" title="chapter 1: 量化设计与分析基础"></a>chapter 1: 量化设计与分析基础</h2><p>计算机分类:</p>
+<ul>
+<li>个人移动设备(PMD)</li>
+<li>桌面计算机(PC)</li>
+<li>服务器</li>
+<li>集群/仓库级计算机</li>
+<li>嵌入式计算机</li>
+</ul>
+<blockquote>
+<p>PMD经常被看做嵌入式计算机，但我们仍然把它们看作不同的类别。这是因为PMD是一些可以运行外部开发软件的平台，与桌面计算机存在诸多共同特征。其他嵌入式设备在硬件和软件复杂性上存在很大的限制。我们以是否能运行第三方软件作为区分嵌入式和非嵌入式的分界线。</p>
+</blockquote>
+<p>应用程序的并行度分类:</p>
+<ul>
+<li>数据级并行(DLP)</li>
+<li>任务级并行(TLP)</li>
+</ul>
+<p>计算机硬件实现并行的方式:</p>
+<ul>
+<li>指令级并行(借助流水线之类的实现)</li>
+<li>向量体系结构和图形处理器(GPU)</li>
+<li>线程级并行</li>
+<li>请求级并行</li>
+</ul>
+<p>Michael Flynn在1966年提出的并行分类分类方式:</p>
+<ul>
+<li>单指令流、单数据流(SISD)</li>
+<li>单指令流、多数据流(SIMD)</li>
+<li>多指令流、单数据流(MISD)</li>
+<li>多指令流、多数据流(MIMD)</li>
+</ul>
+<p>计算机体系结构的定义: 指令集体系结构 + 组成(微体系结构) + 硬件</p>
+<p>技术趋势:</p>
+<ul>
+<li>集成电路逻辑技术</li>
+<li>半导体DRAM</li>
+<li>半导体闪存</li>
+<li>磁盘技术</li>
+<li>网络技术</li>
+</ul>
+<p>整体上，带宽的改进要比延迟的改进更为重要(带宽的改进速度至少是延时的改进速度的平方)</p>
+<p>能耗趋势:</p>
+<ul>
+<li>峰值功率</li>
+<li>持续功率(TDP)<br>  冷却效率需要不低于此功率，现在处理有两种办法去散热 - 降频和散热装置</li>
+<li>以能耗度量<br>  动态能耗计算公式 - 1/2 x 容性负载 x 电压<sup>2</sup><br>  动态功率计算公式 - 1/2 x 容性负载 x 电压<sup>2</sup> x 开关频率</li>
+</ul>
+<h2 id="appendix-A-指令集基本原理"><a href="#appendix-A-指令集基本原理" class="headerlink" title="appendix A: 指令集基本原理"></a>appendix A: 指令集基本原理</h2><p>指令集体系结构的分类:</p>
+<ul>
+<li><p>寄存器-存储器体系结构</p>
+</li>
+<li><p>载入-存储体系结构</p>
+</li>
+<li><p>存储器-存储器体系结构(不存在对应工业成品)</p>
+</li>
+<li><p>变长编码</p>
+</li>
+<li><p>定长编码</p>
+</li>
+<li><p>混合编码(ARM Thumb)</p>
+</li>
+</ul>
+<h2 id="appendix-C-流水线基础与中级概念"><a href="#appendix-C-流水线基础与中级概念" class="headerlink" title="appendix C: 流水线基础与中级概念"></a>appendix C: 流水线基础与中级概念</h2><p>RISC指令的五级流水线：</p>
+<ul>
+<li>Instruction fetch cycle(IF)</li>
+<li>Instruction decode/register fetch cycle(ID)</li>
+<li>Execution/effective address cycle(EX) – ALU</li>
+<li>Memory access(EM)</li>
+<li>Write-back cycle(WB)</li>
+</ul>
+<p>流水线之间的平衡，流水线化带来的开销以及流水线的延迟会限制流水线的深度(Amdahl’s law)</p>
+<p>Pipeline Hazards:</p>
+<ul>
+<li>Structural hazards<ul>
+<li>Schedule</li>
+<li>Stall - Stop until resource is available</li>
+<li>Duplicate - Add more hardware resources</li>
+</ul>
+</li>
+<li>Data hazards<ul>
+<li>Schedule</li>
+<li>Stall</li>
+<li>Bypass - allow values to be sent to an earlier stage</li>
+<li>Speculate</li>
+</ul>
+</li>
+<li>Control hazards<ul>
+<li>冻结/冲刷流水线</li>
+<li>分支预测，将未选中分支变为空操作(出现延迟分支 - branch delay slot) -&gt; 编译器进行优化利用</li>
+</ul>
+</li>
+</ul>
+<p>分支预测：</p>
+<ul>
+<li>静态分支预测(利用先前运行过程中收集的一览数据)</li>
+<li>动态分支预测(对分支地址的低位部分进行索引并记录)</li>
+</ul>
+<h2 id="reference"><a href="#reference" class="headerlink" title="reference"></a>reference</h2><ul>
+<li><a href="https://blog.csdn.net/qq_34567703/article/details/76736564" target="_blank" rel="noopener">磁盘、内存、闪存、缓存等物理存储介质的区别</a></li>
+</ul>
+<h2 id="problem"><a href="#problem" class="headerlink" title="problem"></a>problem</h2><ol>
+<li><p>每条指令执行的时间是否对等?<br>时钟周期和流水线的时间是相等的，不同指令需要的时钟周期不一样;对于未采用流水线的体系结构来说，每条指令执行的时间是一样的，且CPI时间很长</p>
+</li>
+<li><p>流水线过程中如何避免相互干扰？</p>
+<ul>
+<li>寄存器通过边沿触发</li>
+<li>存在连接流水线的额外寄存器</li>
+<li>见Pipeline Hazards的解决办法</li>
+</ul>
+</li>
+</ol>
+
+        
+        <br />
+        <div id="comment-container">
+        </div>
+        <div id="disqus_thread"></div>
+
+        <div id="lv-container">
+        </div>
+
+    </div>
+</div>
+
+    </div>
+</div>
+
+
+<footer class="footer">
+    <ul class="list-inline text-center">
+        
+        
+
+        
+
+        
+
+        
+
+        
+
+    </ul>
+    
+    <p>
+        All Rights Reserved By Nobody.
+    </p>
+</footer>
+
+
+
+
+</body>
+
+<script>
+    // We expose some of the variables needed by the front end
+    window.hexo_search_path = "search.json"
+    window.hexo_root = "/"
+    window.isPost = true
+</script>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+
+<script src="/js/index.js"></script>
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+    <script>
+        /**
+         *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+         *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables
+        */
+        if( '' || '')
+        var disqus_config = function () {
+            this.page.url = '';  // Replace PAGE_URL with your page's canonical URL variable
+            this.page.identifier = ''; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+        };
+
+        (function() { // DON'T EDIT BELOW THIS LINE
+            var d = document, s = d.createElement('script');
+            s.src = 'https://anatasluo.disqus.com/embed.js';
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+        })();
+    </script>
+
+
+
+</html>

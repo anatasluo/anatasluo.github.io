@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="又是胡思乱想的一天">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>
+        
+        GCC对标准C拓展概述 - anatasluo的博客 | anatasluo&#39;s Blog
+        
+    </title>
+
+    <!-- Custom CSS -->
+    
+<link rel="stylesheet" href="/css/aircloud.css">
+
+    
+<link rel="stylesheet" href="/css/gitment.css">
+
+    <!--<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">-->
+    <link href="//at.alicdn.com/t/font_620856_pl6z7sid89qkt9.css" rel="stylesheet" type="text/css">
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+
+<div class="site-nav-toggle" id="site-nav-toggle">
+    <button>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+    </button>
+</div>
+
+<div class="index-about">
+    <i> anatas blog </i>
+</div>
+
+<div class="index-container">
+    
+    <div class="index-left">
+        
+<div class="nav" id="nav">
+    <div class="avatar-name">
+        <div class="avatar radius">
+            <img src="/about/img/avatar.jpg" />
+        </div>
+        <div class="name">
+            <i>anatasluo</i>
+        </div>
+    </div>
+    <div class="contents" id="nav-content">
+        <ul>
+            <li >
+                <a href="/">
+                    <i class="iconfont icon-shouye1"></i>
+                    <span>HOME</span>
+                </a>
+            </li>
+            <li >
+                <a href="/tags">
+                    <i class="iconfont icon-biaoqian1"></i>
+                    <span>TAGS</span>
+                </a>
+            </li>
+            <li >
+                <a href="/archives">
+                    <i class="iconfont icon-guidang2"></i>
+                    <span>ARCHIVES</span>
+                </a>
+            </li>
+            <li >
+                <a href="/about/">
+                    <i class="iconfont icon-guanyu2"></i>
+                    <span>ABOUT</span>
+                </a>
+            </li>
+            
+            <li>
+                <a id="search">
+                    <i class="iconfont icon-sousuo1"></i>
+                    <span>SEARCH</span>
+                </a>
+            </li>
+            
+        </ul>
+    </div>
+    
+        <div id="toc" class="toc-article">
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#GCC发展及当前的主流编译器"><span class="toc-text">GCC发展及当前的主流编译器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GCC对C语言的拓展"><span class="toc-text">GCC对C语言的拓展</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#变长数组"><span class="toc-text">变长数组</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Empty-struct"><span class="toc-text">Empty struct</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-text">参考</span></a></li></ol>
+</div>
+    
+</div>
+
+
+<div class="search-field" id="search-field">
+    <div class="search-container">
+        <div class="search-input">
+            <span id="esc-search"> <i class="icon-fanhui iconfont"></i></span>
+            <input id="search-input"/>
+            <span id="begin-search">search</span>
+        </div>
+        <div class="search-result-container" id="search-result-container">
+
+        </div>
+    </div>
+</div>
+
+        <div class="index-about-mobile">
+            <i> anatas blog </i>
+        </div>
+    </div>
+    
+    <div class="index-middle">
+        <!-- Main Content -->
+        
+
+
+<div class="post-container">
+    <div class="post-title">
+        GCC对标准C拓展概述
+    </div>
+
+    <div class="post-meta">
+        <span class="attr">Post：<span>2020-06-11 16:33:59</span></span>
+        
+        <span class="attr">Tags：/
+        
+        <a class="tag" href="/tags/#C" title="C">C</a>
+        <span>/</span>
+        
+        <a class="tag" href="/tags/#C++" title="C++">C++</a>
+        <span>/</span>
+        
+        <a class="tag" href="/tags/#GCC" title="GCC">GCC</a>
+        <span>/</span>
+        
+        <a class="tag" href="/tags/#GNU" title="GNU">GNU</a>
+        <span>/</span>
+        
+        
+        </span>
+        <span class="attr">Visit：<span id="busuanzi_value_page_pv"></span>
+</span>
+</span>
+    </div>
+    <div class="post-content no-indent">
+        <h2 id="GCC发展及当前的主流编译器"><a href="#GCC发展及当前的主流编译器" class="headerlink" title="GCC发展及当前的主流编译器"></a>GCC发展及当前的主流编译器</h2><p>C语言最初出现，是为了适应内核编写的需要。编译器则是编程语言发展的具现。GCC是GNU运动的产物，说是最重要的产物之一也不为过。后来，由于Apple等公司，对编译器的定制化需求越来越大，且这些需求或者新特性，无法被GCC社区及时接受。因此，Apple公司转而拥抱LLVM。LLVM是一套编译器组件，用C++编写，用于编写其他语言，允许使用者高度定制化编译器。Clang则是在LLVM框架中，发展出的一个C语言编译器。除此之外，还有微软编写的，仅能用于Windows平台的MSVC。</p>
+<p>一言以蔽之，当前主流的编译器:</p>
+<ul>
+<li>GCC(GNU)</li>
+<li>Clang(LLVM)</li>
+<li>MSVC(MicroSoft)</li>
+</ul>
+<p>MSVC不能用于其他平台，不在讨论之列。Clang相比于GCC，优势在于社区更加活跃，开发节奏快，对很多新技术的支持好，实现上更接近标准实现。GCC的优点在于，在占据主流的传统生产环境上，优化的效果也出色一些，这也得益于GCC本身对标准进行了大量拓展。</p>
+<h2 id="GCC对C语言的拓展"><a href="#GCC对C语言的拓展" class="headerlink" title="GCC对C语言的拓展"></a>GCC对C语言的拓展</h2><p>为了适应生产环境的变化，GCC对C语言做了相当多的拓展。以C90为节点，进行划分，这些拓展相当一部分被C99和C++标准接受，剩余一部分则未被接受，因此，在编写C语言程序时，对于依赖编译器的实现，需要作出相应的适应性修改，以保证兼容性。本文主要介绍GCC 8.4.0对C90的拓展，对于比较重要的拓展，会新开博客讲述，对不那么重要的，则一带而过。</p>
+<h3 id="变长数组"><a href="#变长数组" class="headerlink" title="变长数组"></a>变长数组</h3><p>见<a href="https://anatasluo.github.io/blog/Flexible-array-in-C-C/">Flexible array in C/C++</a></p>
+<h3 id="Empty-struct"><a href="#Empty-struct" class="headerlink" title="Empty struct"></a>Empty struct</h3><p>见<a href="https://anatasluo.github.io/blog/Empty-struct-class-in-C-C/">Empty struct/class in C/C++</a></p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ol>
+<li><a href="https://zh.wikipedia.org/wiki/LLVM" target="_blank" rel="noopener">LLVM Wiki词条</a></li>
+<li><a href="https://gcc.gnu.org/onlinedocs/gcc-8.4.0/gcc/C-Extensions.html" target="_blank" rel="noopener">GCC拓展</a></li>
+<li><a href="https://wiki.sei.cmu.edu/confluence/display/c/DCL38-C.+Use+the+correct+syntax+when+declaring+a+flexible+array+member" target="_blank" rel="noopener">变长数组</a></li>
+</ol>
+
+        
+        <br />
+        <div id="comment-container">
+        </div>
+        <div id="disqus_thread"></div>
+
+        <div id="lv-container">
+        </div>
+
+    </div>
+</div>
+
+    </div>
+</div>
+
+
+<footer class="footer">
+    <ul class="list-inline text-center">
+        
+        
+
+        
+
+        
+
+        
+
+        
+
+    </ul>
+    
+    <p>
+        All Rights Reserved By Nobody.
+    </p>
+</footer>
+
+
+
+
+</body>
+
+<script>
+    // We expose some of the variables needed by the front end
+    window.hexo_search_path = "search.json"
+    window.hexo_root = "/"
+    window.isPost = true
+</script>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+
+<script src="/js/index.js"></script>
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+    <script>
+        /**
+         *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+         *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables
+        */
+        if( '' || '')
+        var disqus_config = function () {
+            this.page.url = '';  // Replace PAGE_URL with your page's canonical URL variable
+            this.page.identifier = ''; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+        };
+
+        (function() { // DON'T EDIT BELOW THIS LINE
+            var d = document, s = d.createElement('script');
+            s.src = 'https://anatasluo.disqus.com/embed.js';
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+        })();
+    </script>
+
+
+
+</html>

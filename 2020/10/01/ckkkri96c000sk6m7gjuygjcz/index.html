@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="又是胡思乱想的一天">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>
+        
+        [note]逆向工程权威指南 - anatasluo的博客 | anatasluo&#39;s Blog
+        
+    </title>
+
+    <!-- Custom CSS -->
+    
+<link rel="stylesheet" href="/css/aircloud.css">
+
+    
+<link rel="stylesheet" href="/css/gitment.css">
+
+    <!--<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">-->
+    <link href="//at.alicdn.com/t/font_620856_pl6z7sid89qkt9.css" rel="stylesheet" type="text/css">
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+
+<div class="site-nav-toggle" id="site-nav-toggle">
+    <button>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+    </button>
+</div>
+
+<div class="index-about">
+    <i> anatas blog </i>
+</div>
+
+<div class="index-container">
+    
+    <div class="index-left">
+        
+<div class="nav" id="nav">
+    <div class="avatar-name">
+        <div class="avatar radius">
+            <img src="/about/img/avatar.jpg" />
+        </div>
+        <div class="name">
+            <i>anatasluo</i>
+        </div>
+    </div>
+    <div class="contents" id="nav-content">
+        <ul>
+            <li >
+                <a href="/">
+                    <i class="iconfont icon-shouye1"></i>
+                    <span>HOME</span>
+                </a>
+            </li>
+            <li >
+                <a href="/tags">
+                    <i class="iconfont icon-biaoqian1"></i>
+                    <span>TAGS</span>
+                </a>
+            </li>
+            <li >
+                <a href="/archives">
+                    <i class="iconfont icon-guidang2"></i>
+                    <span>ARCHIVES</span>
+                </a>
+            </li>
+            <li >
+                <a href="/about/">
+                    <i class="iconfont icon-guanyu2"></i>
+                    <span>ABOUT</span>
+                </a>
+            </li>
+            
+            <li>
+                <a id="search">
+                    <i class="iconfont icon-sousuo1"></i>
+                    <span>SEARCH</span>
+                </a>
+            </li>
+            
+        </ul>
+    </div>
+    
+        <div id="toc" class="toc-article">
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#编程语言-汇编语言-机器语言-硬件指令"><span class="toc-text">编程语言 - 汇编语言 - 机器语言 - 硬件指令</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#汇编语言阅读技巧"><span class="toc-text">汇编语言阅读技巧</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#X86汇编"><span class="toc-text">X86汇编</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ARM汇编"><span class="toc-text">ARM汇编</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#调用规范-calling-convention"><span class="toc-text">调用规范(calling convention)</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#分类"><span class="toc-text">分类</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#部分比较重要的规范细节"><span class="toc-text">部分比较重要的规范细节</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#内存寻址和栈帧管理"><span class="toc-text">内存寻址和栈帧管理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-text">参考</span></a></li></ol>
+</div>
+    
+</div>
+
+
+<div class="search-field" id="search-field">
+    <div class="search-container">
+        <div class="search-input">
+            <span id="esc-search"> <i class="icon-fanhui iconfont"></i></span>
+            <input id="search-input"/>
+            <span id="begin-search">search</span>
+        </div>
+        <div class="search-result-container" id="search-result-container">
+
+        </div>
+    </div>
+</div>
+
+        <div class="index-about-mobile">
+            <i> anatas blog </i>
+        </div>
+    </div>
+    
+    <div class="index-middle">
+        <!-- Main Content -->
+        
+
+
+<div class="post-container">
+    <div class="post-title">
+        [note]逆向工程权威指南
+    </div>
+
+    <div class="post-meta">
+        <span class="attr">Post：<span>2020-10-01 12:51:05</span></span>
+        
+        <span class="attr">Tags：/
+        
+        <a class="tag" href="/tags/#Note" title="Note">Note</a>
+        <span>/</span>
+        
+        <a class="tag" href="/tags/#Cyber Security" title="Cyber Security">Cyber Security</a>
+        <span>/</span>
+        
+        
+        </span>
+        <span class="attr">Visit：<span id="busuanzi_value_page_pv"></span>
+</span>
+</span>
+    </div>
+    <div class="post-content no-indent">
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>这篇blog是<em>逆向工程权威指南</em>(Dennis Yurichev)(中国工信出版社)的读书笔记，主要设计到逆向工程中涉及到的体系结构的一些内容。</p>
+<h2 id="编程语言-汇编语言-机器语言-硬件指令"><a href="#编程语言-汇编语言-机器语言-硬件指令" class="headerlink" title="编程语言 - 汇编语言 - 机器语言 - 硬件指令"></a>编程语言 - 汇编语言 - 机器语言 - 硬件指令</h2><p>CPU可以看做一堆复杂电路的集合，电路接收的是控制信号。CPU为了提高执行效率，使用了流水线的设计。CPU的执行过程，大致可以分为三步: 取指，译码，执行。</p>
+<p>在计算机最早出现的时候，程序员是通过打孔纸带来编程的。这些打孔纸会被计算机识别为01组成的序列，进而被解释称机器语言。机器语言被CPU解释，指导CPU的运行。机器语言所属的指令集主要可以分成两类架构：CISC(复杂指令集)和RISC(精简指令集)。当然，还有一些不常见的指令集架构，包括：<a href="https://en.wikipedia.org/wiki/Very_long_instruction_word" target="_blank" rel="noopener">VLIW</a>, <a href="https://en.wikipedia.org/wiki/Explicitly_parallel_instruction_computing" target="_blank" rel="noopener">EPIC</a>，<a href="https://en.wikipedia.org/wiki/Minimal_instruction_set_computer" target="_blank" rel="noopener">MISC</a>。CISC代表性的指令集有x86，RISC代表性的有ARM, MIPS, RISC-V。</p>
+<p>再后来，出现了汇编语言，汇编语言跟机器语言是等价的。也就说，从汇编语言翻译成机器语言，可以看做是一对一的过程。跟机器语言相比，汇编语言更容易记忆和使用。每条汇编语言，都由opcodes(操作指令)和operands(操作数)组成。</p>
+<p>再之后，在汇编语言的基础上，又进一步抽象发展出了编程语言。编程语言的分类方法比较多，此处不一一列举，更多的总结，可以参考<a href="https://anatasluo.github.io/2020/02/14/ckgnz8v1j000qg8zcawil5w1v/">这里</a>。由于编程语言的抽象程度较高，从编程语言到汇编语言需要经历复杂的过程。不同于汇编语言和机器语言之间的一一对应关系，从编程语言到汇编语言之间存在很大的优化空间，不同的编译器对同一份编程语言，生成的汇编语言也可能是不一样的。</p>
+<p>总之，从开发者接触的编程语言，到最终CPU理解的硬件指令的过程中，依次经历了编程语言，汇编语言，机器语言和最终的硬件指令。</p>
+<h2 id="汇编语言阅读技巧"><a href="#汇编语言阅读技巧" class="headerlink" title="汇编语言阅读技巧"></a>汇编语言阅读技巧</h2><h3 id="X86汇编"><a href="#X86汇编" class="headerlink" title="X86汇编"></a>X86汇编</h3><p>X86的汇编语言有两种风格: AT&amp;T风格 和 Intel风格</p>
+<p>在使用gcc进行编译时，通过 -S-masm=intel 的方式，指明生成的汇编语言风格</p>
+<p>AT&amp;T风格中，大量使用了编译宏，这些编译宏以”.”开始，gcc中使用-fno-asynchronous-unwind-tables将这些宏进行预处理，以消除此类宏，增强可读性。</p>
+<p>Intel风格:</p>
+<ul>
+<li>&lt;指令&gt;&lt;源&gt;&lt;目标&gt;</li>
+<li>Intel风格使用方括号</li>
+</ul>
+<p>AT&amp;T风格:</p>
+<ul>
+<li>&lt;指令&gt;&lt;目标&gt;&lt;源&gt;</li>
+<li>AT&amp;T风格使用圆括号</li>
+<li>AT&amp;T风格中，寄存器使用百分号(%)标记，立即数使用美元符号($)标记</li>
+<li>AT&amp;T需要声明操作数据的类型:<ul>
+<li>-l(32位long)</li>
+<li>-w(16位word)</li>
+<li>-b(8位byte)</li>
+</ul>
+</li>
+</ul>
+<p>X86汇编指令可以分为三类:</p>
+<ul>
+<li>data movement</li>
+<li>arithmetic&amp;logic</li>
+<li>control-flow</li>
+</ul>
+<h3 id="ARM汇编"><a href="#ARM汇编" class="headerlink" title="ARM汇编"></a>ARM汇编</h3><p>ARM64汇编中”!”表明该运算会优先执行，称之为”预索引”(pre-index)指令。与之相对的，有”延时索引”(post-index)指令。</p>
+<p>IDA显示ARM平台指令的方式:</p>
+<ul>
+<li>ARM32及ARM64的指令opcode = 4-3-2-1</li>
+<li>Thumb模式下的指令opcode = 2-1</li>
+<li>Thumb2模式下的指令opcode = 2-1-4-3</li>
+</ul>
+<h2 id="调用规范-calling-convention"><a href="#调用规范-calling-convention" class="headerlink" title="调用规范(calling convention)"></a>调用规范(calling convention)</h2><h3 id="分类"><a href="#分类" class="headerlink" title="分类"></a>分类</h3><ul>
+<li>ARM中的AAPCS</li>
+<li>X86中的cdecl</li>
+<li>stdcall和fastcall</li>
+<li>Windows平台下的一些约定</li>
+<li>Caller Rules和Callee Rules</li>
+</ul>
+<h3 id="部分比较重要的规范细节"><a href="#部分比较重要的规范细节" class="headerlink" title="部分比较重要的规范细节"></a>部分比较重要的规范细节</h3><p>RISC中存在Branch delay slot的现象，即转移指令后的若干指令先于转移指令发生(即转移到新地址之前，转移后的指令已经被执行了)。这一现象是流水线的副作用，主要出现在部分比较老的RISC指令集中，可以通过编译器在生成汇编代码时改变顺序，来修复这一问题。</p>
+<p>双字节对齐:</p>
+<ul>
+<li>X86中的双字节对齐方式一般为 and esp, 0xfffffff0</li>
+<li>入栈操作时，寄存器的个数必须为偶数个</li>
+</ul>
+<p>ARM架构下，存在thumb指令集，为了在不同模式之间进行切换，ARM中存在形实转换函数(thunk function)</p>
+<h2 id="内存寻址和栈帧管理"><a href="#内存寻址和栈帧管理" class="headerlink" title="内存寻址和栈帧管理"></a>内存寻址和栈帧管理</h2><p>相对寻址: 利用PC进行相对寻址，从而产生PIC(position-independent code)</p>
+<p>由于arm32的编码方式，寻址的部分只有26位，因而只能支持32M范围内的寻址</p>
+<p>栈帧(函数序言和函数尾声)和叶函数(leaf function)，由于叶函数的特殊性，可以做针对性的优化，减少寄存器和栈的操作</p>
+<p>栈内存分配函数: alloca</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li><a href="https://en.wikipedia.org/wiki/Comparison_of_instruction_set_architectures" target="_blank" rel="noopener">Comparison of instruction set architectures</a></li>
+<li><a href="http://flint.cs.yale.edu/cs421/papers/x86-asm/asm.html#:~:text=The%20lea%20instruction%20places%20the,and%20placed%20into%20the%20register" target="_blank" rel="noopener">X86汇编</a></li>
+</ul>
+
+        
+        <br />
+        <div id="comment-container">
+        </div>
+        <div id="disqus_thread"></div>
+
+        <div id="lv-container">
+        </div>
+
+    </div>
+</div>
+
+    </div>
+</div>
+
+
+<footer class="footer">
+    <ul class="list-inline text-center">
+        
+        
+
+        
+
+        
+
+        
+
+        
+
+    </ul>
+    
+    <p>
+        All Rights Reserved By Nobody.
+    </p>
+</footer>
+
+
+
+
+</body>
+
+<script>
+    // We expose some of the variables needed by the front end
+    window.hexo_search_path = "search.json"
+    window.hexo_root = "/"
+    window.isPost = true
+</script>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+
+<script src="/js/index.js"></script>
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+    <script>
+        /**
+         *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+         *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables
+        */
+        if( '' || '')
+        var disqus_config = function () {
+            this.page.url = '';  // Replace PAGE_URL with your page's canonical URL variable
+            this.page.identifier = ''; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+        };
+
+        (function() { // DON'T EDIT BELOW THIS LINE
+            var d = document, s = d.createElement('script');
+            s.src = 'https://anatasluo.disqus.com/embed.js';
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+        })();
+    </script>
+
+
+
+</html>

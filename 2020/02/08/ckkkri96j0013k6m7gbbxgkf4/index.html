@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="又是胡思乱想的一天">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>
+        
+        嵌入式系统概述 - anatasluo的博客 | anatasluo&#39;s Blog
+        
+    </title>
+
+    <!-- Custom CSS -->
+    
+<link rel="stylesheet" href="/css/aircloud.css">
+
+    
+<link rel="stylesheet" href="/css/gitment.css">
+
+    <!--<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">-->
+    <link href="//at.alicdn.com/t/font_620856_pl6z7sid89qkt9.css" rel="stylesheet" type="text/css">
+    <!-- ga & ba script hoook -->
+    <script></script>
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+
+<div class="site-nav-toggle" id="site-nav-toggle">
+    <button>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+        <span class="btn-bar"></span>
+    </button>
+</div>
+
+<div class="index-about">
+    <i> anatas blog </i>
+</div>
+
+<div class="index-container">
+    
+    <div class="index-left">
+        
+<div class="nav" id="nav">
+    <div class="avatar-name">
+        <div class="avatar radius">
+            <img src="/about/img/avatar.jpg" />
+        </div>
+        <div class="name">
+            <i>anatasluo</i>
+        </div>
+    </div>
+    <div class="contents" id="nav-content">
+        <ul>
+            <li >
+                <a href="/">
+                    <i class="iconfont icon-shouye1"></i>
+                    <span>HOME</span>
+                </a>
+            </li>
+            <li >
+                <a href="/tags">
+                    <i class="iconfont icon-biaoqian1"></i>
+                    <span>TAGS</span>
+                </a>
+            </li>
+            <li >
+                <a href="/archives">
+                    <i class="iconfont icon-guidang2"></i>
+                    <span>ARCHIVES</span>
+                </a>
+            </li>
+            <li >
+                <a href="/about/">
+                    <i class="iconfont icon-guanyu2"></i>
+                    <span>ABOUT</span>
+                </a>
+            </li>
+            
+            <li>
+                <a id="search">
+                    <i class="iconfont icon-sousuo1"></i>
+                    <span>SEARCH</span>
+                </a>
+            </li>
+            
+        </ul>
+    </div>
+    
+        <div id="toc" class="toc-article">
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#嵌入式系统的定义，组成及一般开发流程"><span class="toc-text">嵌入式系统的定义，组成及一般开发流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#嵌入式C语言编程写法及优化技巧"><span class="toc-text">嵌入式C语言编程写法及优化技巧</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Linux-C的编程工具链以及构建系统"><span class="toc-text">Linux C的编程工具链以及构建系统</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#嵌入式系统书籍推荐"><span class="toc-text">嵌入式系统书籍推荐</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-text">参考</span></a></li></ol>
+</div>
+    
+</div>
+
+
+<div class="search-field" id="search-field">
+    <div class="search-container">
+        <div class="search-input">
+            <span id="esc-search"> <i class="icon-fanhui iconfont"></i></span>
+            <input id="search-input"/>
+            <span id="begin-search">search</span>
+        </div>
+        <div class="search-result-container" id="search-result-container">
+
+        </div>
+    </div>
+</div>
+
+        <div class="index-about-mobile">
+            <i> anatas blog </i>
+        </div>
+    </div>
+    
+    <div class="index-middle">
+        <!-- Main Content -->
+        
+
+
+<div class="post-container">
+    <div class="post-title">
+        嵌入式系统概述
+    </div>
+
+    <div class="post-meta">
+        <span class="attr">Post：<span>2020-02-08 18:40:34</span></span>
+        
+        <span class="attr">Tags：/
+        
+        <a class="tag" href="/tags/#Linux" title="Linux">Linux</a>
+        <span>/</span>
+        
+        <a class="tag" href="/tags/#Embeded System" title="Embeded System">Embeded System</a>
+        <span>/</span>
+        
+        
+        </span>
+        <span class="attr">Visit：<span id="busuanzi_value_page_pv"></span>
+</span>
+</span>
+    </div>
+    <div class="post-content no-indent">
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本篇blog主要介绍嵌入式系统开发过程中涉及的常见概念，包括：</p>
+<ul>
+<li>嵌入式系统的一般开发流程</li>
+<li>ARM C程序优化</li>
+<li>工具链</li>
+<li>构建系统</li>
+<li>嵌入式软件平台</li>
+</ul>
+<br/>
+
+<h2 id="嵌入式系统的定义，组成及一般开发流程"><a href="#嵌入式系统的定义，组成及一般开发流程" class="headerlink" title="嵌入式系统的定义，组成及一般开发流程"></a>嵌入式系统的定义，组成及一般开发流程</h2><p>目前国内普遍接受的概念<sup>[1]</sup>：嵌入式系统是以应用为中心，以计算机技术为基础，软硬件可裁剪，适于应用系统对功能、可靠性、成本、体积、功耗严格要求的专用计算机系统。</p>
+<p>嵌入式系统的一般设计过程<sup>[1]</sup>： </p>
+<ol>
+<li>硬件原理图的设计</li>
+<li>PCB设计</li>
+<li>硬件制板</li>
+<li>硬件元器件的安装</li>
+<li>嵌入式操作系统的移植</li>
+<li>嵌入式软件设计</li>
+</ol>
+<p>嵌入式系统的设计，通常要考虑到实时性、可靠性、稳定性。具体的问题包括：</p>
+<ul>
+<li>硬件资源、运行环境和设计指标</li>
+<li>升级方式</li>
+<li>开发和测试策略</li>
+</ul>
+<p>嵌入式的概念，是相对于通用计算机的，当然，这种通用也是相对的，嵌入式强调的是一种专用用途，应用场景常常是资源受限的，优先考虑的也不是用户友好性，是安全性和可靠性。嵌入式系统的用途非常广，包括但不限于无人驾驶、通信设备、军事武器等等。</p>
+<br/>
+
+<h2 id="嵌入式C语言编程写法及优化技巧"><a href="#嵌入式C语言编程写法及优化技巧" class="headerlink" title="嵌入式C语言编程写法及优化技巧"></a>嵌入式C语言编程写法及优化技巧</h2><p>嵌入式开发过程中，最为常用的编程语言是C语言，原因很多，很重要的一个原因，内核通常是用C语言写的。</p>
+<p>一般的单任务嵌入式程序典型架构是：</p>
+<ol>
+<li>从cpu复位时的指定地址开始执行</li>
+<li>跳转至汇编代码startup处执行，完成部分初始化动作</li>
+<li>跳转至用户主程序main执行，在main中完成：<ul>
+<li>初始化部分硬件设备</li>
+<li>初始化各软件模块</li>
+<li>进入死循环(无线循环)，调用各模块的处理函数</li>
+</ul>
+</li>
+</ol>
+<p>尽管C语言并不是一门面向对象的语言，但是，通过sturct和函数指针，仍然可以很好的模拟“类”的写法，使得写出的代码，具备很好的维护性。</p>
+<p>以下，是这种写法的一种实例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">#define C_Class struct</span><br><span class="line"></span><br><span class="line">C_Class A&#123;</span><br><span class="line">    C_Class A *A_this;</span><br><span class="line"></span><br><span class="line">    void (*foo)(C_Class A*A_this);</span><br><span class="line">    int (*parea)(int length, int width);</span><br><span class="line"></span><br><span class="line">    int a;</span><br><span class="line">    int b;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>嵌入式平台中，最常用的芯片是arm系列，因此，如果需要处理一些性能敏感的场景，需要结合生成的arm汇编代码一起查看。</p>
+<p>尽管现在的编译器已经非常智能，能够帮助程序员处理很多情况。但是，在一些存在歧义的情况下，编译器一般会采取保守的判断，以防止程序行为超出预期。因此需要对编译器有一定的了解，了解编译器在哪些方面是保守的，了解编译器对应的处理器体系结构。</p>
+<p>以指针别名为例，来展示编译器的保守方面以及对应的优化策略：</p>
+<p>考虑以下代码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">void timers_v1(int *timer1, int *timer2, int *step)</span><br><span class="line">&#123;</span><br><span class="line">    *timer1 +&#x3D; *step;</span><br><span class="line">    *timer2 +&#x3D; *step;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>对应的arm汇编为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">LDR r3, [r0, #0]     --&gt; r3 &#x3D; *timer1</span><br><span class="line">LDR r12,[r2, #0]     --&gt; r12 &#x3D; *step</span><br><span class="line">ADD r3, r3, r12      --&gt; r3 +&#x3D; r12</span><br><span class="line">STR r3, [r0, #0]     --&gt; *timer1 &#x3D; r3</span><br><span class="line">LDR r0, [r1, #0]     --&gt; r0 &#x3D; *timer2</span><br><span class="line">LDR r2, [r2, #0]     --&gt; r2 &#x3D; *step</span><br><span class="line">ADD r0, r0, r2       --&gt; r0 +&#x3D; r2</span><br><span class="line">STR r0, [r1, #0]     --&gt; *timer2 &#x3D; r0</span><br><span class="line">MOV pc, r14          --&gt; return</span><br></pre></td></tr></table></figure>
+<p>可以看到, step指针指向的值被取出来两次，有一次是明显多余的。出现这种情况的原因，是编译器必须考虑所有可能的情况，假设step跟timer1指向同一个地址，那么第一次运算后，timer和step的值都被更新了，所以第2次重取step的值，才能保证在这种情况下，行为也符合预期。</p>
+<p>但是如果程序员确定step和timer指向不同的地址，那么可以采取下面的写法，来减少一次step取值：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">void timers_v2(int *timer1, int *timer2, int *step)</span><br><span class="line">&#123;</span><br><span class="line">    int tmp &#x3D; *step;</span><br><span class="line">    *timer1 +&#x3D; tmp;</span><br><span class="line">    *timer2 +&#x3D; tmp;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>除此之外，数据结构在内存中的布局也能极大影响程序的效率，如果结构的成员变量不全是内存对齐的，那么在取值时，就需要多余的操作。</p>
+<p>总之，嵌入式程序的优化，是在基于对所写程序面向的场景，编译器和程序语言的了解上，使得生成的arm汇编最为精简。需要说明的是，效率最优并不总是程序首先考虑的事情，代码的可维护性以及优化所要付出的努力和优化带来的效果对比，这些都是优化前所要考虑的事情。</p>
+<br/>
+
+<h2 id="Linux-C的编程工具链以及构建系统"><a href="#Linux-C的编程工具链以及构建系统" class="headerlink" title="Linux C的编程工具链以及构建系统"></a>Linux C的编程工具链以及构建系统</h2><p>嵌入式开发过程中，涉及到的编译器，调试器，构建工具等等一系列的工具，被称之为工具链。</p>
+<p>嵌入式系统开发中，开发环境和运行环境常常是不同架构的，因此就需要交叉编译，即在开发环境中编译出与之不同的运行环境的可执行文件。</p>
+<p>当前使用最为广泛的为GNU工具链，GNU支持本地程序开发，也交叉编译，即GNU工具链包括  ：</p>
+<ul>
+<li>GNU Tools (GNU Development Toolchains)</li>
+<li>GNU Tools交叉开发环境 (GNU Cross-Platform Development Toolchains)</li>
+</ul>
+<p>嵌入式C语言最早流行的构建系统是make，后来进一步发展出了CMake，CMake足够处理一些常见的项目场景，但在更复杂的构建场景中，比如系统的生成需要从多个仓库获取源码，进行编译链接时。对于这种复杂的场景，当前比较主流的构建系统是yocto。</p>
+<p>一个嵌入式系统通常由3部分构成：</p>
+<ul>
+<li>Bootloader</li>
+<li>嵌入式操作系统内核</li>
+<li>文件系统</li>
+</ul>
+<p>Bootloader可以分为单阶段和多阶段。多阶段的Bootloader能提供更加复杂的功能，以及更好的移植性。大多数Bootloader都有两种工作模式，分别是Bootloader自动加载操作系统运行，全程不需要用户介入，即正常工作模式;以及通过串口或者网络等方式首先下载所需文件，再进行后续引导，即下载模式，通常首次启动时使用。</p>
+<br/>
+
+<h2 id="嵌入式系统书籍推荐"><a href="#嵌入式系统书籍推荐" class="headerlink" title="嵌入式系统书籍推荐"></a>嵌入式系统书籍推荐</h2><ol>
+<li>嵌入式软件设计(清华大学出版社)</li>
+<li>ARM嵌入式系统开发 - 软件设计与优化(北京航空航天大学出版社)</li>
+<li>Linux程序设计(人民邮电出版社)</li>
+<li>Linux设备驱动程序(中国电力出版社)</li>
+<li>Linux设备驱动开发详解(人民邮电出版社)</li>
+<li>Proteus电子电路设计及仿真(电子工业出版社)</li>
+</ol>
+<br/>
+
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ol>
+<li><a href="https://www.icourse163.org/course/DLUT-1002607070" target="_blank" rel="noopener">嵌入式系统概述(中国大学MOOC)</a></li>
+</ol>
+
+        
+        <br />
+        <div id="comment-container">
+        </div>
+        <div id="disqus_thread"></div>
+
+        <div id="lv-container">
+        </div>
+
+    </div>
+</div>
+
+    </div>
+</div>
+
+
+<footer class="footer">
+    <ul class="list-inline text-center">
+        
+        
+
+        
+
+        
+
+        
+
+        
+
+    </ul>
+    
+    <p>
+        All Rights Reserved By Nobody.
+    </p>
+</footer>
+
+
+
+
+</body>
+
+<script>
+    // We expose some of the variables needed by the front end
+    window.hexo_search_path = "search.json"
+    window.hexo_root = "/"
+    window.isPost = true
+</script>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+
+<script src="/js/index.js"></script>
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+    <script>
+        /**
+         *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+         *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables
+        */
+        if( '' || '')
+        var disqus_config = function () {
+            this.page.url = '';  // Replace PAGE_URL with your page's canonical URL variable
+            this.page.identifier = ''; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+        };
+
+        (function() { // DON'T EDIT BELOW THIS LINE
+            var d = document, s = d.createElement('script');
+            s.src = 'https://anatasluo.disqus.com/embed.js';
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+        })();
+    </script>
+
+
+
+</html>
