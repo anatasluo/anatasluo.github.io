@@ -7,21 +7,7 @@ date: 2021-03-31 03:01:12
 
 A guy who is interested in computer science.
 
-#### Experience
-
-Front-end(nodejs+angular/vue):
-
-+ Email Template
-+ P2P Downloader
-
-OS Kernel(FreeBSD/Linux):
-
-+ Share Memory
-+ VFS
-+ Exception, Symbol and arch related(ARM)
-+ kexec(x86)
-+ criu
-
+If you have any questions about my blog, feel free to send email to luolongjuna@gmail.com.
 
 #### Blog
 
