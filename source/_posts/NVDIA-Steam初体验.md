@@ -51,7 +51,7 @@ Windows下首先找到grub相应的引导分区，直接修改grub.cfg即可。
 
 2. 远程桌面下，无法打开NVDIA Stream
 
-这个问题，我折腾了最久。后来用了命令行版的NVDIA Stream，发现是远程桌面下不能支持NVDIA Steam。可以使用vnc之类的软件来解决。当然，也可以设置好一次好，下次直接让NVDIA Stream自动启动就好。注意，只要使用过远程桌面，就会导致NVDIA Steam失效。
+这个问题，我折腾了最久。后来用了命令行版的NVDIA Stream，发现是远程桌面下不能支持NVDIA Steam。可以使用vnc之类的软件来解决。当然，也可以一次设置好，下次直接让NVDIA Stream自动启动就好。注意，只要使用过远程桌面，就会导致NVDIA Steam失效。
 
 3. 游戏运行前，需要首先运行加速器
 
