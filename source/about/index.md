@@ -43,3 +43,5 @@ Some ordinary learning notes, including
 + [openssh-log](https://github.com/openssh/openssh-portable/commit/1050109b4b2884bf50fd1b3aa084c7fd0a42ae90)
 
 + [linux-fs](https://lore.kernel.org/linux-fsdevel/685386c2840b76c49b060bf7dcea1fefacf18176.1614322182.git.luolongjun@huawei.com/)
+
++ [readelf-section](https://sourceware.org/pipermail/binutils/2021-April/116183.html)
