@@ -53,6 +53,8 @@ short header 遵循以下布局：
 1. client的网络变动不需要重新建立链接，比如手机从蜂窝网络切换到无线网。
 2. client和server可以充分利用多个udp链接。
 
+需要注意的是，QUIC 1.0 协议中的server是不支持网络迁移的。
+
 按照我对内核代码的理解，这一模型也需要解释以下两个问题：
 1. client发生网络迁移，是否会遇到NAT问题。当然，一般的server都是公网IP，但是如果QUIC协议未来运用到p2p场景下，这一问题就必须被解决。
 2. 如果client发生了网络变迁，那IP就变化了。如果server绑定了IP，那有可能出现网络不可达。即使仍然可达，但是内核是根据五元组寻找对应的socket，然后进一步交给上层处理。此时IP变化，不存在对应的socket，最终将由listen态的socket进行处理，这一过程QUIC协议是如何处理的？(这个问题参考RFC 9000规定)
@@ -119,9 +121,50 @@ Version Negion包一定是long类型，遵从以下格式:
 RFC 9000 的标题是QUIC: A UDP-Based Multiplexed and Secure Transport。
 RFC 9000 是QUIC 1.0的标准说明。
 
+####  Streams
+
 stream 有两种，分别为bidirectional streams，用于双向通信；以及unidirectional streams，用于单向通信。
 
-QUIC 1.0 协议中的server是不支持网络迁移的。
+在同一个connection中，stream ID不允许复用。
+
+stream ID的最低有效位表明了stream的发起人，0表示由client发起，1表示有server发起。
+stream ID的第二个最低有效位表明了stream的单双向，0表示双向，1表示单向。
+
+stream ID的两个最低有效位因此存在四种组合，对应四种stream type：
+```
+                +======+==================================+
+                | Bits | Stream Type                      |
+                +======+==================================+
+                | 0x00 | Client-Initiated, Bidirectional  |
+                +------+----------------------------------+
+                | 0x01 | Server-Initiated, Bidirectional  |
+                +------+----------------------------------+
+                | 0x02 | Client-Initiated, Unidirectional |
+                +------+----------------------------------+
+                | 0x03 | Server-Initiated, Unidirectional |
+                +------+----------------------------------+
+```
+
+#### 发送和接受数据
+
+节点通过Stream ID和offset来使数据在stream frames中有序排列。
+
+#### stream优先级
+
+QUIC协议不提供优先级信息交换的机制，其依赖于上层应用来提供优先级信息。
+
+QUIC协议的实现应该提供机制来上层来说明对应stream的优先级，然后这些信息被用于如何分配资源激活stream。
+
+#### stream上可以进行的操作(API设计)
+
+对于发送方：
+1. 写入数据，并且感知到流控制机制允许该写入。
+2. 结束流，将相应frame的FIN bit置位。
+3. 流重置，如果stream当前不处于terminal状态，则发送RESET_STREAM frame。
+
+对于接收方：
+1. 读取数据
+2. 结束读取，极有可能导致STOP_SENDING frame的发送
 
 ### RFC 9001
 
