@@ -1,3 +1,4 @@
+
 ---
 title: Per-CPU及RSEQ机制分析
 tags:
@@ -142,8 +143,6 @@ __per_cpu_offset是一个数组，其计算方式为：__per_cpu_offset[cpu] = (
 
 per_cpu_offset(x)获取的就是之前所说的__per_cpu_offset[x]的值，即cpu x static区域相对于__per_cpu_start的偏移。 
 
-(smp_setup_processor_id --> set_my_cpu_offset(0);)
-
 set_my_cpu_offset的实现如下：
 ```
 static inline void set_my_cpu_offset(unsigned long off)
@@ -154,7 +153,11 @@ static inline void set_my_cpu_offset(unsigned long off)
 			:: "r" (off) : "memory");
 }
 ```
-作用是把之前的偏移值直接写入tpidr_el1和tpidr_el2寄存器。
+作用是把之前的偏移值直接写入tpidr_el1或者tpidr_el2寄存器。
+
+> 关于smp_processor_id的处理，smp_processor_id使用到了per cpu特性，其最早是在start_kernel-->boot_cpu_init被调用，要早于setup_per_cpu_areas对per cpu的内存进行初始化。这里的调用不会引起问题吗？答案是不会，在更早的start_kernel-->smp_setup_processor_id中，kernel调用了set_my_cpu_offset(0)。即把当前的per cpu偏移设置为0，后面通过per cpu机制访问到的，直接就是vmlinux中的变量。而此时的cpu_number是0，也就是boot cpu的编号。
+
+> 一个查看kernel macro的办法，修改对应make file，加入ccflags-y := -save-temps=obj
 
 ##### 定义一个per-cpu变量
 
@@ -215,3 +218,4 @@ chunk内存的管理逻辑本文将不涉及。
 1. [Per-CPU variable module writing](https://programmer.ink/think/kernel-kernel-per-cpu-variable-module-writing.html)
 2. [Better per-CPU variables](https://lwn.net/Articles/258238/)
 3. [PERCPU变量实现](https://zhuanlan.zhihu.com/p/260986194)
+4. [smp_processor_id()获取当前执行cpu_id](https://www.cnblogs.com/still-smile/p/11655239.html)
