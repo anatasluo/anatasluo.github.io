@@ -1,4 +1,5 @@
 
+
 ---
 title: Per-CPU及RSEQ机制分析
 tags:
@@ -213,9 +214,36 @@ chunk内存的管理逻辑本文将不涉及。
 
 对于dynamic区域的per cpu变量，其区别在于如果该区域的内存耗尽了，是可以继续申请的。这也是first_chunk含义的由来，内核在初始化时，设置的dynamic区域被称为first chunk。其余用法与reserved一致。
 
+### RSEQ(restartable-sequences)机制
+
+#### 诞生背景
+
+并发控制策略可以粗略的分为两种：乐观并发控制(Optimistic Concurrency Control)和悲观并发控制(Pessimistic Concurrency Control)。
+
+悲观并发控制，认为该数据的竞争较为激烈，总是先进行获取锁的动作，再去处理数据，典型的设计就是kernel中的mutx。
+
+乐观并发控制，认为该数据的竞争情况较少。乐观并发控制的一般过程如下：
+1. 读取数据，记录时间戳。
+2. 处理数据，处理结束后。在修改生效前，将相关数据的时间戳与记录数据戳进行比较，如果不一致，则进行回滚操作。
+3. 如果一致，则执行修改操作。
+这种思路最直观的实现，就是CAS(compare and swap)锁。
+
+CAS锁的问题在于，其实现需要借助原子变量。体系结构的原子变量实现，通常需要锁总线，这一操作会带来较大的开销。
+
+RSEQ机制源于一种观察，以链表插入为例，通常实现为：
+```
+1. node = head->next;
+2. head->next = node;
+```
+将第一步称为准备区，用于产生最终需要提交的数据。第二步称为提交区，将修改完成的数据提交生效。在第二步执行之前，第一步的重复执行，是不会影响最终的程序结果的。如果线程在准备区开始到提交生效最终之前的执行过程被打断(调度或者信号...)，那么线程只需要从准备区开始位置重新执行即可。rseq机制可以避免原子操作带来的锁总线开销，但是，代价是被打断后重新执行的开销。在临界区(准备区+提交区)比较小或者竞争不激烈的情况下，刚好在这一区域被打断的概率是很低的，已有的数据表明(来自tcmalloc)，rseq的效率是高于CAS的。
+
+
 #### 参考
 
 1. [Per-CPU variable module writing](https://programmer.ink/think/kernel-kernel-per-cpu-variable-module-writing.html)
 2. [Better per-CPU variables](https://lwn.net/Articles/258238/)
 3. [PERCPU变量实现](https://zhuanlan.zhihu.com/p/260986194)
 4. [smp_processor_id()获取当前执行cpu_id](https://www.cnblogs.com/still-smile/p/11655239.html)
+5. [The 5-year journey to bring restartable sequences to Linux](https://www.efficios.com/blog/2019/02/08/linux-restartable-sequences/)
+6. [google/tcmalloc](https://github.com/google/tcmalloc/blob/master/docs/design.md)
+7. [facebookarchive/Rseq](https://github.com/facebookarchive/Rseq/blob/master/Rseq.md)
