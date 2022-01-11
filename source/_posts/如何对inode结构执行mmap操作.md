@@ -34,17 +34,17 @@ struct file *d_open_inode(struct inode *inode)
     if (hlist_empty(&inode->i_dentry))
 	    return NULL;
 	
-	spin_lock(&inode->i_lock);
-	alias = hlist_entry(inode->i_dentry.first, struct dentry, d_u.d_alias);
-	p = dentry_path_raw(alias, name, PATH_MAX);
-	if (IS_ERR(p)) {
-		goto  out_unlock;
-	}
-	
-	d_file = filp_open(p, O_RDWR, 0);
+    spin_lock(&inode->i_lock);
+    alias = hlist_entry(inode->i_dentry.first, struct dentry, d_u.d_alias);
+    p = dentry_path_raw(alias, name, PATH_MAX);
+    if (IS_ERR(p)) {
+        goto  out_unlock;
+    }
+
+    d_file = filp_open(p, O_RDWR, 0);
 out_unlock:
-	__putname(name);
-	spin_unlock(&inode->i_lock);
-	return d_file;
+    __putname(name);
+    spin_unlock(&inode->i_lock);
+    return d_file;
 }
 ```
