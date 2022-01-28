@@ -1,10 +1,11 @@
 ---
-title: Linux ELF规范整理及其在live-patch中的应用
+title: Linux ELF规范整理
 tags:
   - Linux
   - Live patch
   - ELF
   - Assembly
+date: 2022-01-28 18:34:36
 
 ---
 

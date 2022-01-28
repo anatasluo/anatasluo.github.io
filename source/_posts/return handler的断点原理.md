@@ -5,6 +5,7 @@ tags:
   - Live patch
   - ELF
   - Assembly
+date: 2022-01-27 15:34:36
 
 ---
 
