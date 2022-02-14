@@ -59,6 +59,7 @@ Segment是从在ELF执行时看到的内存视图，此时的Segment跟权限有
 在ELF规范中，仅有ELF header是有固定位置的，其余的信息被ELF header描述。program header的作用是告诉内核如何创建process，section header table的作用是在linking阶段用于描述一个section。
 
 **Data Representation**
+
 |Name|Size|Alignment|Purpose|
 |--|--|--|--|
 |Elf32_Addr|4|4|Unsigned program address|
