@@ -47,19 +47,14 @@ unsigned long hijack_handler = 0x40116a;
 
 #define hijack_return_address() { \
     asm volatile( \
-                "mov %%rbp, %%rdi \n\t" \
-                "addq $0x8, %%rdi \n\t" \
-                "mov (%%rdi), %0 \n\t" \
-                : "=r" (original_ret) \
-                : \
-                : "%rdi" \
-            ); \
-    asm volatile( \
-                "movq %0, (%%rdi) \n\t" \
-                : \
-                : "r" (hijack_handler) \
-                : "%rdi" \
-            ); \
+        "mov %%rbp, %%rdi \n\t" \
+        "addq $0x8, %%rdi \n\t" \
+        "mov (%%rdi), %0 \n\t" \
+        "movq %1, (%%rdi) \n\t" \
+        : "=&r" (original_ret) \
+        : "r" (hijack_handler) \
+        : "%rdi" \
+    ); \
 }
 
 static unsigned long test_print(void)
@@ -87,6 +82,6 @@ int main(void) {
 ```
 
 一些说明：
-1. hijack_return_address的asm写成两个是因为gcc无法保证指令间的严格顺序，而这段汇编中，对rdi寄存器先读后写，如果写在一段汇编中，将无法发挥正常功能。
+1. 内联汇编中，由于输入和输出会操作同一个寄存器，一个是写，一个是读。因此，需要限制输入和输出动作不会使用同一个额外的寄存器进行跳转，因此要加上"&"。GNU的说明，参考[此处](https://gcc.gnu.org/onlinedocs/gcc/Modifiers.html)。
 
 2. 此处汇编写成宏，是因为call指令会影响rbp/rsp寄存器，从而影响return address的寻找，实际应用过程中，这里对return address的修改一般是通过代码注入完成的。
