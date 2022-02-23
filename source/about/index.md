@@ -5,7 +5,11 @@ date: 2021-03-31 03:01:12
 
 #### Introduction
 
-A guy who is interested in computer science.
+My interests include:
++ operating system, mainly about linux
++ ELF/linker
++ live patch
++ network
 
 If you have any questions about me or my blog, feel free to send an email to luolongjuna@gmail.com.
 
@@ -36,3 +40,14 @@ If you have any questions about me or my blog, feel free to send an email to luo
 + [linux-fs](https://lore.kernel.org/linux-fsdevel/685386c2840b76c49b060bf7dcea1fefacf18176.1614322182.git.luolongjun@huawei.com/)
 
 + [readelf-section](https://sourceware.org/pipermail/binutils/2021-April/116183.html)
+
+##### RECENT CHECKLIST
+MOOC:
++ [MIT 6-172](https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-172-performance-engineering-of-software-systems-fall-2018/lecture-videos/)
+
+Blog:
++ [Link History](https://www.airs.com/blog/archives/38)
+
+Document:
++ [GNU Link Script Example](https://sourceware.org/binutils/docs/ld/index.html#SEC_Contents)
++ [CMU ELF Document](https://www.cs.cmu.edu/afs/cs/academic/class/15213-f00/docs/elf.pdf)
