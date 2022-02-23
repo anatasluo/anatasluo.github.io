@@ -9,15 +9,6 @@ A guy who is interested in computer science.
 
 If you have any questions about me or my blog, feel free to send an email to luolongjuna@gmail.com.
 
-#### Blog
-
-Some ordinary learning notes, including
-
-+ Reading notes
-+ Materials Summary
-+ Thoughts about computer science
-+ ...
-
 #### Project
 
 + [ant](https://github.com/anatasluo/ant)
