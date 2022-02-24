@@ -8,7 +8,7 @@ tags:
 
 ---
 
-criu中实现了一个代码注入工具 -> compel.
+criu中实现了一个代码注入工具 -> [compel](https://github.com/checkpoint-restore/criu/tree/criu-dev/compel)
 
 这篇blog将对compel工具的实现原理，进行一个梳理。
 
@@ -79,6 +79,8 @@ compel实现，在以上步骤的基础上，还加入了一个限制：**注入
 第二步，根据描述信息，对blob进行重定向处理。
 
 最终执行时，还需要分配栈空间，信号处理函数的栈空间等等，其内存模型参考[这里](https://criu.org/Parasite_code)
+
+这里内存分配中，在多线程环境下，有两个栈，一个用于主线程，一个是其他线程。其他线程共用一个栈，即其他线程之间不存在并发。
 
 #### 修改执行上下文的寄存器值，让进程跳转到区域执行
 通过ptrace实现
