@@ -9,9 +9,9 @@ tags:
 
 ## PPT链接
 
-+ [quic演示.pdf](quic演示.pdf)
++ [QUIC protocol.pdf](quic演示.pdf)
 
-+ [quic演示.pptx](quic演示.pptx)
++ [QUIC protocol.pptx](quic演示.pptx)
 
 ## 总结
 
