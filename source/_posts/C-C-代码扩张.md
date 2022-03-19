@@ -8,7 +8,7 @@ tags:
 
 编译器的编译过程，可以粗略的分为前端和后端，如[下图](http://icps.u-strasbg.fr/~pop/images/front-end.png)所示:
 
-![编译器编译过程](front-end.png)
+![编译器编译过程](8c1747b82340/front-end.png)
 
 除了使用反汇编研究编译器的最终结果外，也可以查看编译器生成的AST树表示。AST树是编译器前端所产生的最终代码表现形式。
 
