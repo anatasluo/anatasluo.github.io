@@ -1,4 +1,4 @@
-Linker histroy
+ Linker histroy
 
 ```
 a linker converts object files into executables and shared libraries.
@@ -136,6 +136,103 @@ The idea of a shared library is to permit mapping the same shared library into d
 
 总结下，之所以使用PLT和GOT，是因为shared library设计之处，是为了节省内存，而relocation会改写shared library的内容，将触发私有拷贝。
 
+
+------------------------
+
+TLS是尤其有用的，TLS对program来说是global的，对thread来说是local的。TLS实际上是一种特殊的内存抽象，既涉及ELF，也涉及thread。
+
+TLS由compiler和program linker/dynamic linker提供支持。为了做到效率最大，kernel的支持也是必要的。
+
+TLS storage models (check reference 3):
+1. global dynamic
+2. local dynamic
+3. initial executable
+4. local executable
+
+存储模式的特点：
+1. 灵活性从上到下，不断降低，效率得到提升。
+2. gcc通过`-ftls-model`选项来控制
+
+
+Linker的优化策略：
+1. 根据已有信息，自动选择最佳的storage model
+2. gather all TLS variables toger into a single TLS segment
+3. compiler总是产生同样的代码序列来访问TLS变量(方便识别)，可以根据需要，在运行时候进行改写
+
+------------------------------------------------
+
+From section to segment
+1. program linker maps all the loadable sections into segments.
+2. the sections are mapped to segments based on the access requirements.
+3. the segment physical address is officially undefined, but is often used as the load address when using a system which does not use virtual memory.
+
+Segment type(partly):
++ `PT_GNU_EH_FRAME`
++ `PT_GNU_RELRO`
+
+Section(partly):
++ SHT_HASH -> speed symbol lookup
+
+------------------------------------------
+Symbol Versions:
+Linked against a specific instance of the shared library.
+
+relaxation:
+It consists of optimnizing code sequences which can become smaller or more efficient when final addresses are known. (optimize PIC insturction)
+
+------------------------------------------------------------
+Parallel Linking:
+1. reading the symbols and relocation entries (need process in order)
+2. complete the layout of all the input contents
+3. the process of reading the contents, applying relocations, and writing the contents to the output file can be fully parallelized. Each input file can be processed separately.
+
+---------------------------------------------------------------
+Archives
+
+Archives are a traditional Unix package format. (created by ar program)
+
+Achivers all have  a symbol table (symbol + object) --> Long before, created by ranlib.
+
+
+----------------------------------------------------
+Symbol Resolution
+
+Consider common symbol. (only exists in relocation file.)
+
+----------------------------------------------------------
+
+link time optimization / whole program optimization : (bring significant performance benefits)
+`At link time is that the compiler can then see the entire program.` -> inlining functions 
+
+Two approach:
+1. pre-linker  --> looking for stored *intermediate representation*. and then runs the link time optimization passes.
+2. the linker proper to call back into the compiler
+
+-----------------------------------------------------------
+
+COMDAT sections: --> section groups
+*vague linkage*
+
+C++ Template Instantiation  --> Borland model vs Cfront model
+
+Exception Frames -> unwinding_ the stack
+
+
+-----------------------------------------------
+
+Warning Symbols
+`__start` and `__stop` Symbols
+
+-------------------------------------------
+
+Incremental Linking --> record extra information
+
+--------------------------
+
 Reference:
-+ [Linkers part 1](https://www.airs.com/blog/archives/38)
-+ [GOT/PLT/REL](https://www.airs.com/blog/archives/42)
+
+1. [Linkers part 1](https://www.airs.com/blog/archives/38)
+2. [GOT/PLT/REL](https://www.airs.com/blog/archives/42)
+3. [TLS storage model](https://docs.oracle.com/cd/E24847_01/html/E22196/chapter8-20.html)
+4. [common symbols](https://binarydodo.wordpress.com/2016/05/09/investigating-linking-with-common-symbols-in-elf/)
+5. [section groups](https://cache.one/read/14379277)
