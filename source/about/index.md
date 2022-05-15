@@ -26,6 +26,7 @@ If you have any questions about me or my blog, feel free to send an email to luo
 ##### IMPLEMENTATION
 
 + [toybox-ping](https://github.com/landley/toybox/commit/896fa846b1ec8cd4895f6320b56942f129e54bc9)
++ [kpatch-openEuler](https://github.com/dynup/kpatch/commit/6a0dcb0da8e2960559afc33ecefc22ce39e49e2b)
 
 ##### BUG FIX
 
