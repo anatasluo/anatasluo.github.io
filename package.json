@@ -9,12 +9,12 @@
     "server": "hexo server"
   },
   "hexo": {
-    "version": "6.1.0"
+    "version": "6.2.0"
   },
   "dependencies": {
     "bufferutil": "^4.0.1",
     "canvas": "^2.5.0",
-    "hexo": "^6.0.0",
+    "hexo": "^6.2.0",
     "hexo-all-minifier": "^0.5.7",
     "hexo-deployer-git": "^3.0.0",
     "hexo-generator-archive": "^1.0.0",
