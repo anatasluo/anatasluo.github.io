@@ -75,6 +75,12 @@ shell构造参数的过程，这里就不记录了。
 这部分比较复杂，与Linux的ELF加载过程有关，本文的例子调用过程为：
 do_execve -> do_execveat_common -> bprm_execve -> exec_binprm -> search_binary_handler
 
+当进入内核态的系统调用时，调用参数和环境变量的指针存储在内核页中，但对应的内容存储在用户态页中。
+
+接着，通过copy_strings，所有的参数和环境变量被复制到bprm结构中，此时，所有的内容都存储在内核页中。
+
+在后面的调用过程中，begin_new_exec将确保仅有一条线程，同时通过exec_mmap对内存地址空间进行替换，旧有的映射关系将被全部丢弃。
+
 search_binary_handler需要按照文件格式，查找对应的加载函数，接下来的过程为：
 load_elf_binary -> start_thread
 
