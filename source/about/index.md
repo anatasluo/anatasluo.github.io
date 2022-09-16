@@ -40,14 +40,17 @@ If you have any questions about me or my blog, feel free to send an email to luo
 + [criu-smaps](https://github.com/checkpoint-restore/criu/commit/d203b57357e68447964cad6b6542ebefda832504)
 + [openssh-log](https://github.com/openssh/openssh-portable/commit/1050109b4b2884bf50fd1b3aa084c7fd0a42ae90)
 + [linux-fs](https://lore.kernel.org/linux-fsdevel/685386c2840b76c49b060bf7dcea1fefacf18176.1614322182.git.luolongjun@huawei.com/)
-
 + [readelf-section](https://sourceware.org/pipermail/binutils/2021-April/116183.html)
++ [kpatch-rela(in debate)](https://github.com/dynup/kpatch/pull/1301)
++ [linux-uprobe(in debate)](https://www.spinics.net/lists/kernel/msg4516532.html)
 
 #### MATERIAL SHARE
 
 + [QUIC protocol](https://anatasluo.github.io/198507ba1486/quic%E6%BC%94%E7%A4%BA.pdf)
 + [FOSDEM 2022 - Seamless Kernel Update](https://fosdem.org/2022/schedule/event/security_seamless_kernel/)
 + [FOSDEM 2022 - Seamless Kernel Update - PDF](https://fosdem.org/2022/schedule/event/security_seamless_kernel/attachments/slides/5061/export/events/attachments/security_seamless_kernel/slides/5061/Seamless_Kernel_Update.pdf)
++ [LinuxCon Europe 2022 - Livepatch in Userspace Based on Uprobe](https://www.accelevents.com/e/osseu2022/portal/schedule/271452)
++ [LinuxCon Europe 2022 - Livepatch in Userspace Based on Uprobe - PDF](https://static.sched.com/hosted_files/osseu2022/19/OSS-EU22-Livepatch-in-Userspace.pdf)
 
 ##### RECENT CHECKLIST
 MOOC:
