@@ -3,11 +3,11 @@
 ## Source: https://github.com/hexojs/hexo/
 
 # Site
-title: anatas luo's blog
+title: longjun luo's blog
 subtitle: ''
 description: ''
 keywords:
-author: ANATAS LUO
+author: Longjun Luo
 language: zh
 timezone: ''
 
@@ -41,6 +41,9 @@ external_link:
 filename_case: 0
 render_drafts: false
 post_asset_folder: true
+marked:
+  prependRoot: true
+  postAsset: true
 relative_link: false
 future: true
 highlight:
