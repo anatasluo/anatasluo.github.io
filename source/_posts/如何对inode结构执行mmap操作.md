@@ -10,7 +10,7 @@ date: 2022-01-20 15:34:36
 
 ## struct inode, struct dentry, struct file
 
-![inode, dentry, file之间的关系](https://images.squarespace-cdn.com/content/v1/5e1f51eb1bb1681137ea90b8/1590002096006-Y2R8KAQGPXWZ8ONF02M3/vfs-delineation.png)
+![inode, dentry, file之间的关系](https://miro.medium.com/max/502/1*Hg1I1fJVItCe_WvIiJEriA.png)
 
 1. struct file是对打开文件的抽象，每个进程都有一个fd table，一个fd对应一个struct file
 2. struct dentry是对文件系统里一个路径的抽象，即一个逻辑文件。(目录是一种特殊的文件)
