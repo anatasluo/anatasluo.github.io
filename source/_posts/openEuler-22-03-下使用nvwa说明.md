@@ -104,7 +104,7 @@ sudo systemctl daemon-reload
 sudo service nginx restart
 ```
 
-5. 设置nvwa的配置，要求nvwa去保存和恢复nvwa
+5. 设置nvwa的配置，要求nvwa去保存和恢复nginx
 
 ```
 vim /etc/nvwa/nvwa-restore.yaml
@@ -121,6 +121,7 @@ enbale_debug_mode: true
 ```
 
 6. 确认nvwa/nginx的运行状态，并开始运行nvwa
+
 确认服务状态
 ```
 service nvwa status
