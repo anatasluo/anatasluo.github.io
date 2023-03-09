@@ -1,9 +1,10 @@
 ---
 title: shell执行命令时参数传递过程
 date: 2022-05-25 00:43:44
-  - Bash
-  - Linux
-  - Execve
+tags:
+    - Bash
+    - Linux
+    - Execve
 
 ---
 
