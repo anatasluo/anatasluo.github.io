@@ -45,7 +45,7 @@ If you have any questions about me or my blog, feel free to send an email to luo
 + [kpatch-rela2](https://github.com/dynup/kpatch/pull/1303)
 + [linux-uprobe(in debate)](https://www.spinics.net/lists/kernel/msg4516532.html)
 + [linux-uprobe(in debate)](https://lore.kernel.org/lkml/eb310620-3913-b673-d35a-cc7d50a74610@huawei.com/T/)
-+ [gcc-LINE macro(in debate)](https://gcc.gnu.org/pipermail/gcc-patches/2022-December/607605.html)
++ [gcc-LINE macro](https://gcc.gnu.org/pipermail/gcc-patches/2022-December/607605.html)
 
 #### MATERIAL SHARE
 
