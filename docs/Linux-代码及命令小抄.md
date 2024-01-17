@@ -4,7 +4,6 @@ date: 2022-10-19 18:14:01
 tags:
     - Linux
     - Code Snippt
-
 ---
 
 #### GCC从标准输入中读取源码并且编译
