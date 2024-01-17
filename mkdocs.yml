@@ -8,6 +8,8 @@ theme:
     - navigation.tracking
     - navigation.path
     - navigation.prune
+    - search
+    - tags
   favicon: /favicon.ico
   custom_dir: overrides
 plugins:
