@@ -1,0 +1,1835 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="Linux-From-Scratch%E5%AE%9E%E9%AA%8C%E8%BF%87%E7%A8%8B%E8%AE%B0%E5%BD%95.html">
+      
+      
+        <link rel="next" href="Linux-%E4%BB%A3%E7%A0%81%E5%8F%8A%E5%91%BD%E4%BB%A4%E5%B0%8F%E6%8A%84.html">
+      
+      
+      <link rel="icon" href="/favicon.ico">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.4">
+    
+    
+      
+        <title>Linux Kernel Module加载卸除过程分析 - Anatas Luo's Blog</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.50c56a3b.min.css">
+      
+      
+
+
+    
+    
+      
+        <script src="https://unpkg.com/iframe-worker/shim"></script>
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="https://anatasluo.github.io" title="Anatas Luo&#39;s Blog" class="md-header__button md-logo" aria-label="Anatas Luo's Blog" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Anatas Luo's Blog
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Linux Kernel Module加载卸除过程分析
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="https://anatasluo.github.io" title="Anatas Luo&#39;s Blog" class="md-nav__button md-logo" aria-label="Anatas Luo's Blog" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    Anatas Luo's Blog
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    About Author
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Binary-hacks%E6%8A%80%E5%B7%A7%E6%95%B4%E7%90%86.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Binary.hacks技巧整理
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="C-C-%E4%B8%AD%E7%9A%84%E5%86%85%E5%AD%98%E6%B3%84%E9%9C%B2%E6%A3%80%E6%B5%8B.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    C/C++中的内存泄露检测
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="C-C-%E4%BB%A3%E7%A0%81%E6%89%A9%E5%BC%A0.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    C/C++代码扩张
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="C-%E4%B8%AD%E5%85%A8%E5%B1%80%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    C++中全局对象的初始化
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="C%E8%AF%AD%E8%A8%80%E5%8F%91%E5%B1%95%E5%8F%B2%E5%8F%8A%E6%A0%87%E5%87%86%E5%BA%93%E6%A2%B3%E7%90%86.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    C语言发展史及标准库梳理
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="DWARF-debug-format-information.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DWARF and exception handling
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ELF.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linux ELF规范整理
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Empty-struct-class-in-C-C.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Empty struct/class in C/C++
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Flexible-array-in-C-C.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Flexible array in C/C++
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="GCC%E7%BC%96%E8%AF%91%E5%99%A8%E9%80%9A%E8%BF%87stack%E6%89%A7%E8%A1%8C%E4%BB%A3%E7%A0%81.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GCC编译器通过stack执行代码
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="GNU-C%E8%AF%AD%E8%A8%80%E4%B8%AD%E7%9A%84%E6%9E%84%E9%80%A0%E5%92%8C%E6%9E%90%E6%9E%84%E5%87%BD%E6%95%B0.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GNU C语言中的构造和析构函数
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="HTTP3-QUIC-HTTP%E5%8F%91%E5%B1%95%E5%8E%86%E5%8F%B2%E6%95%B4%E7%90%86.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    HTTP3(QUIC)-HTTP发展历史整理
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="IC221-USNA-Systems-Programming.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    [IC221]USNA/Systems Programming
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Linux-From-Scratch%E5%AE%9E%E9%AA%8C%E8%BF%87%E7%A8%8B%E8%AE%B0%E5%BD%95.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linux From Scratch实验过程记录
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Linux Kernel Module加载卸除过程分析
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="Linux-Kernel-Module%E5%8A%A0%E8%BD%BD%E5%8D%B8%E9%99%A4%E8%BF%87%E7%A8%8B%E5%88%86%E6%9E%90.html" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Linux Kernel Module加载卸除过程分析
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      文章参考的代码信息
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kernel-module" class="md-nav__link">
+    <span class="md-ellipsis">
+      Kernel Module的加载过程
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Kernel Module的加载过程">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#kernel-modulekernelmodulec" class="md-nav__link">
+    <span class="md-ellipsis">
+      读取kernel module到内存(kernel/module.c)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      检查签名是否存在
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sectionsetup_load_info" class="md-nav__link">
+    <span class="md-ellipsis">
+      处理并加载section(setup_load_info)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#blacklisted" class="md-nav__link">
+    <span class="md-ellipsis">
+      查看是否是被禁止加载的模块(blacklisted)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#section" class="md-nav__link">
+    <span class="md-ellipsis">
+      更新各个section的地址
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#moduleversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      检查module中的version信息是否存在
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#section_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      根据读取到的section信息，对内存进行分配
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kernel-module_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      初步加载kernel module
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#module" class="md-nav__link">
+    <span class="md-ellipsis">
+      module运行现场的初始化
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find_module_sections" class="md-nav__link">
+    <span class="md-ellipsis">
+      find_module_sections
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#simplify_symbols" class="md-nav__link">
+    <span class="md-ellipsis">
+      simplify_symbols
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#section_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      section重定位
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#module_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      开始运行module前的准备
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#module_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      开始运行module
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kernel-module_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Kernel Module的卸载过程
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#qa" class="md-nav__link">
+    <span class="md-ellipsis">
+      相关Q&amp;A
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      参考
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Linux-%E4%BB%A3%E7%A0%81%E5%8F%8A%E5%91%BD%E4%BB%A4%E5%B0%8F%E6%8A%84.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linux-代码及命令小抄
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Linux%E4%B8%8B%E5%A6%82%E4%BD%95%E6%89%A7%E8%A1%8Cbuffer%E4%B8%AD%E7%9A%84%E4%B8%80%E6%AE%B5%E4%BB%A3%E7%A0%81.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linux下如何执行buffer中的一段代码
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Linux%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E4%BD%BF%E7%94%A8%E8%B5%84%E6%BA%90%E9%99%90%E5%88%B6%E5%8A%9E%E6%B3%95.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linux修改进程使用资源限制办法
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="NVDIA-Steam%E5%88%9D%E4%BD%93%E9%AA%8C.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    NVDIA Steam初体验
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Per-CPU%E5%8F%8ARSEQ%E6%9C%BA%E5%88%B6%E5%88%86%E6%9E%90.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Per-CPU及RSEQ机制分析
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Weak-Symbol-in-ELFA.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Weak Symbol in C/C++
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="X86-64-ELF-abi%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    X86_64 ELF abi阅读笔记
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="X86-64%E4%B8%8B%E5%85%B3%E9%97%ADMMU.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    X86-64下关闭MMU
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="criu%E4%BB%A3%E7%A0%81%E6%B3%A8%E5%85%A5%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    criu代码注入原理解析
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="dnf%E5%8C%85%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F%E4%B8%ADdebug%E5%8C%85%E7%9A%84%E4%BD%BF%E7%94%A8.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    dnf包管理系统中debug包的使用
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ebpf-usage-in-malicious-soft.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    BPF usage in malicious software
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="fedora%E4%B8%8Bkvm%E7%9A%84bridge%E7%BD%91%E7%BB%9C%E8%AE%BE%E7%BD%AE.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    fedora下kvm的bridge网络设置
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="initrd-initramfs-rootfs.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    initrd, initramfs, rootfs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="libcare%E5%AE%9E%E7%8E%B0live%20patch%E7%9A%84%E8%A6%81%E7%82%B9%E6%80%BB%E7%BB%93.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Libcare实现live patch的要点总结
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="mooc-%E5%B5%8C%E5%85%A5%E5%BC%8F%E7%B3%BB%E7%BB%9F%E6%A6%82%E8%BF%B0.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    嵌入式系统概述
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="note-%E7%90%86%E8%A7%A3%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    [note]理解编程语言
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="note-%E9%AB%98%E6%95%88%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%8445%E4%B8%AA%E4%B9%A0%E6%83%AF.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    [note]高效程序员的45个习惯
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="openEuler-21-09-%E4%B8%8B%E8%BF%90%E8%A1%8Ckpatch.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    openEuler 21.09 下运行kpatch
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="return%20handler%E7%9A%84%E6%96%AD%E7%82%B9%E5%8E%9F%E7%90%86.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    return handler的断点原理
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="shell%E6%89%A7%E8%A1%8C%E5%91%BD%E4%BB%A4%E6%97%B6%E5%8F%82%E6%95%B0%E4%BC%A0%E9%80%92%E8%BF%87%E7%A8%8B.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    shell执行命令时参数传递过程
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="syscall%E7%9A%84%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B%E7%AE%80%E6%9E%90%E4%BB%A5%E5%8F%8A%E5%A6%82%E4%BD%95%E5%9C%A8%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E4%B8%AD%E5%8F%91%E8%B5%B7%E8%B0%83%E7%94%A8.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    syscall的执行过程简析以及如何在内核模块中发起调用
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E4%B8%80%E8%A1%8C%E6%89%93%E5%8D%B0%E5%BC%95%E5%87%BA%E7%9A%84Linux%E4%BF%A1%E5%8F%B7%E7%9F%A5%E8%AF%86.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    一行打印引出的Linux信号知识
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E4%B8%AD%E6%96%AD%E4%B8%8A%E4%B8%8B%E6%96%87%E8%B0%83%E7%94%A8filp-open.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    中断上下文调用filp_open
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%AF%B9%E5%8E%9F%E5%AD%90%E6%93%8D%E4%BD%9C%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%92%8C%E6%94%AF%E6%8C%81.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    体系结构对原子操作的实现和支持
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E4%BD%BF%E7%94%A8Virtiosfs%E8%BF%9B%E8%A1%8C%E5%86%85%E6%A0%B8%E5%BC%80%E5%8F%91.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    使用Virtiofs进行内核开发
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E4%BD%BF%E7%94%A8gdb%E8%B0%83%E8%AF%95qemu%E8%BF%90%E8%A1%8C%E4%B8%AD%E7%9A%84%E5%86%85%E6%A0%B8%E4%BB%A3%E7%A0%81.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    使用gdb调试qemu运行中的内核代码
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E5%9B%BD%E5%86%85%E5%AE%A0%E7%89%A9%E6%89%98%E8%BF%90%E6%8C%87%E5%8D%97.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    国内宠物托运指南
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E5%A6%82%E4%BD%95%E5%AF%B9inode%E7%BB%93%E6%9E%84%E6%89%A7%E8%A1%8Cmmap%E6%93%8D%E4%BD%9C.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    如何对inode结构执行mmap操作
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E5%B5%8C%E5%85%A5%E5%BC%8F%E8%AE%BE%E5%A4%87%E4%B8%AD%E7%9A%84Linux%E5%BC%95%E5%AF%BC%E6%96%B9%E5%BC%8F.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    嵌入式设备中的Linux引导方式
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E7%9B%B8%E5%AF%B9%E9%87%8D%E5%AE%9A%E5%90%91.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    深入理解相对重定向
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      文章参考的代码信息
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kernel-module" class="md-nav__link">
+    <span class="md-ellipsis">
+      Kernel Module的加载过程
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Kernel Module的加载过程">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#kernel-modulekernelmodulec" class="md-nav__link">
+    <span class="md-ellipsis">
+      读取kernel module到内存(kernel/module.c)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      检查签名是否存在
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sectionsetup_load_info" class="md-nav__link">
+    <span class="md-ellipsis">
+      处理并加载section(setup_load_info)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#blacklisted" class="md-nav__link">
+    <span class="md-ellipsis">
+      查看是否是被禁止加载的模块(blacklisted)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#section" class="md-nav__link">
+    <span class="md-ellipsis">
+      更新各个section的地址
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#moduleversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      检查module中的version信息是否存在
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#section_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      根据读取到的section信息，对内存进行分配
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kernel-module_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      初步加载kernel module
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#module" class="md-nav__link">
+    <span class="md-ellipsis">
+      module运行现场的初始化
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find_module_sections" class="md-nav__link">
+    <span class="md-ellipsis">
+      find_module_sections
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#simplify_symbols" class="md-nav__link">
+    <span class="md-ellipsis">
+      simplify_symbols
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#section_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      section重定位
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#module_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      开始运行module前的准备
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#module_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      开始运行module
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#kernel-module_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Kernel Module的卸载过程
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#qa" class="md-nav__link">
+    <span class="md-ellipsis">
+      相关Q&amp;A
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      参考
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  <h1>Linux Kernel Module加载卸除过程分析</h1>
+
+<h2 id="_1">文章参考的代码信息</h2>
+<ul>
+<li>
+<p>内核: Linux v5.12-rc6</p>
+</li>
+<li>
+<p>架构: X86</p>
+</li>
+</ul>
+<h2 id="kernel-module">Kernel Module的加载过程</h2>
+<h3 id="kernel-modulekernelmodulec">读取kernel module到内存(kernel/module.c)</h3>
+<p>内核中用于module load的系统调用有两个：finit_module和init_module。区别在于，finit_module接受的是一个fd，init_module直接从内存中复制。这两个调用是内核模块加载的入口，最终都会调用到load_module。加载过程中使用的管理结构为struct load_info，kernel module在内核内存中的地址，是通过__vmalloc申请出来的，被记录在info-&gt;hdr。</p>
+<h3 id="_2">检查签名是否存在</h3>
+<ol>
+<li>
+<p>module_sig_check</p>
+<p>读取info-&gt;hdr末尾的一部分，并进行校验。检验结束后，更新info-&gt;len。</p>
+</li>
+<li>
+<p>elf_validity_check</p>
+<p>校验ELF相关的内容</p>
+</li>
+</ol>
+<h3 id="sectionsetup_load_info">处理并加载section(setup_load_info)</h3>
+<ol>
+<li>
+<p>读取modinfo section</p>
+<p>.modinfo这个section中放入module相关的一些描述信息。通过<em>readelf -p .modinfo xxx.ko</em>可以读出相应的信息，包括version，description，author等信息。</p>
+</li>
+<li>
+<p>遍历各个section，获取符号表信息(strtb和symtb)，这一过程中，需要根据info-&gt;hdr和section中的offset，计算出真正的内存地址</p>
+</li>
+<li>
+<p>读取.gnu.linkonce.this_module section</p>
+</li>
+<li>
+<p>尝试读取__versions section，并更新info-&gt;index.vers</p>
+</li>
+</ol>
+<h3 id="blacklisted">查看是否是被禁止加载的模块(blacklisted)</h3>
+<p>读取kernel中的module blacklist，这一过程中判断的依据是info-&gt;name，如果info-&gt;name在blacklist中，则不加载该模块。</p>
+<h3 id="section">更新各个section的地址</h3>
+<p>二进制中的section记录的是内存offset，以info-&gt;hdr为基准，进行重定位。</p>
+<p>清除vers和info相关section中的SHF_ALLOC标记，后续过程中将不会分配内存。</p>
+<h3 id="moduleversion">检查module中的version信息是否存在</h3>
+<ol>
+<li>
+<p>find_symbol</p>
+<p>从已经加载的kernel和module符号中，寻找name为module_layout的符号，并获取到相应的信息。</p>
+</li>
+<li>
+<p>进行crc和version校验</p>
+</li>
+</ol>
+<h3 id="section_1">根据读取到的section信息，对内存进行分配</h3>
+<ol>
+<li>
+<p>check_modinfo</p>
+<p>对vermagic进行校验，如果不是由内核本身维护的module，设置污染标记(内核会打印'loading out-of-tree module taints kernel')</p>
+<p>检查module的编译信息</p>
+<p>检查是否有live-patch(check_modinfo_livepatch)</p>
+<p>设置license(set_license)</p>
+</li>
+<li>
+<p>module_frob_arch_sections</p>
+</li>
+</ol>
+<p>这个函数设置了weak属性，允许arch层重定义该函数，X86中未找到相关定义。</p>
+<ol>
+<li>
+<p>module_enforce_rwx_sections</p>
+<p>检查各个section的flag</p>
+</li>
+<li>
+<p>清除per-cpu sections标记中的SHF_ALLOC</p>
+</li>
+<li>
+<p>将.data..ro_after_init标记为SHF_RO_AFTER_INIT(read only after init)</p>
+</li>
+<li>
+<p>将__jump_table标记为SHF_RO_AFTER_INIT</p>
+</li>
+<li>
+<p>遍历各个section，将section划分成两部分，分别是core part和init part。init part将在初始化完成后丢弃，从而节省内存。对于每个part，又细分为四类，分别是text，ro，ro_after_init，other，细分是为了后面设置内存页的权限。</p>
+</li>
+<li>
+<p>设置core和init的符号表(layout_symtab)</p>
+</li>
+<li>
+<p>move_module</p>
+<p>根据7和8获取到的core和init的信息，将需要的信息从二进制中复制到core和init中，此时获得的地址，便是最终的运行地址。这一步执行结束后，mod变量被正确赋值。</p>
+</li>
+</ol>
+<h3 id="kernel-module_1">初步加载kernel module</h3>
+<p>内核中管理module的结构为struct module</p>
+<ol>
+<li>
+<p>初始化一个struct module，并更新状态为MODULE_STATE_UNFORMED</p>
+</li>
+<li>
+<p>查看kernel中是否已经加载相关module</p>
+</li>
+<li>
+<p>更新module_addr_min和module_addr_max</p>
+</li>
+<li>
+<p>将struct module插入到kernel的list中，此时，该module开始被kernel识别并管理</p>
+</li>
+<li>
+<p>校验签名</p>
+</li>
+</ol>
+<h3 id="module">module运行现场的初始化</h3>
+<ol>
+<li>
+<p>分配内存给percpu section</p>
+</li>
+<li>
+<p>初始化mod的依赖管理结构(source_list和target_list)</p>
+</li>
+<li>
+<p>引用计数置为1</p>
+</li>
+<li>
+<p>初始化mod-&gt;param_lock</p>
+</li>
+</ol>
+<h3 id="find_module_sections">find_module_sections</h3>
+<ol>
+<li>
+<p>获取存有元数据的section，包括导出的符号表，crc校验参数等等</p>
+</li>
+<li>
+<p>校验license和version(check_module_license_and_versions)</p>
+</li>
+<li>
+<p>设置Module的描述信息(从.modinfo section中读取的内容)</p>
+</li>
+</ol>
+<h3 id="simplify_symbols">simplify_symbols</h3>
+<p>这一步比较重要，进行符号表偏移的计算。对于SHN_UNDEF的符号，将在内核中进行查找，查找成功后，更新相应的依赖关系。对于weak属性的符号，会做进一步的检查和处理。对于除SHN_COMMON，SHN_ABS，SHN_LIVEPATCH，SHN_UNDEF之外的一般符号，依据符号的偏移以及所属section的基址，计算出符号的内存地址。</p>
+<h3 id="section_2">section重定位</h3>
+<ol>
+<li>
+<p>apply_relocations</p>
+<p>进行符号的重定位，有一类特殊的section，记录了对应section的relocation信息。relocation的计算分为三步：
+1. 计算二进制中重定位部分的内存位置(src)
+2. 根据type，计算内存中重定位部分的内存地址(dst)
+3. 校验dst部分是否全为0，如果是，执行write(dst, src, size)</p>
+</li>
+<li>
+<p>post_relocation</p>
+<ol>
+<li>对exception table进行排序</li>
+<li>执行符号表的拷贝工作(此时的符号表位置已经计算出来)
+return module_finalize(info-&gt;hdr, info-&gt;sechdrs, mod);</li>
+<li>arch相关的结束动作()</li>
+</ol>
+</li>
+<li>
+<p>刷新cache(flush_module_icache)，获取module的运行参数</p>
+</li>
+</ol>
+<h3 id="module_1">开始运行module前的准备</h3>
+<ol>
+<li>
+<p>查看是否有重复的符号</p>
+</li>
+<li>
+<p>对init和core部分的四个类别section进行内存权限设置</p>
+</li>
+<li>
+<p>设置module状态为MODULE_STATE_COMING</p>
+</li>
+<li>
+<p>对内核的通知链发出一个通知，此后状态为MODULE_STATE_GOING</p>
+</li>
+<li>
+<p>解析参数</p>
+</li>
+<li>
+<p>设置sys相关的文件(mod_sysfs_setup)</p>
+</li>
+</ol>
+<h3 id="module_2">开始运行module</h3>
+<ol>
+<li>如果注册了init，执行init函数</li>
+<li>对内核的通知链发出一个通知，此后状态为MODULE_STATE_LIVE</li>
+<li>mod计数减一</li>
+<li>释放init区域</li>
+</ol>
+<h2 id="kernel-module_2">Kernel Module的卸载过程</h2>
+<ol>
+<li>
+<p>检查是否有权限进行卸载</p>
+</li>
+<li>
+<p>从用户参数中获取所要卸载的模块name</p>
+</li>
+<li>
+<p>根据name寻找相应的module结构(find_module)</p>
+</li>
+<li>
+<p>检查是否有其他模块依赖待卸载模块</p>
+</li>
+<li>
+<p>执行module的exit函数</p>
+</li>
+<li>
+<p>释放module占据的资源，更新内核的管理数据</p>
+</li>
+</ol>
+<h2 id="qa">相关Q&amp;A</h2>
+<ol>
+<li>
+<p>data段和bss段的区别</p>
+<p>bss段由于不存在初始化值，在二进制中不需要分配位置存储，因此bss变量不会造成二进制变大。但是，在进行二进制加载时，会分配相应的内存。在符号表中，尽管bss段在二进制本身中不占据位置，但是在运行内存中占据了位置，因此偏移计算时，是将bss段作为有size进行处理的(因为符号表是描述运行内存布局的)。</p>
+</li>
+<li>
+<p>是否可以将某些section单独管理</p>
+<p>原理上是可行的，我尝试过将bss和data单独分离出来。需要考虑的几个点:
+1. 修改符号表的偏移，偏移是重定向的依据。
+2. 如果原有地址存在数据，重定向对0值的校验会失败。</p>
+</li>
+<li>
+<p>kernel module为何要export符号，才能被其他模块使用</p>
+<p>export出来的符号会单独放在一个section中，module本身的符号表对内核其他部分是不可见的。但是，module跟内核其他部分是在一个地址空间里的，缺少的只是内存布局信息(也就是符号表)。</p>
+</li>
+<li>
+<p>符号表中Global和Local的区别</p>
+<p>广义上的全局变量，是指生存周期为全局的变量，在符号表中出现的变量，代表运行内存中为该变量分配了位置，因此符号表中出现的变量，其生存周期都是全局的，都可以认为是广义上的全局变量。符号表中的Global和Local的区别在于，作用域不一样，Global对整个模块都是可见的，而Local只有一个局部作用域(文件内或者函数内)。这个作用域的检查是在编译时进行的，也就是说，如果能拿到正确的地址，即使不符合作用域，也能正常使用。</p>
+</li>
+<li>
+<p>二进制运行过程中的内存管理</p>
+<p>此处以变量举例，来说明运行模块对内存的使用。第一类是广义上的全局变量，此类变量从二进制加载到二进制结束运行，一直存在内存中。第二类是函数内的局部变量，这部分是放置在栈中的。随着函数的运行，生成和销毁。第三类，就是程序在运行过程中，通过malloc之类的管理接口申请的内存，这类内存需要程序自行释放，否则会造成内存泄露。</p>
+</li>
+</ol>
+<h2 id="_3">参考</h2>
+<ol>
+<li><a href="https://man7.org/linux/man-pages/man5/elf.5.html">elf header</a></li>
+<li>深入Linux设备驱动内核机制(陈学松著)第一章</li>
+</ol>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.path", "navigation.prune", "search", "tags"], "search": "assets/javascripts/workers/search.c011b7c0.min.js", "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}}</script>
+    
+    
+      <script src="assets/javascripts/bundle.7389ff0e.min.js"></script>
+      
+    
+  </body>
+</html>

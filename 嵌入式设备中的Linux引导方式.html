@@ -1,0 +1,1632 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="%E5%A6%82%E4%BD%95%E5%AF%B9inode%E7%BB%93%E6%9E%84%E6%89%A7%E8%A1%8Cmmap%E6%93%8D%E4%BD%9C.html">
+      
+      
+        <link rel="next" href="%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E7%9B%B8%E5%AF%B9%E9%87%8D%E5%AE%9A%E5%90%91.html">
+      
+      
+      <link rel="icon" href="/favicon.ico">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.4">
+    
+    
+      
+        <title>嵌入式设备中的Linux引导方式 - Anatas Luo's Blog</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.50c56a3b.min.css">
+      
+      
+
+
+    
+    
+      
+        <script src="https://unpkg.com/iframe-worker/shim"></script>
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="https://anatasluo.github.io" title="Anatas Luo&#39;s Blog" class="md-header__button md-logo" aria-label="Anatas Luo's Blog" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Anatas Luo's Blog
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              嵌入式设备中的Linux引导方式
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="https://anatasluo.github.io" title="Anatas Luo&#39;s Blog" class="md-nav__button md-logo" aria-label="Anatas Luo's Blog" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    Anatas Luo's Blog
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    About Author
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Binary-hacks%E6%8A%80%E5%B7%A7%E6%95%B4%E7%90%86.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Binary.hacks技巧整理
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="C-C-%E4%B8%AD%E7%9A%84%E5%86%85%E5%AD%98%E6%B3%84%E9%9C%B2%E6%A3%80%E6%B5%8B.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    C/C++中的内存泄露检测
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="C-C-%E4%BB%A3%E7%A0%81%E6%89%A9%E5%BC%A0.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    C/C++代码扩张
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="C-%E4%B8%AD%E5%85%A8%E5%B1%80%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    C++中全局对象的初始化
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="C%E8%AF%AD%E8%A8%80%E5%8F%91%E5%B1%95%E5%8F%B2%E5%8F%8A%E6%A0%87%E5%87%86%E5%BA%93%E6%A2%B3%E7%90%86.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    C语言发展史及标准库梳理
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="DWARF-debug-format-information.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DWARF and exception handling
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ELF.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linux ELF规范整理
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Empty-struct-class-in-C-C.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Empty struct/class in C/C++
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Flexible-array-in-C-C.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Flexible array in C/C++
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="GCC%E7%BC%96%E8%AF%91%E5%99%A8%E9%80%9A%E8%BF%87stack%E6%89%A7%E8%A1%8C%E4%BB%A3%E7%A0%81.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GCC编译器通过stack执行代码
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="GNU-C%E8%AF%AD%E8%A8%80%E4%B8%AD%E7%9A%84%E6%9E%84%E9%80%A0%E5%92%8C%E6%9E%90%E6%9E%84%E5%87%BD%E6%95%B0.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GNU C语言中的构造和析构函数
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="HTTP3-QUIC-HTTP%E5%8F%91%E5%B1%95%E5%8E%86%E5%8F%B2%E6%95%B4%E7%90%86.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    HTTP3(QUIC)-HTTP发展历史整理
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="IC221-USNA-Systems-Programming.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    [IC221]USNA/Systems Programming
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Linux-From-Scratch%E5%AE%9E%E9%AA%8C%E8%BF%87%E7%A8%8B%E8%AE%B0%E5%BD%95.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linux From Scratch实验过程记录
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Linux-Kernel-Module%E5%8A%A0%E8%BD%BD%E5%8D%B8%E9%99%A4%E8%BF%87%E7%A8%8B%E5%88%86%E6%9E%90.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linux Kernel Module加载卸除过程分析
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Linux-%E4%BB%A3%E7%A0%81%E5%8F%8A%E5%91%BD%E4%BB%A4%E5%B0%8F%E6%8A%84.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linux-代码及命令小抄
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Linux%E4%B8%8B%E5%A6%82%E4%BD%95%E6%89%A7%E8%A1%8Cbuffer%E4%B8%AD%E7%9A%84%E4%B8%80%E6%AE%B5%E4%BB%A3%E7%A0%81.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linux下如何执行buffer中的一段代码
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Linux%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E4%BD%BF%E7%94%A8%E8%B5%84%E6%BA%90%E9%99%90%E5%88%B6%E5%8A%9E%E6%B3%95.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linux修改进程使用资源限制办法
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="NVDIA-Steam%E5%88%9D%E4%BD%93%E9%AA%8C.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    NVDIA Steam初体验
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Per-CPU%E5%8F%8ARSEQ%E6%9C%BA%E5%88%B6%E5%88%86%E6%9E%90.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Per-CPU及RSEQ机制分析
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Weak-Symbol-in-ELFA.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Weak Symbol in C/C++
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="X86-64-ELF-abi%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    X86_64 ELF abi阅读笔记
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="X86-64%E4%B8%8B%E5%85%B3%E9%97%ADMMU.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    X86-64下关闭MMU
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="criu%E4%BB%A3%E7%A0%81%E6%B3%A8%E5%85%A5%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    criu代码注入原理解析
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="dnf%E5%8C%85%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F%E4%B8%ADdebug%E5%8C%85%E7%9A%84%E4%BD%BF%E7%94%A8.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    dnf包管理系统中debug包的使用
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ebpf-usage-in-malicious-soft.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    BPF usage in malicious software
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="fedora%E4%B8%8Bkvm%E7%9A%84bridge%E7%BD%91%E7%BB%9C%E8%AE%BE%E7%BD%AE.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    fedora下kvm的bridge网络设置
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="initrd-initramfs-rootfs.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    initrd, initramfs, rootfs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="libcare%E5%AE%9E%E7%8E%B0live%20patch%E7%9A%84%E8%A6%81%E7%82%B9%E6%80%BB%E7%BB%93.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Libcare实现live patch的要点总结
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="mooc-%E5%B5%8C%E5%85%A5%E5%BC%8F%E7%B3%BB%E7%BB%9F%E6%A6%82%E8%BF%B0.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    嵌入式系统概述
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="note-%E7%90%86%E8%A7%A3%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    [note]理解编程语言
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="note-%E9%AB%98%E6%95%88%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%8445%E4%B8%AA%E4%B9%A0%E6%83%AF.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    [note]高效程序员的45个习惯
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="openEuler-21-09-%E4%B8%8B%E8%BF%90%E8%A1%8Ckpatch.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    openEuler 21.09 下运行kpatch
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="return%20handler%E7%9A%84%E6%96%AD%E7%82%B9%E5%8E%9F%E7%90%86.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    return handler的断点原理
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="shell%E6%89%A7%E8%A1%8C%E5%91%BD%E4%BB%A4%E6%97%B6%E5%8F%82%E6%95%B0%E4%BC%A0%E9%80%92%E8%BF%87%E7%A8%8B.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    shell执行命令时参数传递过程
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="syscall%E7%9A%84%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B%E7%AE%80%E6%9E%90%E4%BB%A5%E5%8F%8A%E5%A6%82%E4%BD%95%E5%9C%A8%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E4%B8%AD%E5%8F%91%E8%B5%B7%E8%B0%83%E7%94%A8.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    syscall的执行过程简析以及如何在内核模块中发起调用
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E4%B8%80%E8%A1%8C%E6%89%93%E5%8D%B0%E5%BC%95%E5%87%BA%E7%9A%84Linux%E4%BF%A1%E5%8F%B7%E7%9F%A5%E8%AF%86.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    一行打印引出的Linux信号知识
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E4%B8%AD%E6%96%AD%E4%B8%8A%E4%B8%8B%E6%96%87%E8%B0%83%E7%94%A8filp-open.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    中断上下文调用filp_open
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%AF%B9%E5%8E%9F%E5%AD%90%E6%93%8D%E4%BD%9C%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%92%8C%E6%94%AF%E6%8C%81.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    体系结构对原子操作的实现和支持
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E4%BD%BF%E7%94%A8Virtiosfs%E8%BF%9B%E8%A1%8C%E5%86%85%E6%A0%B8%E5%BC%80%E5%8F%91.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    使用Virtiofs进行内核开发
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E4%BD%BF%E7%94%A8gdb%E8%B0%83%E8%AF%95qemu%E8%BF%90%E8%A1%8C%E4%B8%AD%E7%9A%84%E5%86%85%E6%A0%B8%E4%BB%A3%E7%A0%81.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    使用gdb调试qemu运行中的内核代码
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E5%9B%BD%E5%86%85%E5%AE%A0%E7%89%A9%E6%89%98%E8%BF%90%E6%8C%87%E5%8D%97.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    国内宠物托运指南
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E5%A6%82%E4%BD%95%E5%AF%B9inode%E7%BB%93%E6%9E%84%E6%89%A7%E8%A1%8Cmmap%E6%93%8D%E4%BD%9C.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    如何对inode结构执行mmap操作
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    嵌入式设备中的Linux引导方式
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="%E5%B5%8C%E5%85%A5%E5%BC%8F%E8%AE%BE%E5%A4%87%E4%B8%AD%E7%9A%84Linux%E5%BC%95%E5%AF%BC%E6%96%B9%E5%BC%8F.html" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    嵌入式设备中的Linux引导方式
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      概述
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      嵌入式设备的关键属性
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      从开机到控制权交接给内核
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      内核空间初始化过程
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="内核空间初始化过程">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#heads" class="md-nav__link">
+    <span class="md-ellipsis">
+      内核入口 head.S
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mainc" class="md-nav__link">
+    <span class="md-ellipsis">
+      内核开始 main.c
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      用户空间初始化
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      补充
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="补充">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-dtbdtsdtc" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. dtb,dts,dtc介绍及常用用法
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-u-boot" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. U-Boot的一般用法
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      需要区分的概念
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      参考
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E7%9B%B8%E5%AF%B9%E9%87%8D%E5%AE%9A%E5%90%91.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    深入理解相对重定向
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      概述
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      嵌入式设备的关键属性
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      从开机到控制权交接给内核
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      内核空间初始化过程
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="内核空间初始化过程">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#heads" class="md-nav__link">
+    <span class="md-ellipsis">
+      内核入口 head.S
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mainc" class="md-nav__link">
+    <span class="md-ellipsis">
+      内核开始 main.c
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      用户空间初始化
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      补充
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="补充">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-dtbdtsdtc" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. dtb,dts,dtc介绍及常用用法
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-u-boot" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. U-Boot的一般用法
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      需要区分的概念
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      参考
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  <h1>嵌入式设备中的Linux引导方式</h1>
+
+<h2 id="_1">概述</h2>
+<p>主要是总结Linux的引导过程，包括:</p>
+<ul>
+<li>从开机到控制权交接给内核</li>
+<li>内核初始化过程</li>
+<li>用户空间初始化过程</li>
+</ul>
+<p>本文参考的Linux代码版本是2.6.x，是比较老的版本，如果与最新的代码特性有出入，以最新的为主。
+<br/></p>
+<h2 id="_2">嵌入式设备的关键属性</h2>
+<p>嵌入式设备和非嵌入式设备并没有明确的界限，嵌入式设备通常具有以下属性：</p>
+<ul>
+<li>包含一个处理引擎，比如通用微处理器</li>
+<li>一般是针对某种具体的应用或目的设计的</li>
+<li>用户界面通常不是考量的关键因素，甚至会为了安全性而牺牲一部分可用性</li>
+<li>资源通常受限，比如没有硬盘，供电受限等等</li>
+<li>应用程序通常是内置的，出厂时，软硬件均已经集成完善。</li>
+</ul>
+<p><br/></p>
+<h2 id="_3">从开机到控制权交接给内核</h2>
+<p>对于这一过程的概述，嵌入式设备和一般的桌面PC设备稍有差别，也可以说是ARM世界和x86世界的差别。</p>
+<p>在一般的桌面PC系统中，通电之后，Bios立刻接管了设备，在完成硬件自检等工作后，跳转，将控制权交给Bootloader，如果硬盘里不只安装了一个系统，在Bootloader这一步可以决定启动哪一个操作系统。在这个语境中，Bios被称为“first-stage boot loader”，bootloader被称为“second-stage boot loader”。主流的Bootloader包括bootmgr, grub等等。</p>
+<p>在嵌入式设备中，通常不会有多个系统的情况，因此，不需要将整个引导过程拆成两步进行。所以，嵌入式设备中，很少使用bios的概念，而是直接将两个步骤统称为 bootloader，本文以下内容涉及到的bootloader，除非特别说明，都是指嵌入式开发中的概念。</p>
+<p>在嵌入式设备中，bootloader的关键职能，包括：</p>
+<ul>
+<li>初始化关键的硬件，比如SDRAM控制器，I/O控制器和图形控制器</li>
+<li>为外设控制器分配必要的系统资源，比如内存和中断电路</li>
+<li>提供一个定位和加载操作系统镜像的机制</li>
+<li>加载操作系统，并将控制权移交给它，同时传递必要的启动信息。内容可能包括内存总容量、时钟频率、串行端口频率（波特率）等等</li>
+</ul>
+<p>嵌入式开发过程中，使用最为广泛的bootloader便是U-Boot。本文不会过多的涉及U-Boot的内容，以避免行文过于臃肿，U-Boot的用法可以参考<a href="#supplement">补充内容</a>。</p>
+<p><br/></p>
+<h2 id="_4">内核空间初始化过程</h2>
+<p>如果bootloader引导顺利的话，控制权接着就转交给了linux内核。</p>
+<p>Linux内核的引导过程比较复杂，本文从<strong>源码</strong>角度简单介绍下其中比较重要的几个环节。</p>
+<p><br/></p>
+<h3 id="heads">内核入口 head.S</h3>
+<p>head.S位于../arch/<ARCH>/kernel/head.S，从目录也可以看出，该文件是用来处理架构相关的初始化工作，主要有以下的作用：</p>
+<ol>
+<li>检查处理器和架构的有效性</li>
+<li>创建初始的页表（page table)表项</li>
+<li>启用处理器的内存管理单元（MMU）</li>
+<li>进行错误检测并报告</li>
+<li>跳转到内核主体的起始位置，即main.c中的函数start_kernel()</li>
+</ol>
+<p><br/></p>
+<h3 id="mainc">内核开始 main.c</h3>
+<p>该文件位于../init/main.c中，如前文所述，head.S在执行结束后，将开始执行main.c中的start_kernel()。main.c完成大部分内核启动工作，从初始化第一个内核线程开始，直至挂在根文件系统并执行最初的用户空间Linux应用程序。</p>
+<p>主要工作及过程如下：</p>
+<ol>
+<li>
+<p>架构设置</p>
+<p>通过调用setup_arch(),完成对某种架构通用的初始化工作，该参数接受一个指向内核命令行的指针 --&gt; setup_arch(&amp;command_line)</p>
+</li>
+<li>
+<p>内核命令行的处理</p>
+<p>内核命令行是引导程序启动时，向内核传递的参数，相比与编译时指定的参数，cmdline要灵活得多。一个典型的cmdline通常如下:</p>
+<blockquote>
+<p>console=ttys0,115200 root=/dev/nfs</p>
+</blockquote>
+<p>cmdline拥有的参数可以多达上百个，内核中使用__setup宏将cmdline与相关的模块关联起来。其一般用法如下所示：</p>
+<blockquote>
+<p>__setup("console=", console_setup);</p>
+</blockquote>
+<p>含义为，当cmdline中遇到console=字符串时，就调用__setup宏的第二个参数指定的函数。详细的过程涉及到ELF文件的生成和链接器的使用，不在本文的讨论范围。内核会遍历cmdline中的参数，并调用相应的处理函数。</p>
+</li>
+<li>
+<p>子系统的初始化</p>
+<p>子系统的初始化有两种方式，一种是显式初始化，比如调用init_timers()函数，console_init()函数，另外一种是借助类似__setup宏这种技巧实现的初始化，承担这种宏有一个系列*__initcall，具体过程本文不涉及。</p>
+</li>
+<li>
+<p>init线程</p>
+<p>执行到这里，内核生成了第一个内核线程 -- init线程。init线程是Linux所有用户空间进程的父进程。需要说明的是，对于linux来说，并没有严格区分线程和进程，他们由同一种结构表示，区别在于资源的调度。</p>
+</li>
+<li>
+<p>最后的引导步骤</p>
+<p>在完成初始化工作之后，内核开始执行最后的引导步骤，包括：</p>
+<ul>
+<li>释放初始化函数和数据占用的内存</li>
+<li>打开系统控制台设备</li>
+<li>启动第一个用户空间进程</li>
+<li>....</li>
+</ul>
+<p>```
+if (execute_command) {
+    run_init_process(execute_command);
+    printk(KERN_WARNING "Failed to execute %s. Attempting"
+            "defaults...\n", execute_command);
+}</p>
+<p>run_init_process("/sbin/init");
+run_init_process("/etc/init");
+run_init_process("/bin/init");
+run_init_process("/bin/sh");</p>
+<p>panic("No init found, Try passing init= option to kernel");
+```
+上述代码来自main.c中的init_post函数最后一段，如果该函数执行到最后，将会产生一个"No init found"的错误，这也是嵌入式开始过程中见到比较多的一个错误。run_init_process执行成功后，并不会返回，而是通过execve()系统调用生成一个新进程覆盖旧进程，因此，init过程是第一个执行成功的run_init_process函数。</p>
+</li>
+</ol>
+<p><br/></p>
+<h2 id="_5">用户空间初始化</h2>
+<p>根文件系统，简单的说，就是内核挂载最早的文件系统。如上文所说，内核引导的最后，会试图通过run_init_process执行类似/sbin/init的二进制程序。根文件系统，在进行到最后的引导步骤前，就已经初始化并挂在完成。</p>
+<p>根文件的生成，挂在过程，会在另外一篇blog中详细介绍。在run_init_process执行成功后，第一个用户态程序便开始执行了。
+<br/></p>
+<h2 id="_6"><span id="supplement">补充</span></h2>
+<p><br/></p>
+<h3 id="1-dtbdtsdtc">1. dtb,dts,dtc介绍及常用用法</h3>
+<p>dts,即device tree source。是arm嵌入式中，用于描述硬件的方式。dts通过dtc工具，生成供内核使用的dtb文件。</p>
+<p><br/></p>
+<h3 id="2-u-boot">2. U-Boot的一般用法</h3>
+<ul>
+<li>加载内容镜像到固定内存地址</li>
+</ul>
+<pre><code>tftp 600000 uImage
+</code></pre>
+<ul>
+<li>加载dtb到固定内存位置</li>
+</ul>
+<pre><code>tftp c00000 dtb
+</code></pre>
+<ul>
+<li>根据之前的dtb开始引导系统</li>
+</ul>
+<pre><code>bootm 600000 - c00000
+</code></pre>
+<hr />
+<ul>
+<li>从磁盘引导</li>
+</ul>
+<pre><code>diskboot Ox400000 0:0
+</code></pre>
+<p>此处中的0：0指第一个IDE设备的第一个分区</p>
+<ul>
+<li>从内存的某个位置开始引导</li>
+</ul>
+<pre><code>bootm Ox400000
+</code></pre>
+<hr />
+<p><br/></p>
+<h2 id="_7">需要区分的概念</h2>
+<ul>
+<li>BIOS-MBR 与 GPT-UEFI</li>
+<li>GRUB, GRUB2</li>
+<li>ROM 与 EEPROM</li>
+<li>U-boot</li>
+<li>dtb, dtc, dts</li>
+</ul>
+<p><br/></p>
+<h2 id="_8">参考</h2>
+<ul>
+<li>《嵌入式LINUX基础教程（第2版）》 第1章至第7章</li>
+<li><a href="https://neosmart.net/wiki/mbr-boot-process/">The BIOS/MBR Boot Process</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Booting">booting</a></li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.path", "navigation.prune", "search", "tags"], "search": "assets/javascripts/workers/search.c011b7c0.min.js", "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}}</script>
+    
+    
+      <script src="assets/javascripts/bundle.7389ff0e.min.js"></script>
+      
+    
+  </body>
+</html>

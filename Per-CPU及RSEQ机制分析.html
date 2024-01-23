@@ -1,0 +1,1698 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="NVDIA-Steam%E5%88%9D%E4%BD%93%E9%AA%8C.html">
+      
+      
+        <link rel="next" href="Weak-Symbol-in-ELFA.html">
+      
+      
+      <link rel="icon" href="/favicon.ico">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.4">
+    
+    
+      
+        <title>Per-CPU及RSEQ机制分析 - Anatas Luo's Blog</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.50c56a3b.min.css">
+      
+      
+
+
+    
+    
+      
+        <script src="https://unpkg.com/iframe-worker/shim"></script>
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#per-cpu" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="https://anatasluo.github.io" title="Anatas Luo&#39;s Blog" class="md-header__button md-logo" aria-label="Anatas Luo's Blog" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Anatas Luo's Blog
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Per-CPU及RSEQ机制分析
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="https://anatasluo.github.io" title="Anatas Luo&#39;s Blog" class="md-nav__button md-logo" aria-label="Anatas Luo's Blog" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    Anatas Luo's Blog
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    About Author
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Binary-hacks%E6%8A%80%E5%B7%A7%E6%95%B4%E7%90%86.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Binary.hacks技巧整理
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="C-C-%E4%B8%AD%E7%9A%84%E5%86%85%E5%AD%98%E6%B3%84%E9%9C%B2%E6%A3%80%E6%B5%8B.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    C/C++中的内存泄露检测
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="C-C-%E4%BB%A3%E7%A0%81%E6%89%A9%E5%BC%A0.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    C/C++代码扩张
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="C-%E4%B8%AD%E5%85%A8%E5%B1%80%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    C++中全局对象的初始化
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="C%E8%AF%AD%E8%A8%80%E5%8F%91%E5%B1%95%E5%8F%B2%E5%8F%8A%E6%A0%87%E5%87%86%E5%BA%93%E6%A2%B3%E7%90%86.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    C语言发展史及标准库梳理
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="DWARF-debug-format-information.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DWARF and exception handling
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ELF.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linux ELF规范整理
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Empty-struct-class-in-C-C.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Empty struct/class in C/C++
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Flexible-array-in-C-C.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Flexible array in C/C++
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="GCC%E7%BC%96%E8%AF%91%E5%99%A8%E9%80%9A%E8%BF%87stack%E6%89%A7%E8%A1%8C%E4%BB%A3%E7%A0%81.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GCC编译器通过stack执行代码
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="GNU-C%E8%AF%AD%E8%A8%80%E4%B8%AD%E7%9A%84%E6%9E%84%E9%80%A0%E5%92%8C%E6%9E%90%E6%9E%84%E5%87%BD%E6%95%B0.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    GNU C语言中的构造和析构函数
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="HTTP3-QUIC-HTTP%E5%8F%91%E5%B1%95%E5%8E%86%E5%8F%B2%E6%95%B4%E7%90%86.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    HTTP3(QUIC)-HTTP发展历史整理
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="IC221-USNA-Systems-Programming.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    [IC221]USNA/Systems Programming
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Linux-From-Scratch%E5%AE%9E%E9%AA%8C%E8%BF%87%E7%A8%8B%E8%AE%B0%E5%BD%95.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linux From Scratch实验过程记录
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Linux-Kernel-Module%E5%8A%A0%E8%BD%BD%E5%8D%B8%E9%99%A4%E8%BF%87%E7%A8%8B%E5%88%86%E6%9E%90.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linux Kernel Module加载卸除过程分析
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Linux-%E4%BB%A3%E7%A0%81%E5%8F%8A%E5%91%BD%E4%BB%A4%E5%B0%8F%E6%8A%84.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linux-代码及命令小抄
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Linux%E4%B8%8B%E5%A6%82%E4%BD%95%E6%89%A7%E8%A1%8Cbuffer%E4%B8%AD%E7%9A%84%E4%B8%80%E6%AE%B5%E4%BB%A3%E7%A0%81.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linux下如何执行buffer中的一段代码
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Linux%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E4%BD%BF%E7%94%A8%E8%B5%84%E6%BA%90%E9%99%90%E5%88%B6%E5%8A%9E%E6%B3%95.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linux修改进程使用资源限制办法
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="NVDIA-Steam%E5%88%9D%E4%BD%93%E9%AA%8C.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    NVDIA Steam初体验
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Per-CPU及RSEQ机制分析
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="Per-CPU%E5%8F%8ARSEQ%E6%9C%BA%E5%88%B6%E5%88%86%E6%9E%90.html" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Per-CPU及RSEQ机制分析
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#per-cpu" class="md-nav__link">
+    <span class="md-ellipsis">
+      Per-CPU
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Per-CPU">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      设计的出发点和优点
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      设计的要点和存在问题
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linux-510" class="md-nav__link">
+    <span class="md-ellipsis">
+      源码分析(Linux 5.10)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="源码分析(Linux 5.10)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#per-cpu_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      per-cpu如何分配和管理内存？
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cpuarm64" class="md-nav__link">
+    <span class="md-ellipsis">
+      如何根据不同的cpu，计算出相应的偏移？(ARM64)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="如何根据不同的cpu，计算出相应的偏移？(ARM64)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#per-cpu_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      定义一个per-cpu变量
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#per-cpu_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      读取一个per-cpu变量
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#per-cpuchunk" class="md-nav__link">
+    <span class="md-ellipsis">
+      动态分配的per cpu变量(chunk区域)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rseqrestartable-sequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      RSEQ(restartable-sequences)机制
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RSEQ(restartable-sequences)机制">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      诞生背景
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      参考
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Weak-Symbol-in-ELFA.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Weak Symbol in C/C++
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="X86-64-ELF-abi%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    X86_64 ELF abi阅读笔记
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="X86-64%E4%B8%8B%E5%85%B3%E9%97%ADMMU.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    X86-64下关闭MMU
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="criu%E4%BB%A3%E7%A0%81%E6%B3%A8%E5%85%A5%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    criu代码注入原理解析
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="dnf%E5%8C%85%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F%E4%B8%ADdebug%E5%8C%85%E7%9A%84%E4%BD%BF%E7%94%A8.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    dnf包管理系统中debug包的使用
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="ebpf-usage-in-malicious-soft.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    BPF usage in malicious software
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="fedora%E4%B8%8Bkvm%E7%9A%84bridge%E7%BD%91%E7%BB%9C%E8%AE%BE%E7%BD%AE.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    fedora下kvm的bridge网络设置
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="initrd-initramfs-rootfs.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    initrd, initramfs, rootfs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="libcare%E5%AE%9E%E7%8E%B0live%20patch%E7%9A%84%E8%A6%81%E7%82%B9%E6%80%BB%E7%BB%93.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Libcare实现live patch的要点总结
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="mooc-%E5%B5%8C%E5%85%A5%E5%BC%8F%E7%B3%BB%E7%BB%9F%E6%A6%82%E8%BF%B0.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    嵌入式系统概述
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="note-%E7%90%86%E8%A7%A3%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    [note]理解编程语言
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="note-%E9%AB%98%E6%95%88%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%8445%E4%B8%AA%E4%B9%A0%E6%83%AF.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    [note]高效程序员的45个习惯
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="openEuler-21-09-%E4%B8%8B%E8%BF%90%E8%A1%8Ckpatch.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    openEuler 21.09 下运行kpatch
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="return%20handler%E7%9A%84%E6%96%AD%E7%82%B9%E5%8E%9F%E7%90%86.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    return handler的断点原理
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="shell%E6%89%A7%E8%A1%8C%E5%91%BD%E4%BB%A4%E6%97%B6%E5%8F%82%E6%95%B0%E4%BC%A0%E9%80%92%E8%BF%87%E7%A8%8B.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    shell执行命令时参数传递过程
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="syscall%E7%9A%84%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B%E7%AE%80%E6%9E%90%E4%BB%A5%E5%8F%8A%E5%A6%82%E4%BD%95%E5%9C%A8%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E4%B8%AD%E5%8F%91%E8%B5%B7%E8%B0%83%E7%94%A8.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    syscall的执行过程简析以及如何在内核模块中发起调用
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E4%B8%80%E8%A1%8C%E6%89%93%E5%8D%B0%E5%BC%95%E5%87%BA%E7%9A%84Linux%E4%BF%A1%E5%8F%B7%E7%9F%A5%E8%AF%86.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    一行打印引出的Linux信号知识
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E4%B8%AD%E6%96%AD%E4%B8%8A%E4%B8%8B%E6%96%87%E8%B0%83%E7%94%A8filp-open.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    中断上下文调用filp_open
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E5%AF%B9%E5%8E%9F%E5%AD%90%E6%93%8D%E4%BD%9C%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%92%8C%E6%94%AF%E6%8C%81.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    体系结构对原子操作的实现和支持
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E4%BD%BF%E7%94%A8Virtiosfs%E8%BF%9B%E8%A1%8C%E5%86%85%E6%A0%B8%E5%BC%80%E5%8F%91.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    使用Virtiofs进行内核开发
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E4%BD%BF%E7%94%A8gdb%E8%B0%83%E8%AF%95qemu%E8%BF%90%E8%A1%8C%E4%B8%AD%E7%9A%84%E5%86%85%E6%A0%B8%E4%BB%A3%E7%A0%81.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    使用gdb调试qemu运行中的内核代码
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E5%9B%BD%E5%86%85%E5%AE%A0%E7%89%A9%E6%89%98%E8%BF%90%E6%8C%87%E5%8D%97.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    国内宠物托运指南
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E5%A6%82%E4%BD%95%E5%AF%B9inode%E7%BB%93%E6%9E%84%E6%89%A7%E8%A1%8Cmmap%E6%93%8D%E4%BD%9C.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    如何对inode结构执行mmap操作
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E5%B5%8C%E5%85%A5%E5%BC%8F%E8%AE%BE%E5%A4%87%E4%B8%AD%E7%9A%84Linux%E5%BC%95%E5%AF%BC%E6%96%B9%E5%BC%8F.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    嵌入式设备中的Linux引导方式
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E7%9B%B8%E5%AF%B9%E9%87%8D%E5%AE%9A%E5%90%91.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    深入理解相对重定向
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#per-cpu" class="md-nav__link">
+    <span class="md-ellipsis">
+      Per-CPU
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Per-CPU">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      设计的出发点和优点
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      设计的要点和存在问题
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linux-510" class="md-nav__link">
+    <span class="md-ellipsis">
+      源码分析(Linux 5.10)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="源码分析(Linux 5.10)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#per-cpu_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      per-cpu如何分配和管理内存？
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cpuarm64" class="md-nav__link">
+    <span class="md-ellipsis">
+      如何根据不同的cpu，计算出相应的偏移？(ARM64)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="如何根据不同的cpu，计算出相应的偏移？(ARM64)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#per-cpu_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      定义一个per-cpu变量
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#per-cpu_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      读取一个per-cpu变量
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#per-cpuchunk" class="md-nav__link">
+    <span class="md-ellipsis">
+      动态分配的per cpu变量(chunk区域)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rseqrestartable-sequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      RSEQ(restartable-sequences)机制
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RSEQ(restartable-sequences)机制">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      诞生背景
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      参考
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  <h1>Per-CPU及RSEQ机制分析</h1>
+
+<h2 id="per-cpu">Per-CPU</h2>
+<h3 id="_1">设计的出发点和优点</h3>
+<p>现代的cpu都有cache hierarchy的设计，这一设计会极大的加快cpu访问内存的速度。但是cache的引入会带来内存访问一致性的问题。比如一个变量对多个核是可见的，对值的修改将导致所有其他核中缓存的该值失效，需要重新load最新的值，这将带来极大的效率损失。</p>
+<p>考虑一种场景，服务器需要统计对磁盘的访问速度，正常的设计会使用一个全局的统计值，通过原子变量或者其他同步机制去修改该统计值。但是，通过per-cpu机制，每个cpu在调度运行时，只需要修改自己的值就可以了。这样一来，在这个值上面，cpu之间将不存在竞争。如果需要获得全局的统计值，依次相加即可。</p>
+<p>当然，per-cpu带来性能提升带前提是，程序修改值的时间要远远大于读取统计值的时间。这一前提大多数情况下是成立的。</p>
+<h3 id="_2">设计的要点和存在问题</h3>
+<p>per-cpu会带来内存的浪费，核数越多，这种内存浪费越明显。因此，per-cpu不应该用NR_CPUS作为规格来分配内存，而是系统初始化时，按照实际内核的数量来分配，以减少内存浪费。</p>
+<p>同时，由于per-cpu的出发点，是加速cpu的访问，避免cpu-cache的不一致问题，因此设计应该尽量符合cpu cache的特点。采取指针数组的形式，主要有以下几个问题需要考虑[^2]：</p>
+<ol>
+<li>指针数组如果包含在一个数据结构里面，可能会导致其前后的数据成员在内存中的位置过于
+分散，导致cpu加载该结构时，占据更多的cache lines。</li>
+<li>每个cpu只需要一个指针，访问其对应的区域即可。如果采用指针数组，一个cpu可能需要load多个指针的地址，带来不必要的浪费。</li>
+<li>获取cpu对应的指针需要两步，获取数组地址，然后获取对应cpu的指针。</li>
+</ol>
+<p>因此，Christoph采取了一个简单的办法解决以上问题，把指针数组变成一个大数组。即所有per-cpu区域在内存上是连续的，只需要一个指针，通过计算cpu相应的偏移，就可以访问到对应区域。</p>
+<h3 id="linux-510">源码分析(Linux 5.10)</h3>
+<p>如上文所述，per-cpu设计的要点在于：
+1. 如何减少内存的浪费
+2. 如何合理设计数据结构，保证亲和性的同时，减少cache lines的占用
+3. 如何管理per-cpu的内存区域</p>
+<h4 id="per-cpu_1">per-cpu如何分配和管理内存？</h4>
+<p>per-cpu的内存布局如下：</p>
+<pre><code>c0                           c1                         c2
+-------------------          -------------------        ------------
+| u0 | u1 | u2 | u3 |        | u0 | u1 | u2 | u3 |      | u0 | u1 | u
+-------------------  ......  -------------------  ....  ------------
+</code></pre>
+<p>在同一个NUMA节点中，各个core的per-cpu区域是连续的。但是在NUMA节点之间，内存并不是连续的。也就是说，对于多NUMA节点的机器，需要根据cpu获取到对应的基址和偏移。</p>
+<p>根据用途的不同，各个cpu的per-cpu的内存区域分为三部分，如下所示:</p>
+<pre><code>&lt;Static | [Reserved] | Dynamic&gt;
+</code></pre>
+<p>static用于内核编译阶段所能识别出的per-cpu变量。
+reserved用于内核模块使用到的static per-cpu变量。
+dynamic用于运行过程中的per-cpu变量的申请和释放。</p>
+<p>其中，static区域比较特殊，因为内核的运行就需要使用到该区域，必须尽可能早的进行初始化。</p>
+<p>在start_kernel阶段，通过调用setup_per_cpu_areas()初始化per-cpu使用到的内存。</p>
+<p>arm64下的实现比较简单，setup_per_cpu_areas的实现如下：</p>
+<pre><code>void __init setup_per_cpu_areas(void)
+{
+    unsigned long delta;
+    unsigned int cpu;
+    int rc;
+
+    /*
+     * Always reserve area for module percpu variables.  That's
+     * what the legacy allocator did.
+     */
+    rc = pcpu_embed_first_chunk(PERCPU_MODULE_RESERVE,
+                    PERCPU_DYNAMIC_RESERVE, PAGE_SIZE,
+                    pcpu_cpu_distance,
+                    pcpu_fc_alloc, pcpu_fc_free);
+    if (rc &lt; 0)
+        panic(&quot;Failed to initialize percpu areas.&quot;);
+
+    delta = (unsigned long)pcpu_base_addr - (unsigned long)__per_cpu_start;
+    for_each_possible_cpu(cpu)
+        __per_cpu_offset[cpu] = delta + pcpu_unit_offsets[cpu];
+}
+</code></pre>
+<p>值得注意的是，在pcpu_embed_first_chunk调用完成per-cpu内存初始化之前，任何代码都无法使用per-cpu特性。</p>
+<p>这一过程中，最重要的是数据结构是struct  pcpu_alloc_info，相关的内存布局信息都存储在该数据结构中。这里面的内存管理实现细节较多(为了做到严格的内存对齐，而实现加速访问)，这里不做过多赘述，重点关注下几个值的计算过程。</p>
+<ol>
+<li>pcpu_base_addr
+pcpu_base_addr 是多个NUMA节点中最小的那个基址
+计算过程为：</li>
+</ol>
+<pre><code>ptr = alloc_fn(cpu, gi-&gt;nr_units * ai-&gt;unit_size, atom_size);
+...
+base = min(ptr, base);
+...
+pcpu_setup_first_chunk(ai, base);
+...
+pcpu_base_addr = base_addr;
+</code></pre>
+<ol>
+<li>
+<p>__per_cpu_start
+__per_cpu_start 是链接脚本中指明的per-cpu section的起始位置，在System.map中值为0。通过__per_cpu_end - __per_cpu_start可以计算static size的大小。</p>
+</li>
+<li>
+<p>__per_cpu_load
+__per_cpu_load对PERCPU_INPUT所定义的section进行了进一步封装。在System.map中，其值是per-cpu section的内存起始地址。</p>
+</li>
+<li>
+<p>pcpu_unit_offsets
+pcpu_unit_offsets是一个数组，记录了各个CPU static区域对应pcpu_base_addr的偏移。</p>
+</li>
+<li>
+<p>__per_cpu_offset
+__per_cpu_offset是一个数组，其计算方式为：__per_cpu_offset[cpu] = (unsigned  long)pcpu_base_addr - (unsigned  long)__per_cpu_start + pcpu_unit_offsets[cpu];
+其结果表示，各个CPU static区域对应__per_cpu_start 的偏移。这一结果非常重要，将后续用于per_cpu变量地址的计算。</p>
+</li>
+</ol>
+<p>这一函数调用结束后，vmlinux中per cpu相关的section会被拷贝到每个CPU对应的static区域。对应代码如下：</p>
+<pre><code>    for (group = 0; group &lt; ai-&gt;nr_groups; group++) {
+        struct pcpu_group_info *gi = &amp;ai-&gt;groups[group];
+        void *ptr = areas[group];
+
+        for (i = 0; i &lt; gi-&gt;nr_units; i++, ptr += ai-&gt;unit_size) {
+            if (gi-&gt;cpu_map[i] == NR_CPUS) {
+                /* unused unit, free whole */
+                free_fn(ptr, ai-&gt;unit_size);
+                continue;
+            }
+            /* copy and return the unused part */
+            memcpy(ptr, __per_cpu_load, ai-&gt;static_size);
+            free_fn(ptr + size_sum, ai-&gt;unit_size - size_sum);
+        }
+    }
+</code></pre>
+<h4 id="cpuarm64">如何根据不同的cpu，计算出相应的偏移？(ARM64)</h4>
+<p>在boot cpu完成per cpu内存的初始化后，在后续初始化过程中，boot cpu将调用smp_prepare_boot_cpu函数，通过set_my_cpu_offset(per_cpu_offset(smp_processor_id()))完成最终设置。</p>
+<p>对于noboot cpu，初始化过程中将调用cpu_init函数，通过set_my_cpu_offset(per_cpu_offset(cpu))完成最终设置。</p>
+<p>per_cpu_offset(x)获取的就是之前所说的__per_cpu_offset[x]的值，即cpu x static区域相对于__per_cpu_start的偏移。 </p>
+<p>set_my_cpu_offset的实现如下：</p>
+<pre><code>static inline void set_my_cpu_offset(unsigned long off)
+{
+    asm volatile(ALTERNATIVE(&quot;msr tpidr_el1, %0&quot;,
+                 &quot;msr tpidr_el2, %0&quot;,
+                 ARM64_HAS_VIRT_HOST_EXTN)
+            :: &quot;r&quot; (off) : &quot;memory&quot;);
+}
+</code></pre>
+<p>作用是把之前的偏移值直接写入tpidr_el1或者tpidr_el2寄存器。</p>
+<blockquote>
+<p>关于smp_processor_id的处理，smp_processor_id使用到了per cpu特性，其最早是在start_kernel--&gt;boot_cpu_init被调用，要早于setup_per_cpu_areas对per cpu的内存进行初始化。这里的调用不会引起问题吗？答案是不会，在更早的start_kernel--&gt;smp_setup_processor_id中，kernel调用了set_my_cpu_offset(0)。即把当前的per cpu偏移设置为0，后面通过per cpu机制访问到的，直接就是vmlinux中的变量。而此时的cpu_number是0，也就是boot cpu的编号。</p>
+<p>一个查看kernel macro的办法，修改对应make file，加入ccflags-y := -save-temps=obj</p>
+</blockquote>
+<h5 id="per-cpu_2">定义一个per-cpu变量</h5>
+<blockquote>
+<p>DEFINE_PER_CPU(int, per_cpu_n)</p>
+</blockquote>
+<p>这个宏完全展开后，便是</p>
+<blockquote>
+<p><strong>attribute</strong>((section(".data..percpu"))) int per_cpu_n</p>
+</blockquote>
+<p>在定义上，per cpu变量是section固定的变量。</p>
+<h5 id="per-cpu_3">读取一个per-cpu变量</h5>
+<pre><code>#define SHIFT_PERCPU_PTR(__p, __offset)                 \
+    RELOC_HIDE((typeof(*(__p)) __kernel __force *)(__p), (__offset))
+...
+#define this_cpu_ptr(ptr)                       \
+({                                  \
+    __verify_pcpu_ptr(ptr);                     \
+    SHIFT_PERCPU_PTR(ptr, my_cpu_offset);               \
+})
+
+</code></pre>
+<p>__verify_pcpu_ptr通过检查地址，确保该指针指向per cpu变量。SHIFT_PERCPU_PTR通过读取寄存器的值，对变量做一个偏移，从而获取到对应cpu的local变量。</p>
+<p>为了防止调度导致上下文在不同的cpu上运行，get_cpu_var将关闭调度，put_cpu_var则重新开启调度。</p>
+<h4 id="per-cpuchunk">动态分配的per cpu变量(chunk区域)</h4>
+<p>per cpu变量的管理上可以分为三类，分别为static，reserved，dynamic。其中static是编译内核时就可以确认的per cpu变量。其余两类则是运行时，动态进行管理的。其中，reserved区域用于管理模块的static per cpu变量。(模块编译时确定的per cpu变量，但是模块编译和运行，有可能在内核运行过程中，因此这类变量无法用static的方式处理。)</p>
+<p>在模块编译时，per cpu变量便被放置在了特定命名的区域(.data..percpu)。</p>
+<p>其内存分配过程为：</p>
+<pre><code>  info-&gt;index.pcpu = find_pcpusec(info);
+     --&gt; find_sec(info, &quot;.data..percpu&quot;);
+  ...
+
+  err = percpu_modalloc(mod, info);
+      --&gt; mod-&gt;percpu = __alloc_reserved_percpu(pcpusec-&gt;sh_size, align);
+          --&gt; pcpu_alloc(size, align, true, GFP_KERNEL);
+
+  err = post_relocation(mod, info);
+      --&gt; percpu_modcopy(mod, (void *)info-&gt;sechdrs[info-&gt;index.pcpu].sh_addr,
+                       info-&gt;sechdrs[info-&gt;index.pcpu].sh_size);
+        --&gt; for_each_possible_cpu(cpu)
+                        memcpy(per_cpu_ptr(mod-&gt;percpu, cpu), from, size);
+</code></pre>
+<p>chunk内存的管理逻辑本文将不涉及。</p>
+<p>对于dynamic区域的per cpu变量，其区别在于如果该区域的内存耗尽了，是可以继续申请的。这也是first_chunk含义的由来，内核在初始化时，设置的dynamic区域被称为first chunk。其余用法与reserved一致。</p>
+<h3 id="rseqrestartable-sequences">RSEQ(restartable-sequences)机制</h3>
+<h4 id="_3">诞生背景</h4>
+<p>并发控制策略可以粗略的分为两种：乐观并发控制(Optimistic Concurrency Control)和悲观并发控制(Pessimistic Concurrency Control)。</p>
+<p>悲观并发控制，认为该数据的竞争较为激烈，总是先进行获取锁的动作，再去处理数据，典型的设计就是kernel中的mutx。</p>
+<p>乐观并发控制，认为该数据的竞争情况较少。乐观并发控制的一般过程如下：
+1. 读取数据，记录时间戳。
+2. 处理数据，处理结束后。在修改生效前，将相关数据的时间戳与记录数据戳进行比较，如果不一致，则进行回滚操作。
+3. 如果一致，则执行修改操作。
+这种思路最直观的实现，就是CAS(compare and swap)锁。</p>
+<p>CAS锁的问题在于，其实现需要借助原子变量。体系结构的原子变量实现，通常需要锁总线，这一操作会带来较大的开销。</p>
+<p>RSEQ机制源于一种观察，以链表插入为例，通常实现为：</p>
+<pre><code>1. node = head-&gt;next;
+2. head-&gt;next = node;
+</code></pre>
+<p>将第一步称为准备区，用于产生最终需要提交的数据。第二步称为提交区，将修改完成的数据提交生效。在第二步执行之前，第一步的重复执行，是不会影响最终的程序结果的。如果线程在准备区开始到提交生效最终之前的执行过程被打断(调度或者信号...)，那么线程只需要从准备区开始位置重新执行即可。rseq机制可以避免原子操作带来的锁总线开销，但是，代价是被打断后重新执行的开销。在临界区(准备区+提交区)比较小或者竞争不激烈的情况下，刚好在这一区域被打断的概率是很低的，已有的数据表明(来自tcmalloc)，rseq的效率是高于CAS的。</p>
+<h4 id="_4">参考</h4>
+<ol>
+<li><a href="https://programmer.ink/think/kernel-kernel-per-cpu-variable-module-writing.html">Per-CPU variable module writing</a></li>
+<li><a href="https://lwn.net/Articles/258238/">Better per-CPU variables</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/260986194">PERCPU变量实现</a></li>
+<li><a href="https://www.cnblogs.com/still-smile/p/11655239.html">smp_processor_id()获取当前执行cpu_id</a></li>
+<li><a href="https://www.efficios.com/blog/2019/02/08/linux-restartable-sequences/">The 5-year journey to bring restartable sequences to Linux</a></li>
+<li><a href="https://github.com/google/tcmalloc/blob/master/docs/design.md">google/tcmalloc</a></li>
+<li><a href="https://github.com/facebookarchive/Rseq/blob/master/Rseq.md">facebookarchive/Rseq</a></li>
+</ol>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.path", "navigation.prune", "search", "tags"], "search": "assets/javascripts/workers/search.c011b7c0.min.js", "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}}</script>
+    
+    
+      <script src="assets/javascripts/bundle.7389ff0e.min.js"></script>
+      
+    
+  </body>
+</html>
