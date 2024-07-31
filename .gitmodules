@@ -1,3 +1,4 @@
+
 [submodule "themes/typo"]
 	path = themes/typo
 	url = https://github.com/rankangkang/hexo-theme-typo.git
