@@ -1,4 +1,4 @@
 
-[submodule "themes/typo"]
-	path = themes/typo
-	url = https://github.com/rankangkang/hexo-theme-typo.git
+[submodule "themes/oranges"]
+	path = themes/oranges
+	url = https://github.com/zchengsite/hexo-theme-oranges.git

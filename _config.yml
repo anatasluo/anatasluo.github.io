@@ -97,16 +97,18 @@ ignore:
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
 
-theme: typo
+theme: oranges
 theme_config:
-  title: anatasluo
-  favicon: /favicon.ico
-  icon: /favicon.ico
-  copyright: 2024 anatasluo
+  author_nickname: anatasluo
+
+search:
+  path: search.xml
+  field: post
+  content: true
 
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment
 deploy:
   type: git
-  repo: https://github.com/anatasluo/anatasluo.github.io
+  repo: git@github.com:anatasluo/anatasluo.github.io.git
   branch: gh-pages
