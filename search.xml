@@ -4,6 +4,31 @@
   
     
     <entry>
+      <title>Dynamic Loader设计中需要关注的部分</title>
+      <link href="/loader/"/>
+      <url>/loader/</url>
+      
+        <content type="html"><![CDATA[<h2 id="load-objects-to-form-image"><a href="#load-objects-to-form-image" class="headerlink" title="load objects to form image"></a>load objects to form image</h2><p>此处的image，指的是ELF文件在被加载到process memory之后，形成的memory layout。在ELF文件中，最基本的unit是section。section按照不同的权限级别，进行划分后，形成segment。</p><p>可以说，section是编译的直接产物，而segment用于指导kernel如何通过ELF生成image。</p><p>在process加载ELF的过程中，process的一部分信息会放入auxiliary vector。这部分实现可以参考<a href="https://elixir.bootlin.com/linux/v5.10.71/source/fs/binfmt_elf.c#L172">此处</a></p><p>参考<a href="https://refspecs.linuxbase.org/elf/x86_64-abi-0.99.pdf">x86_64-abi-0.99</a>，其中比较有意思的几个参数是：</p><ol><li>AT_EXECFD &#x2F; AT_PHDR<br>如果kernel设置了AT_EXECFD，表明进程涉及的object文件需要dynamic loader通过fd去读取。</li></ol><p>具体到linux内核中，仅有binfmt-misc支持设置AT_EXECFD。</p><ol start="2"><li>AT_ENTRY</li></ol><p>记录了process的程序执行入口地址。</p><h2 id="calcuate-load-bias-ASLR"><a href="#calcuate-load-bias-ASLR" class="headerlink" title="calcuate load_bias (ASLR)"></a>calcuate load_bias (ASLR)</h2><p>dynamic loader在开始运行后，需要计算自身的load_bias，即计算segment header中的地址和实际加载地址之间的偏差。</p><p>对于一个binary&#x2F;libary来说，segment之间的偏移是固定的，因此load_bias都是针对一整个binary&#x2F;library来说的。</p><p>load_bias的计算，只需要任意选取内部的一个锚点，计算理论值和实际值的偏差即可。对于dynamic loader来说，直接计算program header table本身的偏差即可。</p><p>理论值：program header table本身的地址记录在type为PT_PHDR的segment中。</p><p>实际值：记录在auxiliary vector中，对应的type为AT_PHDR。</p><p>核心的代码实现参考如下:</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">const Elf64Phdr* phdr = (const Elf64Phdr*)sysv-&gt;auxv[AT_PHDR];</span><br><span class="line">for (unsigned phdrnum = sysv-&gt;auxv[AT_PHNUM]; --phdrnum; ++phdr) &#123;</span><br><span class="line">    if (phdr-&gt;type == PT_PHDR) &#123;</span><br><span class="line">        prog.base = (uint8_t*)(sysv-&gt;auxv[AT_PHDR] - phdr-&gt;vaddr);</span><br><span class="line">    &#125; else if (phdr-&gt;type == PT_DYNAMIC) &#123;</span><br><span class="line">        dynoff = phdr-&gt;vaddr;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><h2 id="resolve-relocations"><a href="#resolve-relocations" class="headerlink" title="resolve relocations"></a>resolve relocations</h2><p>relocation是为了解决未知引用的问题。所谓未知引用，即引用的地方和被引用的地方，彼此之间的偏移无法确定。无法确定最主要的原因在于，使用了外部符号，细分下来的类型很多。</p><p>relocation涉及三部分的信息：</p><ol><li>引用的地址</li><li>被引用的符号</li><li>计算被引用地址的过程</li></ol><h2 id="prelink"><a href="#prelink" class="headerlink" title="prelink"></a>prelink</h2><p>prelink是为了解决relocation过多，引起的加载耗时问题。在ELF加载到process memory变成image的过程中。直到运行前，这部分逻辑是可以提前进行的。提前进行的代价就是，不同binary或者library之间的offset必须得确定下来，从而可以提前进行relocation过程。这在一定程度上牺牲了安全性，获取了运行性能。在主流的发行版中，当前已看不到prelink的使用，合理猜测，性能收益已经抵不上安全性的损失。</p><h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ol><li><a href="https://github.com/johannst/dynld">dynld</a></li><li><a href="https://netwinder.osuosl.org/users/p/patb/public_html/elf_relocs.html">relocs</a></li><li><a href="https://sourceware.org/gnu-gabi/prelink.txt">prelink</a></li></ol>]]></content>
+      
+      
+      
+        <tags>
+            
+            <tag> ELF </tag>
+            
+            <tag> Compiler </tag>
+            
+            <tag> Loader </tag>
+            
+            <tag> Process </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>context_switch and restart_syscall</title>
       <link href="/context-switch-and-restart-syscall/"/>
       <url>/context-switch-and-restart-syscall/</url>
