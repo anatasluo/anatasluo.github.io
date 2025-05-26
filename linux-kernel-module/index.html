@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="zh" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="anatasluo" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      Linux Kernel Module加载卸除过程分析 
+      
+      
+      |
+    
+     anatasluo
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.ico">
+    <link rel="icon" href="/images/favicon.ico">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/huahua.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">anatasluo</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.10/dist/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">Linux Kernel Module加载卸除过程分析</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2025-05-12 14:45:59
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Linux/" title="Linux">
+                    #Linux
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Kernel-Module/" title="Kernel Module">
+                    #Kernel Module
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <h2 id="文章参考的代码信息"><a href="#文章参考的代码信息" class="headerlink" title="文章参考的代码信息"></a>文章参考的代码信息</h2><ul>
+<li><p>内核: Linux v5.12-rc6</p>
+</li>
+<li><p>架构: X86</p>
+</li>
+</ul>
+<h2 id="Kernel-Module的加载过程"><a href="#Kernel-Module的加载过程" class="headerlink" title="Kernel Module的加载过程"></a>Kernel Module的加载过程</h2><h3 id="读取kernel-module到内存-kernel-module-c"><a href="#读取kernel-module到内存-kernel-module-c" class="headerlink" title="读取kernel module到内存(kernel&#x2F;module.c)"></a>读取kernel module到内存(kernel&#x2F;module.c)</h3><p>内核中用于module load的系统调用有两个：finit_module和init_module。区别在于，finit_module接受的是一个fd，init_module直接从内存中复制。这两个调用是内核模块加载的入口，最终都会调用到load_module。加载过程中使用的管理结构为struct load_info，kernel module在内核内存中的地址，是通过__vmalloc申请出来的，被记录在info-&gt;hdr。</p>
+<h3 id="检查签名是否存在"><a href="#检查签名是否存在" class="headerlink" title="检查签名是否存在"></a>检查签名是否存在</h3><ol>
+<li><p>module_sig_check</p>
+<p> 读取info-&gt;hdr末尾的一部分，并进行校验。检验结束后，更新info-&gt;len。</p>
+</li>
+<li><p>elf_validity_check</p>
+<p> 校验ELF相关的内容</p>
+</li>
+</ol>
+<h3 id="处理并加载section-setup-load-info"><a href="#处理并加载section-setup-load-info" class="headerlink" title="处理并加载section(setup_load_info)"></a>处理并加载section(setup_load_info)</h3><ol>
+<li><p>读取modinfo section</p>
+<p> .modinfo这个section中放入module相关的一些描述信息。通过<em>readelf -p .modinfo xxx.ko</em>可以读出相应的信息，包括version，description，author等信息。</p>
+</li>
+<li><p>遍历各个section，获取符号表信息(strtb和symtb)，这一过程中，需要根据info-&gt;hdr和section中的offset，计算出真正的内存地址</p>
+</li>
+<li><p>读取.gnu.linkonce.this_module section</p>
+</li>
+<li><p>尝试读取__versions section，并更新info-&gt;index.vers</p>
+</li>
+</ol>
+<h3 id="查看是否是被禁止加载的模块-blacklisted"><a href="#查看是否是被禁止加载的模块-blacklisted" class="headerlink" title="查看是否是被禁止加载的模块(blacklisted)"></a>查看是否是被禁止加载的模块(blacklisted)</h3><p>读取kernel中的module blacklist，这一过程中判断的依据是info-&gt;name，如果info-&gt;name在blacklist中，则不加载该模块。</p>
+<h3 id="更新各个section的地址"><a href="#更新各个section的地址" class="headerlink" title="更新各个section的地址"></a>更新各个section的地址</h3><p>二进制中的section记录的是内存offset，以info-&gt;hdr为基准，进行重定位。</p>
+<p>清除vers和info相关section中的SHF_ALLOC标记，后续过程中将不会分配内存。</p>
+<h3 id="检查module中的version信息是否存在"><a href="#检查module中的version信息是否存在" class="headerlink" title="检查module中的version信息是否存在"></a>检查module中的version信息是否存在</h3><ol>
+<li><p>find_symbol</p>
+<p> 从已经加载的kernel和module符号中，寻找name为module_layout的符号，并获取到相应的信息。</p>
+</li>
+<li><p>进行crc和version校验</p>
+</li>
+</ol>
+<h3 id="根据读取到的section信息，对内存进行分配"><a href="#根据读取到的section信息，对内存进行分配" class="headerlink" title="根据读取到的section信息，对内存进行分配"></a>根据读取到的section信息，对内存进行分配</h3><ol>
+<li><p>check_modinfo</p>
+<p> 对vermagic进行校验，如果不是由内核本身维护的module，设置污染标记(内核会打印’loading out-of-tree module taints kernel’)</p>
+<p> 检查module的编译信息</p>
+<p> 检查是否有live-patch(check_modinfo_livepatch)</p>
+<p> 设置license(set_license)</p>
+</li>
+<li><p>module_frob_arch_sections</p>
+<p>这个函数设置了weak属性，允许arch层重定义该函数，X86中未找到相关定义。</p>
+</li>
+<li><p>module_enforce_rwx_sections</p>
+<p> 检查各个section的flag</p>
+</li>
+<li><p>清除per-cpu sections标记中的SHF_ALLOC</p>
+</li>
+<li><p>将.data..ro_after_init标记为SHF_RO_AFTER_INIT(read only after init)</p>
+</li>
+<li><p>将__jump_table标记为SHF_RO_AFTER_INIT</p>
+</li>
+<li><p>遍历各个section，将section划分成两部分，分别是core part和init part。init part将在初始化完成后丢弃，从而节省内存。对于每个part，又细分为四类，分别是text，ro，ro_after_init，other，细分是为了后面设置内存页的权限。</p>
+</li>
+<li><p>设置core和init的符号表(layout_symtab)</p>
+</li>
+<li><p>move_module</p>
+<p> 根据7和8获取到的core和init的信息，将需要的信息从二进制中复制到core和init中，此时获得的地址，便是最终的运行地址。这一步执行结束后，mod变量被正确赋值。</p>
+</li>
+</ol>
+<h3 id="初步加载kernel-module"><a href="#初步加载kernel-module" class="headerlink" title="初步加载kernel module"></a>初步加载kernel module</h3><p>内核中管理module的结构为struct module</p>
+<ol>
+<li><p>初始化一个struct module，并更新状态为MODULE_STATE_UNFORMED</p>
+</li>
+<li><p>查看kernel中是否已经加载相关module</p>
+</li>
+<li><p>更新module_addr_min和module_addr_max</p>
+</li>
+<li><p>将struct module插入到kernel的list中，此时，该module开始被kernel识别并管理</p>
+</li>
+<li><p>校验签名</p>
+</li>
+</ol>
+<h3 id="module运行现场的初始化"><a href="#module运行现场的初始化" class="headerlink" title="module运行现场的初始化"></a>module运行现场的初始化</h3><ol>
+<li><p>分配内存给percpu section</p>
+</li>
+<li><p>初始化mod的依赖管理结构(source_list和target_list)</p>
+</li>
+<li><p>引用计数置为1</p>
+</li>
+<li><p>初始化mod-&gt;param_lock</p>
+</li>
+</ol>
+<h3 id="find-module-sections"><a href="#find-module-sections" class="headerlink" title="find_module_sections"></a>find_module_sections</h3><ol>
+<li><p>获取存有元数据的section，包括导出的符号表，crc校验参数等等</p>
+</li>
+<li><p>校验license和version(check_module_license_and_versions)</p>
+</li>
+<li><p>设置Module的描述信息(从.modinfo section中读取的内容)</p>
+</li>
+</ol>
+<h3 id="simplify-symbols"><a href="#simplify-symbols" class="headerlink" title="simplify_symbols"></a>simplify_symbols</h3><p>这一步比较重要，进行符号表偏移的计算。对于SHN_UNDEF的符号，将在内核中进行查找，查找成功后，更新相应的依赖关系。对于weak属性的符号，会做进一步的检查和处理。对于除SHN_COMMON，SHN_ABS，SHN_LIVEPATCH，SHN_UNDEF之外的一般符号，依据符号的偏移以及所属section的基址，计算出符号的内存地址。</p>
+<h3 id="section重定位"><a href="#section重定位" class="headerlink" title="section重定位"></a>section重定位</h3><ol>
+<li><p>apply_relocations</p>
+<p> 进行符号的重定位，有一类特殊的section，记录了对应section的relocation信息。relocation的计算分为三步：</p>
+<ol>
+<li>计算二进制中重定位部分的内存位置(src)</li>
+<li>根据type，计算内存中重定位部分的内存地址(dst)</li>
+<li>校验dst部分是否全为0，如果是，执行write(dst, src, size)</li>
+</ol>
+</li>
+<li><p>post_relocation</p>
+<ol>
+<li>对exception table进行排序</li>
+<li>执行符号表的拷贝工作(此时的符号表位置已经计算出来)<br> return module_finalize(info-&gt;hdr, info-&gt;sechdrs, mod);</li>
+<li>arch相关的结束动作()</li>
+</ol>
+</li>
+<li><p>刷新cache(flush_module_icache)，获取module的运行参数</p>
+</li>
+</ol>
+<h3 id="开始运行module前的准备"><a href="#开始运行module前的准备" class="headerlink" title="开始运行module前的准备"></a>开始运行module前的准备</h3><ol>
+<li><p>查看是否有重复的符号</p>
+</li>
+<li><p>对init和core部分的四个类别section进行内存权限设置</p>
+</li>
+<li><p>设置module状态为MODULE_STATE_COMING</p>
+</li>
+<li><p>对内核的通知链发出一个通知，此后状态为MODULE_STATE_GOING</p>
+</li>
+<li><p>解析参数</p>
+</li>
+<li><p>设置sys相关的文件(mod_sysfs_setup)</p>
+</li>
+</ol>
+<h3 id="开始运行module"><a href="#开始运行module" class="headerlink" title="开始运行module"></a>开始运行module</h3><ol>
+<li>如果注册了init，执行init函数</li>
+<li>对内核的通知链发出一个通知，此后状态为MODULE_STATE_LIVE</li>
+<li>mod计数减一</li>
+<li>释放init区域</li>
+</ol>
+<h2 id="Kernel-Module的卸载过程"><a href="#Kernel-Module的卸载过程" class="headerlink" title="Kernel Module的卸载过程"></a>Kernel Module的卸载过程</h2><ol>
+<li><p>检查是否有权限进行卸载</p>
+</li>
+<li><p>从用户参数中获取所要卸载的模块name</p>
+</li>
+<li><p>根据name寻找相应的module结构(find_module)</p>
+</li>
+<li><p>检查是否有其他模块依赖待卸载模块</p>
+</li>
+<li><p>执行module的exit函数</p>
+</li>
+<li><p>释放module占据的资源，更新内核的管理数据</p>
+</li>
+</ol>
+<h2 id="相关Q-A"><a href="#相关Q-A" class="headerlink" title="相关Q&amp;A"></a>相关Q&amp;A</h2><ol>
+<li><p>data段和bss段的区别</p>
+<p> bss段由于不存在初始化值，在二进制中不需要分配位置存储，因此bss变量不会造成二进制变大。但是，在进行二进制加载时，会分配相应的内存。在符号表中，尽管bss段在二进制本身中不占据位置，但是在运行内存中占据了位置，因此偏移计算时，是将bss段作为有size进行处理的(因为符号表是描述运行内存布局的)。</p>
+</li>
+<li><p>是否可以将某些section单独管理</p>
+<p> 原理上是可行的，我尝试过将bss和data单独分离出来。需要考虑的几个点:</p>
+<ol>
+<li>修改符号表的偏移，偏移是重定向的依据。</li>
+<li>如果原有地址存在数据，重定向对0值的校验会失败。</li>
+</ol>
+</li>
+<li><p>kernel module为何要export符号，才能被其他模块使用</p>
+<p> export出来的符号会单独放在一个section中，module本身的符号表对内核其他部分是不可见的。但是，module跟内核其他部分是在一个地址空间里的，缺少的只是内存布局信息(也就是符号表)。</p>
+</li>
+<li><p>符号表中Global和Local的区别</p>
+<p> 广义上的全局变量，是指生存周期为全局的变量，在符号表中出现的变量，代表运行内存中为该变量分配了位置，因此符号表中出现的变量，其生存周期都是全局的，都可以认为是广义上的全局变量。符号表中的Global和Local的区别在于，作用域不一样，Global对整个模块都是可见的，而Local只有一个局部作用域(文件内或者函数内)。这个作用域的检查是在编译时进行的，也就是说，如果能拿到正确的地址，即使不符合作用域，也能正常使用。</p>
+</li>
+<li><p>二进制运行过程中的内存管理</p>
+<p> 此处以变量举例，来说明运行模块对内存的使用。第一类是广义上的全局变量，此类变量从二进制加载到二进制结束运行，一直存在内存中。第二类是函数内的局部变量，这部分是放置在栈中的。随着函数的运行，生成和销毁。第三类，就是程序在运行过程中，通过malloc之类的管理接口申请的内存，这类内存需要程序自行释放，否则会造成内存泄露。</p>
+</li>
+</ol>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ol>
+<li><a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man5/elf.5.html">elf header</a></li>
+<li>深入Linux设备驱动内核机制(陈学松著)第一章</li>
+</ol>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/nvdia-stream/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2025-05-12 14:45:59
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Linux/" title="Linux">
+                        #Linux
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Kernel-Module/" title="Kernel Module">
+                        #Kernel Module
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/carry-cat/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%87%E7%AB%A0%E5%8F%82%E8%80%83%E7%9A%84%E4%BB%A3%E7%A0%81%E4%BF%A1%E6%81%AF"><span class="toc-text">文章参考的代码信息</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Kernel-Module%E7%9A%84%E5%8A%A0%E8%BD%BD%E8%BF%87%E7%A8%8B"><span class="toc-text">Kernel Module的加载过程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AF%BB%E5%8F%96kernel-module%E5%88%B0%E5%86%85%E5%AD%98-kernel-module-c"><span class="toc-text">读取kernel module到内存(kernel&#x2F;module.c)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A3%80%E6%9F%A5%E7%AD%BE%E5%90%8D%E6%98%AF%E5%90%A6%E5%AD%98%E5%9C%A8"><span class="toc-text">检查签名是否存在</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%84%E7%90%86%E5%B9%B6%E5%8A%A0%E8%BD%BDsection-setup-load-info"><span class="toc-text">处理并加载section(setup_load_info)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B%E6%98%AF%E5%90%A6%E6%98%AF%E8%A2%AB%E7%A6%81%E6%AD%A2%E5%8A%A0%E8%BD%BD%E7%9A%84%E6%A8%A1%E5%9D%97-blacklisted"><span class="toc-text">查看是否是被禁止加载的模块(blacklisted)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9B%B4%E6%96%B0%E5%90%84%E4%B8%AAsection%E7%9A%84%E5%9C%B0%E5%9D%80"><span class="toc-text">更新各个section的地址</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A3%80%E6%9F%A5module%E4%B8%AD%E7%9A%84version%E4%BF%A1%E6%81%AF%E6%98%AF%E5%90%A6%E5%AD%98%E5%9C%A8"><span class="toc-text">检查module中的version信息是否存在</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B9%E6%8D%AE%E8%AF%BB%E5%8F%96%E5%88%B0%E7%9A%84section%E4%BF%A1%E6%81%AF%EF%BC%8C%E5%AF%B9%E5%86%85%E5%AD%98%E8%BF%9B%E8%A1%8C%E5%88%86%E9%85%8D"><span class="toc-text">根据读取到的section信息，对内存进行分配</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9D%E6%AD%A5%E5%8A%A0%E8%BD%BDkernel-module"><span class="toc-text">初步加载kernel module</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#module%E8%BF%90%E8%A1%8C%E7%8E%B0%E5%9C%BA%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">module运行现场的初始化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#find-module-sections"><span class="toc-text">find_module_sections</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#simplify-symbols"><span class="toc-text">simplify_symbols</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#section%E9%87%8D%E5%AE%9A%E4%BD%8D"><span class="toc-text">section重定位</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%80%E5%A7%8B%E8%BF%90%E8%A1%8Cmodule%E5%89%8D%E7%9A%84%E5%87%86%E5%A4%87"><span class="toc-text">开始运行module前的准备</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%80%E5%A7%8B%E8%BF%90%E8%A1%8Cmodule"><span class="toc-text">开始运行module</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Kernel-Module%E7%9A%84%E5%8D%B8%E8%BD%BD%E8%BF%87%E7%A8%8B"><span class="toc-text">Kernel Module的卸载过程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3Q-A"><span class="toc-text">相关Q&amp;A</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-text">参考</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/anatasluo">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+        <li>
+          
+            <a title="email" href="mailto:luolongjuna@gmail.com">
+              <i class="iconfont icon-envelope"></i>
+            </a>
+            
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">Copyright</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">© 2025 anatasluo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + Linux%20Kernel%20Module%E5%8A%A0%E8%BD%BD%E5%8D%B8%E9%99%A4%E8%BF%87%E7%A8%8B%E5%88%86%E6%9E%90 + '&url=' + https%3A%2F%2Fanatasluo.github.io%2Flinux-kernel-module%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=https://anatasluo.github.io/linux-kernel-module/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>

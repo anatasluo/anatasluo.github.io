@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="anatasluo" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      syscall的执行过程简析以及如何在内核模块中发起调用 
+      
+      
+      |
+    
+     anatasluo
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.ico">
+    <link rel="icon" href="/images/favicon.ico">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/huahua.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">anatasluo</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.10/dist/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">syscall的执行过程简析以及如何在内核模块中发起调用</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2025-05-12 14:45:59
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Linux/" title="Linux">
+                    #Linux
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Syscall/" title="Syscall">
+                    #Syscall
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Kernel-Module/" title="Kernel Module">
+                    #Kernel Module
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <p>以下分析过程用的kernel版本为6.2，架构为X86，请注意不同内核版本以及不同架构之间的差异。</p>
+<h2 id="syscall的执行过程"><a href="#syscall的执行过程" class="headerlink" title="syscall的执行过程"></a>syscall的执行过程</h2><p>syscall的执行过程大体上可以分为三步：</p>
+<ol>
+<li>用户态发起调用</li>
+<li>glibc设置参数，发起中断进入内核态</li>
+<li>内核态设置堆栈，进行处理</li>
+</ol>
+<p>前两步无需赘述，直接从内核中断处理开始分析。这一过程中，最重要的过程为堆栈的切换。</p>
+<p>如果是X86的架构，堆栈的切换实现在.&#x2F;arch&#x2F;x86&#x2F;entry&#x2F;entry_64.S下，对应函数为entry_SYSCALL_64。</p>
+<p>此处实现的要点为，用户态的寄存器上下文被存储到了栈中，而后，栈中的某一处地址被处理成struct pt_regs，作为调用参数，传给了syscall的处理函数，因此，以mprotect为例，可以看到如下实现:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,</span><br><span class="line">		unsigned long, prot)</span><br><span class="line">&#123;</span><br><span class="line">	return do_mprotect_pkey(start, len, prot, -1);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>展开的结果为:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">static long __se_sys_mprotect(__typeof(__builtin_choose_expr((__builtin_types_compatible_p(typeof((unsigned long)0), typeof(0LL)) || __builtin_types_compatible_p(typeof((unsigned long)0), typeof(0ULL))), 0LL, 0L)) start, __typeof(__builtin_choose_expr((__builtin_types_compatible_p(typeof((size_t)0), typeof(0LL)) || __builtin_types_compatible_p(typeof((size_t)0), typeof(0ULL))), 0LL, 0L)) len, __typeof(__builtin_choose_expr((__builtin_types_compatible_p(typeof((unsigned long)0), typeof(0LL)) || __builtin_types_compatible_p(typeof((unsigned long)0), typeof(0ULL))), 0LL, 0L)) prot);</span><br><span class="line">static inline __attribute__((__gnu_inline__)) __attribute__((__unused__)) __attribute__((no_instrument_function)) long __do_sys_mprotect(unsigned long start, size_t len, unsigned long prot);</span><br><span class="line">long __x64_sys_mprotect(const struct pt_regs *regs);</span><br><span class="line">;</span><br><span class="line">long __x64_sys_mprotect(const struct pt_regs *regs) &#123; return __se_sys_mprotect(regs-&gt;di, regs-&gt;si, regs-&gt;dx); &#125;</span><br><span class="line">long __ia32_sys_mprotect(const struct pt_regs *regs);</span><br><span class="line">;</span><br><span class="line">long __ia32_sys_mprotect(const struct pt_regs *regs) &#123; return __se_sys_mprotect((unsigned int)regs-&gt;bx, (unsigned int)regs-&gt;cx, (unsigned int)regs-&gt;dx); &#125;</span><br><span class="line">static long __se_sys_mprotect(__typeof(__builtin_choose_expr((__builtin_types_compatible_p(typeof((unsigned long)0), typeof(0LL)) || __builtin_types_compatible_p(typeof((unsigned long)0), typeof(0ULL))), 0LL, 0L)) start, __typeof(__builtin_choose_expr((__builtin_types_compatible_p(typeof((size_t)0), typeof(0LL)) || __builtin_types_compatible_p(typeof((size_t)0), typeof(0ULL))), 0LL, 0L)) len, __typeof(__builtin_choose_expr((__builtin_types_compatible_p(typeof((unsigned long)0), typeof(0LL)) || __builtin_types_compatible_p(typeof((unsigned long)0), typeof(0ULL))), 0LL, 0L)) prot)</span><br><span class="line">&#123;</span><br><span class="line">	long ret = __do_sys_mprotect((unsigned long)start, (size_t)len, (unsigned long)prot);</span><br><span class="line">	(void)((int)(sizeof(struct &#123; int : (-!!(!(__builtin_types_compatible_p(typeof((unsigned long)0), typeof(0LL)) || __builtin_types_compatible_p(typeof((unsigned long)0), typeof(0ULL))) &amp;&amp; sizeof(unsigned long) &gt; sizeof(long))); &#125;))), (void)((int)(sizeof(struct &#123; int : (-!!(!(__builtin_types_compatible_p(typeof((size_t)0), typeof(0LL)) || __builtin_types_compatible_p(typeof((size_t)0), typeof(0ULL))) &amp;&amp; sizeof(size_t) &gt; sizeof(long))); &#125;))), (void)((int)(sizeof(struct &#123; int : (-!!(!(__builtin_types_compatible_p(typeof((unsigned long)0), typeof(0LL)) || __builtin_types_compatible_p(typeof((unsigned long)0), typeof(0ULL))) &amp;&amp; sizeof(unsigned long) &gt; sizeof(long))); &#125;)));</span><br><span class="line">	do</span><br><span class="line">	&#123;</span><br><span class="line">	&#125; while (0);</span><br><span class="line">	return ret;</span><br><span class="line">&#125;</span><br><span class="line">static inline __attribute__((__gnu_inline__)) __attribute__((__unused__)) __attribute__((no_instrument_function)) long __do_sys_mprotect(unsigned long start, size_t len, unsigned long prot)</span><br><span class="line">&#123;</span><br><span class="line">	return do_mprotect_pkey(start, len, prot, -1);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>展开后，主要实现为定义了若干函数，并且进行了调用封装。其中，需要注意的是long __x64_sys_mprotect(const struct pt_regs *regs)。<br>这个符号的地址就是最后填入sys_call_table的地址。</p>
+<p>尽管这个符号被asmlinkage修饰了，但是实际传参仍然是通过寄存器进行的，这与大多数资料里对syscall的描述有出入。在x86-64的架构下，asmlinkage的定义是空。</p>
+<p>上面的实现调用顺序为:__x64_sys_mprotect -&gt; __se_sys_mprotect -&gt; __do_sys_mprotect -&gt; do_mprotect_pkey</p>
+<p>对vmlinux进行汇编，可以得到如下的结果：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&lt;__x64_sys_mprotect&gt;:</span><br><span class="line">f3 0f 1e fa             endbr64 </span><br><span class="line">48 8b 57 60             mov    0x60(%rdi),%rdx</span><br><span class="line">48 8b 77 68             mov    0x68(%rdi),%rsi</span><br><span class="line">b9 ff ff ff ff          mov    $0xffffffff,%ecx</span><br><span class="line">48 8b 7f 70             mov    0x70(%rdi),%rdi</span><br><span class="line">e8 a6 fb ff ff          call   ffffffff81218e80 &lt;do_mprotect_pkey&gt;</span><br><span class="line">48 98                   cltq   </span><br><span class="line">e9 a3 a3 c0 00          jmp    ffffffff81e23684 &lt;__x86_return_thunk&gt;</span><br><span class="line">66 66 2e 0f 1f 84 00    data16 cs nopw 0x0(%rax,%rax,1)</span><br><span class="line">00 00 00 00 </span><br><span class="line">0f 1f 40 00             nopl   0x0(%rax)</span><br></pre></td></tr></table></figure>
+
+<p>此处rdi寄存器的内容就是唯一的参数struct pt_regs*，而这个参数本身存储了用户态的上下文，按照用户态的abi规则读取参数，再传递给对应的内核态函数。</p>
+<p>偏移0x70是rdi寄存器再struct pt_regs中的偏移。</p>
+<h3 id="如何在linux-kernel-module中调用syscall"><a href="#如何在linux-kernel-module中调用syscall" class="headerlink" title="如何在linux kernel module中调用syscall"></a>如何在linux kernel module中调用syscall</h3><p>按照上面所说，调用的办法如下:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">static long (*orig_mprotect) (const struct pt_regs *regs);</span><br><span class="line"></span><br><span class="line">static long krun_mprotect(unsigned long start, size_t len, unsigned long prot)</span><br><span class="line">&#123;</span><br><span class="line">    do_mprotect_pkey((unsigned long)layout-&gt;base, layout-&gt;text_size, PROT_READ | PROT_EXEC, -1);</span><br><span class="line">    struct pt_regs regs;</span><br><span class="line">    setup_parameters(&amp;regs, start, len, prot);</span><br><span class="line">    return orig_mprotect(&amp;regs);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>通过krun_mprotect就能从内核中发起syscall调用，至于如何读到sys_call_table，以及从sys_call_table中读到syscall handler的地址，就不再本文的讨论范畴了。</p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/ebpf-usage-in-malicious-soft/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2025-05-12 14:45:59
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Linux/" title="Linux">
+                        #Linux
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Syscall/" title="Syscall">
+                        #Syscall
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Kernel-Module/" title="Kernel Module">
+                        #Kernel Module
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/gcc-execute-stack/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#syscall%E7%9A%84%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B"><span class="toc-text">syscall的执行过程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E5%9C%A8linux-kernel-module%E4%B8%AD%E8%B0%83%E7%94%A8syscall"><span class="toc-text">如何在linux kernel module中调用syscall</span></a></li></ol></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/anatasluo">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+        <li>
+          
+            <a title="email" href="mailto:luolongjuna@gmail.com">
+              <i class="iconfont icon-envelope"></i>
+            </a>
+            
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">Copyright</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">© 2025 anatasluo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + syscall%E7%9A%84%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B%E7%AE%80%E6%9E%90%E4%BB%A5%E5%8F%8A%E5%A6%82%E4%BD%95%E5%9C%A8%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E4%B8%AD%E5%8F%91%E8%B5%B7%E8%B0%83%E7%94%A8 + '&url=' + https%3A%2F%2Fanatasluo.github.io%2Flinux-syscall%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=https://anatasluo.github.io/linux-syscall/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>

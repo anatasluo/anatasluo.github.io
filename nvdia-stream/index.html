@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="anatasluo" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      NVDIA Steam初体验 
+      
+      
+      |
+    
+     anatasluo
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.ico">
+    <link rel="icon" href="/images/favicon.ico">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/huahua.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">anatasluo</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.10/dist/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">NVDIA Steam初体验</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2025-05-12 14:45:59
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/NVDIA/" title="NVDIA">
+                    #NVDIA
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Cloud-Game/" title="Cloud Game">
+                    #Cloud Game
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <p>手头有台闲置的笔记本，一直在运行Linux。笔记本上有张GTX 970M的显卡，想着能不能拿来玩游戏(Apex)。问题在于：</p>
+<ol>
+<li>Apex不支持在Linux下运行，即使是借助wine的<a target="_blank" rel="noopener" href="https://lutris.net/">lutris</a>。因此，只能考虑在一台笔记本上，同时运行Linux和windows。</li>
+<li>因为要运行Linux，希望能把笔记本一直放在杂物间里，避免搬来搬去。</li>
+</ol>
+<p>对于第一个问题，有两个解决办法：</p>
+<ol>
+<li>使用虚拟机，如果要在虚拟机中使用显卡来获得较好的性能，可以考虑设备直通。支持这一用法的有ESIX。</li>
+<li>使用双系统，通过grub来解决系统间的切换。</li>
+</ol>
+<h2 id="同时运行Windows和Linux"><a href="#同时运行Windows和Linux" class="headerlink" title="同时运行Windows和Linux"></a>同时运行Windows和Linux</h2><h3 id="使用EXSI通过设备直通来同时使用Windows和Linux"><a href="#使用EXSI通过设备直通来同时使用Windows和Linux" class="headerlink" title="使用EXSI通过设备直通来同时使用Windows和Linux"></a>使用EXSI通过设备直通来同时使用Windows和Linux</h3><p>安装EXSI的过程中，遇到无法找到网卡设备的问题。最后发现是ESXI内置支持的网卡驱动比较少，下载了一个别人改造过的版本，顺利安装。悲剧的是，我发现虽然GTX 970M支持设备直通，但是笔记本的bios不支持这一用法。</p>
+<h3 id="使用双系统来同时使用Windows和Linux"><a href="#使用双系统来同时使用Windows和Linux" class="headerlink" title="使用双系统来同时使用Windows和Linux"></a>使用双系统来同时使用Windows和Linux</h3><p>双系统的使用过程不多赘述，要点如下:</p>
+<ol>
+<li>先安装Windows，再安装Linux</li>
+<li>分区设置，将引导默认由Linux中的grub管理</li>
+</ol>
+<p>因为grub可以识别Windows启动项，但是Windows不能识别Linux启动项(至少我没发现办法)。</p>
+<p>这样做有一个局限，就是没法同时运行Linux和Windows，考虑到使用Windows的场景并不多，偶尔拿来打游戏还是能接受的。同时，还有另外一个问题。那就是如何在不去现场操作笔记本的情况下，能在双系统间进行切换？</p>
+<p>解决的要点如下：</p>
+<ol>
+<li>分别设置Windows和Linux的网卡成静态IP，同时分别打开远程桌面和sshd，保证重启后，能登录到笔记本里。</li>
+<li>Linux下可以直接操作grub，修改默认启动项，在Linux下，将grub默认设置为Windows，然后重启；在Windows下，将grub默认设置为Linux，然后重启。</li>
+</ol>
+<p>关于如何在Windows下操作grub：</p>
+<p>Windows下首先找到grub相应的引导分区，直接修改grub.cfg即可。</p>
+<h2 id="通过NVDIA-Stream来玩游戏"><a href="#通过NVDIA-Stream来玩游戏" class="headerlink" title="通过NVDIA Stream来玩游戏"></a>通过NVDIA Stream来玩游戏</h2><p>云游戏的概念很早就出现了，毕竟，只要是使用过远程桌面，就会很自然的想到，能不能远程使用应用，尤其是游戏。当前能找到的云游戏的解决方案很多，腾讯更是几年前就推出过堡垒之夜的云端试玩。我选择了NVDIA Stream，是因为使用起来相对简单，而且我使用的是N卡，如果电脑要支持云游戏，那么我觉得显卡驱动这一层来支持是最好的。</p>
+<p>使用NVDIA Sream过程中，遇到一些问题：</p>
+<ol>
+<li>NVDIA Get Experience存在网络问题</li>
+</ol>
+<p>一开始是无法登陆，后来是登陆了无法跳转，最后通过某加速器加速NVDIA Get Experience解决问题。</p>
+<ol start="2">
+<li>远程桌面下，无法打开NVDIA Stream</li>
+</ol>
+<p>这个问题，我折腾了最久。后来用了命令行版的NVDIA Stream，发现是远程桌面下不能支持NVDIA Steam。可以使用vnc之类的软件来解决。当然，也可以一次设置好，下次直接让NVDIA Stream自动启动就好。注意，只要使用过远程桌面，就会导致NVDIA Steam失效。</p>
+<ol start="3">
+<li>游戏运行前，需要首先运行加速器</li>
+</ol>
+<p>这个问题，我暂时是手动运行解决的。我觉得，可以尝试将加速器也添加到NVDIA Steam的game list中，先运行加速器，再运行游戏，应该也是，没问题的。</p>
+<h2 id="使用体验"><a href="#使用体验" class="headerlink" title="使用体验"></a>使用体验</h2><p>我的测试环境是千兆无线网络，基本感觉不到延迟，偶尔有网络波动，通过有线网络应该可以获得更好的游戏体验。更难得的是，moonlight不仅支持在电脑上玩云游戏，在手机上也可以运行云游戏。可以预见，云游戏在不久的未来，会越来越流行。</p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/about/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2025-05-12 14:45:59
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/NVDIA/" title="NVDIA">
+                        #NVDIA
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Cloud-Game/" title="Cloud Game">
+                        #Cloud Game
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/linux-kernel-module/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%8C%E6%97%B6%E8%BF%90%E8%A1%8CWindows%E5%92%8CLinux"><span class="toc-text">同时运行Windows和Linux</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8EXSI%E9%80%9A%E8%BF%87%E8%AE%BE%E5%A4%87%E7%9B%B4%E9%80%9A%E6%9D%A5%E5%90%8C%E6%97%B6%E4%BD%BF%E7%94%A8Windows%E5%92%8CLinux"><span class="toc-text">使用EXSI通过设备直通来同时使用Windows和Linux</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E5%8F%8C%E7%B3%BB%E7%BB%9F%E6%9D%A5%E5%90%8C%E6%97%B6%E4%BD%BF%E7%94%A8Windows%E5%92%8CLinux"><span class="toc-text">使用双系统来同时使用Windows和Linux</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%9A%E8%BF%87NVDIA-Stream%E6%9D%A5%E7%8E%A9%E6%B8%B8%E6%88%8F"><span class="toc-text">通过NVDIA Stream来玩游戏</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E4%BD%93%E9%AA%8C"><span class="toc-text">使用体验</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/anatasluo">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+        <li>
+          
+            <a title="email" href="mailto:luolongjuna@gmail.com">
+              <i class="iconfont icon-envelope"></i>
+            </a>
+            
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">Copyright</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">© 2025 anatasluo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + NVDIA%20Steam%E5%88%9D%E4%BD%93%E9%AA%8C + '&url=' + https%3A%2F%2Fanatasluo.github.io%2Fnvdia-stream%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=https://anatasluo.github.io/nvdia-stream/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>

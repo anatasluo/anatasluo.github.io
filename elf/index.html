@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="zh" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="anatasluo" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      Linux ELF规范整理 
+      
+      
+      |
+    
+     anatasluo
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.ico">
+    <link rel="icon" href="/images/favicon.ico">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/huahua.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">anatasluo</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.10/dist/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">Linux ELF规范整理</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2025-05-12 14:45:59
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Linux/" title="Linux">
+                    #Linux
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/ELF/" title="ELF">
+                    #ELF
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Live-patch/" title="Live patch">
+                    #Live patch
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Assembly/" title="Assembly">
+                    #Assembly
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <h2 id="Object-Files"><a href="#Object-Files" class="headerlink" title="Object Files"></a>Object Files</h2><p>Three types:</p>
+<ol>
+<li>relocatable file –&gt; need to link</li>
+<li>executable file –&gt; exec uses it to create image</li>
+<li>shared object file</li>
+</ol>
+<p><strong>Linking View</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">ELF header</span><br><span class="line">-------------------------------</span><br><span class="line">Program header table optional</span><br><span class="line">-------------------------------</span><br><span class="line">Section 1</span><br><span class="line">-------------------------------</span><br><span class="line">...</span><br><span class="line">-------------------------------</span><br><span class="line">Section n</span><br><span class="line">-------------------------------</span><br><span class="line">...</span><br><span class="line">-------------------------------</span><br><span class="line">...</span><br><span class="line">-------------------------------</span><br><span class="line">Section header table</span><br><span class="line">-------------------------------</span><br></pre></td></tr></table></figure>
+
+<p>Sections hold the bulk of object file information for linking view: instructions, data, symbol table, relocation information, and so on.</p>
+<p><strong>Execution View</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">ELF header</span><br><span class="line">-------------------------------</span><br><span class="line">Program header table</span><br><span class="line">-------------------------------</span><br><span class="line">Segment 1</span><br><span class="line">-------------------------------</span><br><span class="line">Segment 2</span><br><span class="line">-------------------------------</span><br><span class="line">...</span><br><span class="line">-------------------------------</span><br><span class="line">Section header table optional</span><br></pre></td></tr></table></figure>
+<p>Segment是从在ELF执行时看到的内存视图，此时的Segment跟权限有关。ARM下是两个Segment，X86下是四个，mprotect在修改权限的过程中，会导致新Segment的出现(本质是split vma)。</p>
+<p>在ELF规范中，仅有ELF header是有固定位置的，其余的信息被ELF header描述。program header的作用是告诉内核如何创建process，section header table的作用是在linking阶段用于描述一个section。</p>
+<p><strong>Data Representation</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Size</th>
+<th>Alignment</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Elf32_Addr</td>
+<td>4</td>
+<td>4</td>
+<td>Unsigned program address</td>
+</tr>
+<tr>
+<td>Elf32_Off</td>
+<td>4</td>
+<td>4</td>
+<td>Unsigned file offset</td>
+</tr>
+<tr>
+<td>Elf32_Sword</td>
+<td>4</td>
+<td>4</td>
+<td>Signed large integer</td>
+</tr>
+<tr>
+<td>Elf32_Word</td>
+<td>4</td>
+<td>4</td>
+<td>Unsigned large integer</td>
+</tr>
+<tr>
+<td>Elf32_Half</td>
+<td>2</td>
+<td>2</td>
+<td>Unsigned medium integer</td>
+</tr>
+<tr>
+<td>unsigned char</td>
+<td>1</td>
+<td>1</td>
+<td>Unsigned small integer</td>
+</tr>
+</tbody></table>
+<p><strong>Sections</strong></p>
+<p>Special Section Indexes:</p>
+<ol>
+<li>SHN_UNDEF(0) marks an undefined, missing, irrelevant, or otherwise meaningless section reference.</li>
+<li>SHN_LORESERVE(0xff00) lower bound of the range of reserved indexes.</li>
+<li>SHN_LOPROC(0xff00) - SHN_HIPROC(0xff1f) inclusive range are reserved for processor-specific.</li>
+<li>SHN_ABS(0xfff1) - absolue values for the corresponding reference.</li>
+<li>SHN_COMMON(0xfff2) - common symbols, such like unallocated C external variables.</li>
+<li>SHN_HIRESERVE(0xffff) - upper bound of the range of reserved indexes</li>
+</ol>
+<p>Special Sections(part):</p>
+<ul>
+<li>.bss</li>
+<li>.comment</li>
+<li>.data&#x2F;.data1</li>
+<li>.debug</li>
+<li>.dynamic (dynamic linking information)</li>
+<li>.dynstr</li>
+<li>.dynsym</li>
+<li>.fini</li>
+<li>.got (global offset table)</li>
+<li>.hash (symbol hash table)</li>
+<li>.init (executable instructions for initialization)</li>
+<li>.interp</li>
+<li>.line (symbolic debugging)</li>
+<li>.note</li>
+<li>.plt (procedure linkage table)</li>
+<li>.relname&#x2F;.relaname (relacation information for one section)</li>
+<li>.rodata&#x2F;.rodata1</li>
+<li>.shstrtab</li>
+<li>.text</li>
+</ul>
+<p>Section name with a dot (.) prefix are reserved for the system.</p>
+<p><strong>Symbol Table</strong></p>
+<p>Relocation，是指对symbol table进行重定向。</p>
+<p>Symbol Table Entry:</p>
+<ul>
+<li>st_name -&gt; an index</li>
+<li>st_value -&gt; value of the associated symbol</li>
+<li>st_size</li>
+<li>st_info -&gt; symbol’s type and binding attributes</li>
+<li>st_other -&gt; no special meanthing</li>
+<li>st_shndx -&gt; relevant section header table index</li>
+</ul>
+<p>Symbol Binding:</p>
+<ul>
+<li>STB_LOCAL</li>
+<li>STB_GLOBAL</li>
+<li>STB_WEAK</li>
+<li>STB_LOPROC through STB_HIPROC</li>
+</ul>
+<p>Symbol Types:</p>
+<ul>
+<li>STT_NOTYPE -&gt; not specified</li>
+<li>STT_OBJECT -&gt; data object</li>
+<li>STT_FUNC -&gt; function&#x2F;executable code</li>
+<li>STT_SECTION</li>
+<li>STT_FILE</li>
+<li>STT_LOPROC through STT_HIPROC</li>
+</ul>
+<p>Special Section index:</p>
+<ul>
+<li>SHN_ABS -&gt; an absolute value</li>
+<li>SHN_COMMON -&gt; a common block</li>
+<li>SHN_UNDEF -&gt; need to be resolved</li>
+</ul>
+<p>Procedure linkage table是为了解决objects之间func object引用的问题。</p>
+<p><strong>Relocation</strong></p>
+<p>Elf32_Rel:</p>
+<ul>
+<li>r_offset</li>
+<li>r_info</li>
+</ul>
+<p>Elf32_Rela:</p>
+<ul>
+<li>r_offset</li>
+<li>r_info</li>
+<li>r_addend</li>
+</ul>
+<p>r_offset: the location at which to apply the relocation action<br>r_info: releated symbol table index and type of relocation to apply (low 8 bits)<br>r_addend: a constant addend used to compute the value to be stored into the relocatable field</p>
+<p><strong>Relocation Types</strong><br>A: r_addend<br>B: mmap base address<br>G: the offset into the global offset table<br>GOT: address of the global offset table<br>L: the place of the procedure linkage table entry<br>P: r_offset<br>S: the value of the symbol</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Value</th>
+<th>Field</th>
+<th>Calculation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>R_386_NONE</td>
+<td>0</td>
+<td>none</td>
+<td>none</td>
+</tr>
+<tr>
+<td>R_386_32</td>
+<td>1</td>
+<td>word32</td>
+<td>S+A</td>
+</tr>
+<tr>
+<td>R_386_PC32</td>
+<td>2</td>
+<td>word32</td>
+<td>S+A-P</td>
+</tr>
+<tr>
+<td>R_386_GOT32</td>
+<td>3</td>
+<td>word32</td>
+<td>G+A-P</td>
+</tr>
+<tr>
+<td>R_386_PLT32</td>
+<td>4</td>
+<td>word32</td>
+<td>L+A-P</td>
+</tr>
+<tr>
+<td>R_386_COPY</td>
+<td>5</td>
+<td>none</td>
+<td>none</td>
+</tr>
+<tr>
+<td>R_386_GLOB_DAT</td>
+<td>6</td>
+<td>word32</td>
+<td>S</td>
+</tr>
+<tr>
+<td>R_386_JMP_SLOT</td>
+<td>7</td>
+<td>word32</td>
+<td>S</td>
+</tr>
+<tr>
+<td>R_386_RELATIVE</td>
+<td>8</td>
+<td>word32</td>
+<td>B+A</td>
+</tr>
+<tr>
+<td>R_386_GOTOFF</td>
+<td>9</td>
+<td>word32</td>
+<td>S+A-GOT</td>
+</tr>
+<tr>
+<td>R_386_GOTOC</td>
+<td>10</td>
+<td>word32</td>
+<td>GOT+A-P</td>
+</tr>
+</tbody></table>
+<h2 id="program-loading-and-dynamic-linking"><a href="#program-loading-and-dynamic-linking" class="headerlink" title="program loading and dynamic linking"></a>program loading and dynamic linking</h2><p>Type为SHT_NOTE的section用于记录一些auxiliary information，该section有固定的格式。</p>
+<p>为了做到延迟加载，对segment的地址进行页对齐是必要的。</p>
+<p>Interperter(dynamic linker)接收控制权的两种方法：</p>
+<ol>
+<li>receive a file descriptor</li>
+<li>load the executable file into memory</li>
+</ol>
+<p>Interperter的作用，实际上是将一部分工作从OS中解耦出来，由OS之外的部分来定义和维护，包括：</p>
+<ol>
+<li>将ELF的memory segments添加至进程</li>
+<li>将shared object的memory segments添加至进程</li>
+<li>进行relocation动作</li>
+<li>清理现场，比如关闭打开的ELF fd</li>
+<li>将控制权转移给program，看起来就像是从kernel直接接过控制权一样(保持透明)</li>
+</ol>
+<p>Special sections from the link editor:</p>
+<ul>
+<li>.dynamic section &#x2F; SHT_DYNAMIC -&gt; addresses of other dynamic linking information</li>
+<li>.hash &#x2F; SHT_HASH -&gt; symbol hash table</li>
+<li>.got(.plt) &#x2F; SHT_PROGBITS</li>
+</ul>
+<p><strong>Dynamic Section</strong></p>
+<p>如果object文件参与dynamic linking过程，其program header table中将有一个类型为PT_DYNAMIC的section。这个section包含了一个数组，以键值对的形式描述了一系列信息。</p>
+<p><strong>Global offset table</strong></p>
+<p>Global offset table redirects position-independent address calculations to absolute locations.</p>
+<p><strong>Procedure linkage table</strong></p>
+<p>Procedure linkage table redirects position-independent function calls to absolute locations.</p>
+<p><strong>Steps of the dynamic linker</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">.PLT0:pushl 4(%ebx)</span><br><span class="line">	jmp *8(%ebx)</span><br><span class="line">	nop; nop</span><br><span class="line">	nop; nop</span><br><span class="line">.PLT1:jmp *name1@GOT(%ebx)</span><br><span class="line">	pushl $offset</span><br><span class="line">	jmp .PLT0@PC</span><br><span class="line">.PLT2:jmp *name2@GOT(%ebx)</span><br><span class="line">	pushl $offset</span><br><span class="line">	jmp .PLT0@PC</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li>the dynamic linker sets the second and the third entries in the global offset table to special values.</li>
+<li>如果procedure linkage table是PIC的，global offset table的地址必须放在ebx寄存器。每个shared object file都有自己的procedure linkage table。</li>
+<li>假设program调用了name1，控制权将转移给lable .PLT1.</li>
+<li>跳转到GOT中name1对应的地址，第一次运行时，会直接运行到下一条push指令。</li>
+<li>这个offset是一个relocation offset(在relocation table中的一个偏移)，该relocation entry的type将是R_386_JMP_SLOT，relocation entry的offset将是<em>GOT</em>对应entry的位置，需要解析的位置就是name1的地址。</li>
+<li>接着，program跳到.PLT0，此时，将把第二个GOT entry的位置放入栈中(用作dynamic的标识信息)。然后，跳入third GOT entry，将控制权转移给dynamic linker。</li>
+<li>当dynmaic linker获得控制权后，dynamic linker将从栈中获取到参数，计算出name1的地址，将地址写入到GOT表中，将控制权转移给目标函数。</li>
+<li>后续的name1调用，将直接进入对应函数，无需再次进入dynamic linker，就是说.PLT1中的地址，已经被改成了目标函数地址。(此处的直接，仍然是进入PLT表，再直接进入GOT指明的地址。)</li>
+</ol>
+<p>LD_BIND_NOW环境变量的值，将决定是否要将PLT的relocation过程推迟到第一次使用的时候。</p>
+<p><strong>Hash Table</strong></p>
+<p>nbucket&#x2F;nchain</p>
+<h2 id="c-library"><a href="#c-library" class="headerlink" title="c library"></a>c library</h2><p>C library包含的符号列表(略)。</p>
+<h2 id="ELF需要处理的核心问题"><a href="#ELF需要处理的核心问题" class="headerlink" title="ELF需要处理的核心问题"></a>ELF需要处理的核心问题</h2><ol>
+<li>内存如何分配</li>
+<li>如何保证安全性<ul>
+<li>对内存设置最小权限，比如text段通常不具备写权限。</li>
+<li>SHT_HASH的存在</li>
+</ul>
+</li>
+</ol>
+<h2 id="Q-A"><a href="#Q-A" class="headerlink" title="Q&amp;A"></a>Q&amp;A</h2><ol>
+<li>API和ABI的区别<br>API的函数调用的规范，开发者在代码开发时，需要知道这一信息，应该传递哪些参数，以及应当获得什么样的结果，以及对错误结果的说明。</li>
+</ol>
+<p>ABI是对编译器而言，一个进程由不同的ELF组成，这些ELF是分别编译的，在进行函数调用时，应该如何去读取参数，是去stack中读取，还是去register中读取，哪些register由调用者保护，哪些又是由被调用者保护。</p>
+<p>总结下，区别是，API是代码编写层面的规范，ABI是汇编生成阶段的规范。共同点是，都是为了解决不同object之间的函数调用问题。</p>
+<ol start="2">
+<li>Global offset table和Procedure linkage table的区别</li>
+</ol>
+<p>Global offset table记录的是符号的绝对地址。</p>
+<p>Procedure linkage table记录的是函数的绝对地址，用于函数跳转。</p>
+<p>共同点：都是为了解决编译时无法确定地址的问题，通过一层跳转，将地址计算推迟到load stage。<br>不同点：GOT本质上是一个symbol table，PLT也是记录的地址，但是GOT是键值对，即纯粹只记录了地址，而PLT不仅记录了地址，而通过相关指令进行了jmp动作。GOT承担的是索引功能，PLT本身是text段的一部分。</p>
+<p>总的来说，最终的地址修改都是在对GOT表生效的，而PLT的作用则是控制权的转移。</p>
+<h2 id="reference"><a href="#reference" class="headerlink" title="reference"></a>reference</h2><ol>
+<li><a target="_blank" rel="noopener" href="https://www.cs.cmu.edu/afs/cs/academic/class/15213-f00/docs/elf.pdf">CMU&#x2F;ELF</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.section.io/engineering-education/what-is-an-abi/">What is ABI</a></li>
+</ol>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/rethandler/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2025-05-12 14:45:59
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Linux/" title="Linux">
+                        #Linux
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/ELF/" title="ELF">
+                        #ELF
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Live-patch/" title="Live patch">
+                        #Live patch
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Assembly/" title="Assembly">
+                        #Assembly
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/livepatch-libcare/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Object-Files"><span class="toc-text">Object Files</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#program-loading-and-dynamic-linking"><span class="toc-text">program loading and dynamic linking</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c-library"><span class="toc-text">c library</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ELF%E9%9C%80%E8%A6%81%E5%A4%84%E7%90%86%E7%9A%84%E6%A0%B8%E5%BF%83%E9%97%AE%E9%A2%98"><span class="toc-text">ELF需要处理的核心问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Q-A"><span class="toc-text">Q&amp;A</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#reference"><span class="toc-text">reference</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/anatasluo">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+        <li>
+          
+            <a title="email" href="mailto:luolongjuna@gmail.com">
+              <i class="iconfont icon-envelope"></i>
+            </a>
+            
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">Copyright</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">© 2025 anatasluo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + Linux%20ELF%E8%A7%84%E8%8C%83%E6%95%B4%E7%90%86 + '&url=' + https%3A%2F%2Fanatasluo.github.io%2Felf%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=https://anatasluo.github.io/elf/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>

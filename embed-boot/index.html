@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="anatasluo" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      嵌入式设备中的Linux引导方式 
+      
+      
+      |
+    
+     anatasluo
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.ico">
+    <link rel="icon" href="/images/favicon.ico">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/huahua.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">anatasluo</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.10/dist/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">嵌入式设备中的Linux引导方式</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2025-05-12 14:45:59
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Linux/" title="Linux">
+                    #Linux
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Uboot/" title="Uboot">
+                    #Uboot
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Bootloader/" title="Bootloader">
+                    #Bootloader
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Bios/" title="Bios">
+                    #Bios
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Arm/" title="Arm">
+                    #Arm
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>主要是总结Linux的引导过程，包括:</p>
+<ul>
+<li>从开机到控制权交接给内核</li>
+<li>内核初始化过程</li>
+<li>用户空间初始化过程</li>
+</ul>
+<p>本文参考的Linux代码版本是2.6.x，是比较老的版本，如果与最新的代码特性有出入，以最新的为主。<br><br/></p>
+<h2 id="嵌入式设备的关键属性"><a href="#嵌入式设备的关键属性" class="headerlink" title="嵌入式设备的关键属性"></a>嵌入式设备的关键属性</h2><p>嵌入式设备和非嵌入式设备并没有明确的界限，嵌入式设备通常具有以下属性：</p>
+<ul>
+<li>包含一个处理引擎，比如通用微处理器</li>
+<li>一般是针对某种具体的应用或目的设计的</li>
+<li>用户界面通常不是考量的关键因素，甚至会为了安全性而牺牲一部分可用性</li>
+<li>资源通常受限，比如没有硬盘，供电受限等等</li>
+<li>应用程序通常是内置的，出厂时，软硬件均已经集成完善。</li>
+</ul>
+<br/>
+
+<h2 id="从开机到控制权交接给内核"><a href="#从开机到控制权交接给内核" class="headerlink" title="从开机到控制权交接给内核"></a>从开机到控制权交接给内核</h2><p>对于这一过程的概述，嵌入式设备和一般的桌面PC设备稍有差别，也可以说是ARM世界和x86世界的差别。</p>
+<p>在一般的桌面PC系统中，通电之后，Bios立刻接管了设备，在完成硬件自检等工作后，跳转，将控制权交给Bootloader，如果硬盘里不只安装了一个系统，在Bootloader这一步可以决定启动哪一个操作系统。在这个语境中，Bios被称为“first-stage boot loader”，bootloader被称为“second-stage boot loader”。主流的Bootloader包括bootmgr, grub等等。</p>
+<p>在嵌入式设备中，通常不会有多个系统的情况，因此，不需要将整个引导过程拆成两步进行。所以，嵌入式设备中，很少使用bios的概念，而是直接将两个步骤统称为 bootloader，本文以下内容涉及到的bootloader，除非特别说明，都是指嵌入式开发中的概念。</p>
+<p>在嵌入式设备中，bootloader的关键职能，包括：</p>
+<ul>
+<li>初始化关键的硬件，比如SDRAM控制器，I&#x2F;O控制器和图形控制器</li>
+<li>为外设控制器分配必要的系统资源，比如内存和中断电路</li>
+<li>提供一个定位和加载操作系统镜像的机制</li>
+<li>加载操作系统，并将控制权移交给它，同时传递必要的启动信息。内容可能包括内存总容量、时钟频率、串行端口频率（波特率）等等</li>
+</ul>
+<p>嵌入式开发过程中，使用最为广泛的bootloader便是U-Boot。本文不会过多的涉及U-Boot的内容，以避免行文过于臃肿，U-Boot的用法可以参考<a href="#supplement">补充内容</a>。</p>
+<br/>
+
+<h2 id="内核空间初始化过程"><a href="#内核空间初始化过程" class="headerlink" title="内核空间初始化过程"></a>内核空间初始化过程</h2><p>如果bootloader引导顺利的话，控制权接着就转交给了linux内核。</p>
+<p>Linux内核的引导过程比较复杂，本文从<strong>源码</strong>角度简单介绍下其中比较重要的几个环节。</p>
+<br/>
+
+<h3 id="内核入口-head-S"><a href="#内核入口-head-S" class="headerlink" title="内核入口 head.S"></a>内核入口 head.S</h3><p>head.S位于..&#x2F;arch&#x2F;<ARCH>&#x2F;kernel&#x2F;head.S，从目录也可以看出，该文件是用来处理架构相关的初始化工作，主要有以下的作用：</p>
+<ol>
+<li>检查处理器和架构的有效性</li>
+<li>创建初始的页表（page table)表项</li>
+<li>启用处理器的内存管理单元（MMU）</li>
+<li>进行错误检测并报告</li>
+<li>跳转到内核主体的起始位置，即main.c中的函数start_kernel()</li>
+</ol>
+<br/>
+
+<h3 id="内核开始-main-c"><a href="#内核开始-main-c" class="headerlink" title="内核开始 main.c"></a>内核开始 main.c</h3><p>该文件位于..&#x2F;init&#x2F;main.c中，如前文所述，head.S在执行结束后，将开始执行main.c中的start_kernel()。main.c完成大部分内核启动工作，从初始化第一个内核线程开始，直至挂在根文件系统并执行最初的用户空间Linux应用程序。</p>
+<p>主要工作及过程如下：</p>
+<ol>
+<li><p>架构设置</p>
+<p> 通过调用setup_arch(),完成对某种架构通用的初始化工作，该参数接受一个指向内核命令行的指针 –&gt; setup_arch(&amp;command_line)</p>
+</li>
+<li><p>内核命令行的处理</p>
+<p> 内核命令行是引导程序启动时，向内核传递的参数，相比与编译时指定的参数，cmdline要灵活得多。一个典型的cmdline通常如下:</p>
+<blockquote>
+<p>console&#x3D;ttys0,115200 root&#x3D;&#x2F;dev&#x2F;nfs</p>
+</blockquote>
+<p> cmdline拥有的参数可以多达上百个，内核中使用__setup宏将cmdline与相关的模块关联起来。其一般用法如下所示：</p>
+<blockquote>
+<p>__setup(“console&#x3D;”, console_setup);</p>
+</blockquote>
+<p> 含义为，当cmdline中遇到console&#x3D;字符串时，就调用__setup宏的第二个参数指定的函数。详细的过程涉及到ELF文件的生成和链接器的使用，不在本文的讨论范围。内核会遍历cmdline中的参数，并调用相应的处理函数。</p>
+</li>
+<li><p>子系统的初始化</p>
+<p> 子系统的初始化有两种方式，一种是显式初始化，比如调用init_timers()函数，console_init()函数，另外一种是借助类似__setup宏这种技巧实现的初始化，承担这种宏有一个系列*__initcall，具体过程本文不涉及。</p>
+</li>
+<li><p>init线程</p>
+<p> 执行到这里，内核生成了第一个内核线程 – init线程。init线程是Linux所有用户空间进程的父进程。需要说明的是，对于linux来说，并没有严格区分线程和进程，他们由同一种结构表示，区别在于资源的调度。</p>
+</li>
+<li><p>最后的引导步骤</p>
+<p> 在完成初始化工作之后，内核开始执行最后的引导步骤，包括：</p>
+<ul>
+<li>释放初始化函数和数据占用的内存</li>
+<li>打开系统控制台设备</li>
+<li>启动第一个用户空间进程</li>
+<li>….</li>
+</ul>
+ <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">if (execute_command) &#123;</span><br><span class="line">    run_init_process(execute_command);</span><br><span class="line">    printk(KERN_WARNING &quot;Failed to execute %s. Attempting&quot;</span><br><span class="line">            &quot;defaults...\n&quot;, execute_command);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">run_init_process(&quot;/sbin/init&quot;);</span><br><span class="line">run_init_process(&quot;/etc/init&quot;);</span><br><span class="line">run_init_process(&quot;/bin/init&quot;);</span><br><span class="line">run_init_process(&quot;/bin/sh&quot;);</span><br><span class="line"></span><br><span class="line">panic(&quot;No init found, Try passing init= option to kernel&quot;);</span><br></pre></td></tr></table></figure>
+<p> 上述代码来自main.c中的init_post函数最后一段，如果该函数执行到最后，将会产生一个”No init found”的错误，这也是嵌入式开始过程中见到比较多的一个错误。run_init_process执行成功后，并不会返回，而是通过execve()系统调用生成一个新进程覆盖旧进程，因此，init过程是第一个执行成功的run_init_process函数。</p>
+</li>
+</ol>
+<br/>
+
+<h2 id="用户空间初始化"><a href="#用户空间初始化" class="headerlink" title="用户空间初始化"></a>用户空间初始化</h2><p>根文件系统，简单的说，就是内核挂载最早的文件系统。如上文所说，内核引导的最后，会试图通过run_init_process执行类似&#x2F;sbin&#x2F;init的二进制程序。根文件系统，在进行到最后的引导步骤前，就已经初始化并挂在完成。</p>
+<p>根文件的生成，挂在过程，会在另外一篇blog中详细介绍。在run_init_process执行成功后，第一个用户态程序便开始执行了。<br><br/></p>
+<h2 id="补充"><a href="#补充" class="headerlink" title="补充"></a><span id="supplement">补充</span></h2><br/>
+
+<h3 id="1-dtb-dts-dtc介绍及常用用法"><a href="#1-dtb-dts-dtc介绍及常用用法" class="headerlink" title="1. dtb,dts,dtc介绍及常用用法"></a>1. dtb,dts,dtc介绍及常用用法</h3><p>dts,即device tree source。是arm嵌入式中，用于描述硬件的方式。dts通过dtc工具，生成供内核使用的dtb文件。</p>
+<br/>
+
+<h3 id="2-U-Boot的一般用法"><a href="#2-U-Boot的一般用法" class="headerlink" title="2. U-Boot的一般用法"></a>2. U-Boot的一般用法</h3><ul>
+<li><p>加载内容镜像到固定内存地址</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tftp 600000 uImage</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>加载dtb到固定内存位置</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tftp c00000 dtb</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>根据之前的dtb开始引导系统</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bootm 600000 - c00000</span><br></pre></td></tr></table></figure></li>
+</ul>
+<hr>
+<ul>
+<li><p>从磁盘引导</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">diskboot Ox400000 0:0</span><br></pre></td></tr></table></figure>
+<p>此处中的0：0指第一个IDE设备的第一个分区</p>
+</li>
+<li><p>从内存的某个位置开始引导</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bootm Ox400000</span><br></pre></td></tr></table></figure></li>
+</ul>
+<hr>
+<br/>
+
+<h2 id="需要区分的概念"><a href="#需要区分的概念" class="headerlink" title="需要区分的概念"></a>需要区分的概念</h2><ul>
+<li>BIOS-MBR 与 GPT-UEFI</li>
+<li>GRUB, GRUB2</li>
+<li>ROM 与 EEPROM</li>
+<li>U-boot</li>
+<li>dtb, dtc, dts</li>
+</ul>
+<br/>
+
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li>《嵌入式LINUX基础教程（第2版）》 第1章至第7章</li>
+<li><a target="_blank" rel="noopener" href="https://neosmart.net/wiki/mbr-boot-process/">The BIOS&#x2F;MBR Boot Process</a></li>
+<li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Booting">booting</a></li>
+</ul>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2025-05-12 14:45:59
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Linux/" title="Linux">
+                        #Linux
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Uboot/" title="Uboot">
+                        #Uboot
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Bootloader/" title="Bootloader">
+                        #Bootloader
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Bios/" title="Bios">
+                        #Bios
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Arm/" title="Arm">
+                        #Arm
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/c-history/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A6%82%E8%BF%B0"><span class="toc-text">概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B5%8C%E5%85%A5%E5%BC%8F%E8%AE%BE%E5%A4%87%E7%9A%84%E5%85%B3%E9%94%AE%E5%B1%9E%E6%80%A7"><span class="toc-text">嵌入式设备的关键属性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8E%E5%BC%80%E6%9C%BA%E5%88%B0%E6%8E%A7%E5%88%B6%E6%9D%83%E4%BA%A4%E6%8E%A5%E7%BB%99%E5%86%85%E6%A0%B8"><span class="toc-text">从开机到控制权交接给内核</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%85%E6%A0%B8%E7%A9%BA%E9%97%B4%E5%88%9D%E5%A7%8B%E5%8C%96%E8%BF%87%E7%A8%8B"><span class="toc-text">内核空间初始化过程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E6%A0%B8%E5%85%A5%E5%8F%A3-head-S"><span class="toc-text">内核入口 head.S</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E6%A0%B8%E5%BC%80%E5%A7%8B-main-c"><span class="toc-text">内核开始 main.c</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%94%A8%E6%88%B7%E7%A9%BA%E9%97%B4%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">用户空间初始化</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A1%A5%E5%85%85"><span class="toc-text">补充</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-dtb-dts-dtc%E4%BB%8B%E7%BB%8D%E5%8F%8A%E5%B8%B8%E7%94%A8%E7%94%A8%E6%B3%95"><span class="toc-text">1. dtb,dts,dtc介绍及常用用法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-U-Boot%E7%9A%84%E4%B8%80%E8%88%AC%E7%94%A8%E6%B3%95"><span class="toc-text">2. U-Boot的一般用法</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9C%80%E8%A6%81%E5%8C%BA%E5%88%86%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="toc-text">需要区分的概念</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-text">参考</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/anatasluo">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+        <li>
+          
+            <a title="email" href="mailto:luolongjuna@gmail.com">
+              <i class="iconfont icon-envelope"></i>
+            </a>
+            
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">Copyright</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">© 2025 anatasluo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + %E5%B5%8C%E5%85%A5%E5%BC%8F%E8%AE%BE%E5%A4%87%E4%B8%AD%E7%9A%84Linux%E5%BC%95%E5%AF%BC%E6%96%B9%E5%BC%8F + '&url=' + https%3A%2F%2Fanatasluo.github.io%2Fembed-boot%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=https://anatasluo.github.io/embed-boot/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>

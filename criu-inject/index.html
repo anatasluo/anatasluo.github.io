@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="anatasluo" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      criu代码注入原理解析 
+      
+      
+      |
+    
+     anatasluo
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.ico">
+    <link rel="icon" href="/images/favicon.ico">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/huahua.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">anatasluo</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.10/dist/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">criu代码注入原理解析</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2025-05-12 14:45:59
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Criu/" title="Criu">
+                    #Criu
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Compel/" title="Compel">
+                    #Compel
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Code-injection/" title="Code injection">
+                    #Code injection
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <p>criu中实现了一个代码注入工具 -&gt; <a target="_blank" rel="noopener" href="https://github.com/checkpoint-restore/criu/tree/criu-dev/compel">compel</a></p>
+<p>这篇blog将对compel工具的实现原理，进行一个梳理。</p>
+<h3 id="代码注入"><a href="#代码注入" class="headerlink" title="代码注入"></a>代码注入</h3><p>wiki对code injection的介绍如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Code injection is the exploitation of a computer bug that is caused by processing invalid data. The injection is used by an attacker to introduce (or &quot;inject&quot;) code into a vulnerable computer program and change the course of execution.</span><br></pre></td></tr></table></figure>
+<p>简单的来说，代码注入，就是在某个进程上下文中执行一段代码。</p>
+<h3 id="实现要点"><a href="#实现要点" class="headerlink" title="实现要点"></a>实现要点</h3><p>仅讨论广泛的实现，代码注入通常分为以下过程：</p>
+<ol>
+<li>编写注入代码，生成relocate file</li>
+<li>将该relocate file映射到进程上下文中</li>
+<li>对注入的代码进行relocation处理(这一步不是必须的，取决于注入代码的复杂程度)</li>
+<li>修改执行上下文的寄存器值，让进程跳转到区域执行</li>
+</ol>
+<p>compel实现，在以上步骤的基础上，还加入了一个限制：<strong>注入程序用于获取上下文信息，其执行不能影响原有上下文，注入代码执行结束后，原有上下文可以继续执行。</strong></p>
+<p>下面，我将按个讨论以上步骤的具体实现。</p>
+<h4 id="生成用于注入的relocate-file"><a href="#生成用于注入的relocate-file" class="headerlink" title="生成用于注入的relocate file"></a>生成用于注入的relocate file</h4><p>实际上，注入代码并不一定是relocate file。只要求是可执行的汇编代码即可。这里我用relocate file来讨论，是因为注入代码可能很复杂，这种情况下，全部手写汇编是不现实的，因此势必要让编译器来生成最终的注入代码。这种情况下，不可避免的就会出现重定向过程。</p>
+<p>由于我们是在运行时，加载该注入代码，因此重定向过程，需要我们自行编写代码完成。</p>
+<p><strong>为了简化实现</strong>，该relocate file生成过程存在以下的限制：</p>
+<ol>
+<li>不能链接任何外部库，包括libc</li>
+<li>内存模型需要高度定制 –&gt; 需要自己编写链接脚本</li>
+</ol>
+<h5 id="compel的编译过程和linker-script"><a href="#compel的编译过程和linker-script" class="headerlink" title="compel的编译过程和linker script"></a>compel的编译过程和linker script</h5><p>相关的编译参数包括：</p>
+<ul>
+<li>ffreestanding -&gt; 告诉编译器，该程序不使用任何标准库</li>
+<li>fno-stack-protector –&gt; 不需要在栈中插入额外空间，方便我们简化设计</li>
+<li>nostdlib –&gt; 不链接标准库</li>
+<li>fpie –&gt; 生成位置无关的二进制代码</li>
+<li>-r -z noexecstack –&gt; linker参数</li>
+</ul>
+<p>链接脚本源码在<a target="_blank" rel="noopener" href="https://github.com/checkpoint-restore/criu/blob/criu-dev/compel/arch/x86/scripts/compel-pack.lds.S">这里</a></p>
+<p>.compel.exit和.compel.init两个section是为了实现插件的初始化，不多赘述。</p>
+<h5 id="compel的syscall封装过程"><a href="#compel的syscall封装过程" class="headerlink" title="compel的syscall封装过程"></a>compel的syscall封装过程</h5><p>源码涉及以下两个文件：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/checkpoint-restore/criu/blob/criu-dev/include/common/arch/x86/asm/linkage.h">linkage.h</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/checkpoint-restore/criu/blob/criu-dev/compel/arch/x86/plugins/std/syscalls/syscall-common-x86-64.S">syscall-common-x86-64.S</a></li>
+</ul>
+<p>这里有意思的细节很多：</p>
+<ol>
+<li>为了对齐加入0x90，0x90在X86下是NOP指令，见参考1</li>
+<li>“movq %rcx, %r10”是因为用户态函数调用的ABI和syscall的ABI存在一个细微差异，见参考2</li>
+</ol>
+<h4 id="将该relocate-file映射到进程上下文中"><a href="#将该relocate-file映射到进程上下文中" class="headerlink" title="将该relocate file映射到进程上下文中"></a>将该relocate file映射到进程上下文中</h4><p>这一步通过ptrace实现，ptrace可以实现在进程上下文进程syscall，具体原理此处不赘述。</p>
+<h4 id="对注入的代码进行relocation处理"><a href="#对注入的代码进行relocation处理" class="headerlink" title="对注入的代码进行relocation处理"></a>对注入的代码进行relocation处理</h4><p>源码实现在<a target="_blank" rel="noopener" href="https://github.com/checkpoint-restore/criu/blob/criu-dev/compel/src/lib/handle-elf.c">这里</a></p>
+<p>这一步compel分成两部分进行</p>
+<ol>
+<li>将第一步生成的relocate file进行预处理，生成一个头文件</li>
+<li>头文件里记录了简化后的relocation information</li>
+</ol>
+<p>第一步预处理，生成头文件，我个人猜测是为了执行速度和简化内存处理。这一步会为所有的section都分配内存，包含NOBITS的BSS，塞到一个unsigned char数组中。其他符号和重定向信息会生成特定的数据结构。<br>第二步，根据描述信息，对blob进行重定向处理。</p>
+<p>最终执行时，还需要分配栈空间，信号处理函数的栈空间等等，其内存模型参考<a target="_blank" rel="noopener" href="https://criu.org/Parasite_code">这里</a></p>
+<p>这里内存分配中，在多线程环境下，有两个栈，一个用于主线程，一个是其他线程。其他线程共用一个栈，即其他线程之间不存在并发。</p>
+<h4 id="修改执行上下文的寄存器值，让进程跳转到区域执行"><a href="#修改执行上下文的寄存器值，让进程跳转到区域执行" class="headerlink" title="修改执行上下文的寄存器值，让进程跳转到区域执行"></a>修改执行上下文的寄存器值，让进程跳转到区域执行</h4><p>通过ptrace实现</p>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><ol>
+<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/18413107/align-directive-proper-usage-with-align5-and-0x90">Why 0x90</a></li>
+<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/2535989/what-are-the-calling-conventions-for-unix-linux-system-calls-and-user-space-f">ABI for syscall</a></li>
+</ol>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/livepatch-libcare/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2025-05-12 14:45:59
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Criu/" title="Criu">
+                        #Criu
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Compel/" title="Compel">
+                        #Compel
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Code-injection/" title="Code injection">
+                        #Code injection
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/openeuler-kpatch/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E6%B3%A8%E5%85%A5"><span class="toc-text">代码注入</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0%E8%A6%81%E7%82%B9"><span class="toc-text">实现要点</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%94%9F%E6%88%90%E7%94%A8%E4%BA%8E%E6%B3%A8%E5%85%A5%E7%9A%84relocate-file"><span class="toc-text">生成用于注入的relocate file</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#compel%E7%9A%84%E7%BC%96%E8%AF%91%E8%BF%87%E7%A8%8B%E5%92%8Clinker-script"><span class="toc-text">compel的编译过程和linker script</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#compel%E7%9A%84syscall%E5%B0%81%E8%A3%85%E8%BF%87%E7%A8%8B"><span class="toc-text">compel的syscall封装过程</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B0%86%E8%AF%A5relocate-file%E6%98%A0%E5%B0%84%E5%88%B0%E8%BF%9B%E7%A8%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E4%B8%AD"><span class="toc-text">将该relocate file映射到进程上下文中</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AF%B9%E6%B3%A8%E5%85%A5%E7%9A%84%E4%BB%A3%E7%A0%81%E8%BF%9B%E8%A1%8Crelocation%E5%A4%84%E7%90%86"><span class="toc-text">对注入的代码进行relocation处理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BF%AE%E6%94%B9%E6%89%A7%E8%A1%8C%E4%B8%8A%E4%B8%8B%E6%96%87%E7%9A%84%E5%AF%84%E5%AD%98%E5%99%A8%E5%80%BC%EF%BC%8C%E8%AE%A9%E8%BF%9B%E7%A8%8B%E8%B7%B3%E8%BD%AC%E5%88%B0%E5%8C%BA%E5%9F%9F%E6%89%A7%E8%A1%8C"><span class="toc-text">修改执行上下文的寄存器值，让进程跳转到区域执行</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-text">参考</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/anatasluo">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+        <li>
+          
+            <a title="email" href="mailto:luolongjuna@gmail.com">
+              <i class="iconfont icon-envelope"></i>
+            </a>
+            
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">Copyright</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">© 2025 anatasluo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + criu%E4%BB%A3%E7%A0%81%E6%B3%A8%E5%85%A5%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90 + '&url=' + https%3A%2F%2Fanatasluo.github.io%2Fcriu-inject%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=https://anatasluo.github.io/criu-inject/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>

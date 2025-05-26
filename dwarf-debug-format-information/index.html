@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="zh" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="anatasluo" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      DWARF and exception handling 
+      
+      
+      |
+    
+     anatasluo
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.ico">
+    <link rel="icon" href="/images/favicon.ico">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/huahua.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">anatasluo</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.10/dist/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">DWARF and exception handling</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2025-05-12 14:45:59
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/ELF/" title="ELF">
+                    #ELF
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/DWARF/" title="DWARF">
+                    #DWARF
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Debug/" title="Debug">
+                    #Debug
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>DWARF(debugging with attributed record formats)是一种常用的source-level调试信息。</p>
+<p>DWARF通过树形结构来组织调试信息，树形结构的每个节点可以表示types, variables, functions.</p>
+<p>DWARF使用一系列的DIEs(debugging information entries)来定义source program的底层表示。每一个DIE由一个标识(tag)和一系列的属性(attributes)组成。一个DIE或者一群DIE共同描述了source program中对应实体(entity)。标识(tag)指明了每个entry所属的class，以及对应entry所具有的特定属性。</p>
+<h2 id="DWARF-sections"><a href="#DWARF-sections" class="headerlink" title="DWARF sections"></a>DWARF sections</h2><p>常见的DWARF section以及对应的含义：<br>.debug_abbrev	-&gt;	Abbreviations used in the .debug_info section<br>.debug_aranges	-&gt;	Lookup table for mapping addresses to compilation units<br>.debug_frame	-&gt;	Call frame information<br>.debug_info	-&gt;	Core DWARF information section<br>.debug_line	-&gt;	Line number information<br>.debug_loc	-&gt;	Location lists used in the DW_AT_location attributes<br>.debug_macinfo	-&gt;	Macro information<br>.debug_pubnames	-&gt;	Lookup table for global objects and functions<br>.debug_pubtypes	-&gt;	Lookup table for global types<br>.debug_ranges	-&gt;	Address ranges used in the DW_AT_ranges attributes<br>.debug_str	-&gt;	String table used in .debug_info<br>.debug_types	-&gt;	Type descriptions</p>
+<p>.debug_abbrev section包含多个描述所有遵循DWARF格式的compilation unit的abbreviation tables。</p>
+<p>每一个描述compilation unit的abbreviation table包含一系列的abbreviation declarations。每一个declaration指明了一个DIE的tag和attributes。这些信息用于指导.debug_info section的解释。每一个compilation unit都与一个特定的abbreviation table关联，多个compilation units可以共享一个abbreviation table。</p>
+<h2 id="DWARF-tools"><a href="#DWARF-tools" class="headerlink" title="DWARF tools"></a>DWARF tools</h2><ul>
+<li>readelf</li>
+<li>dwarfdump</li>
+<li>libdwarf</li>
+</ul>
+<h2 id="C-C-相关的tag和attributes"><a href="#C-C-相关的tag和attributes" class="headerlink" title="C&#x2F;C++相关的tag和attributes"></a>C&#x2F;C++相关的tag和attributes</h2><p>DW_TAG_class_type	-&gt;	Represents the class name and type information<br>DW_TAG_structure_type	-&gt;	Represents the structure name and type information<br>DW_TAG_union_type	-&gt;	Represents the union name and type information<br>DW_TAG_enumeration_type	-&gt;	Represents the enum name and type information<br>DW_TAG_typedef	-&gt;	Represents the typedef name and type information<br>DW_TAG_array_type	-&gt;	Represents the array name and type information<br>DW_TAG_subrange_type	-&gt;	Represents the array size information<br>DW_TAG_inheritance	-&gt;	Represents the inherited class name and type information<br>DW_TAG_member	-&gt;	Represents the members of class<br>DW_TAG_subprogram	-&gt;	Represents the function name information<br>DW_TAG_formal_parameter	-&gt;	Represents the function arguments’ information<br>DW_AT_name	-&gt;	Represents the name string<br>DW_AT_type	-&gt;	Represents the type information<br>DW_AT_artificial	-&gt;	Is set when it is created by compiler<br>DW_AT_sibling	-&gt;	Represents the sibling location information<br>DW_AT_data_member_location	-&gt;	Represents the location information<br>DW_AT_virtuality	-&gt;	Is set when it is virtual</p>
+<h2 id="eh-frame-section"><a href="#eh-frame-section" class="headerlink" title=".eh_frame section"></a>.eh_frame section</h2><p>.eh_frame section的格式基本与.debug_frame一样，存在一些细微的差别。</p>
+<p>.eh_frame section包含至少一条CFI(Call Frame Information)记录，而CFI &#x3D; 1 CIE(Common Information Entry) + at least 1 FDE(Frame Description Entry)。</p>
+<p>就观察来说，对于一个源码文件编译出来的object文件，有一个CIE，记录了一些全局的信息，包括version，augmentation string等等。FDE则对应每一个函数。</p>
+<p>在做热补丁的时候，linker报了一个如下的错误:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">no .eh_frame_hdr table will be created</span><br></pre></td></tr></table></figure>
+
+<p>尽管报了这个错误，linker还是正常链接生成了目标文件。</p>
+<p>.eh_frame_hdr简单的说，就是用于.eh_frame检索的概括信息，这些信息最终的用途是实现ELF的Exception Handling机制。(待填坑)</p>
+<p>通过阅读binutils-gdb的源码，发现报错来自以下代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">ENSURE_NO_RELOCS(buf);</span><br><span class="line">if ((sec-&gt;flags &amp; SEC_LINKER_CREATED) == 0 || cookie-&gt;rels != NULL)</span><br><span class="line">&#123;</span><br><span class="line">  asection *rsec;</span><br><span class="line"></span><br><span class="line">  REQUIRE(GET_RELOC(buf));</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这段源码出错的逻辑，是没找到FDE对应的重定向条目。也就是说，每个FDE必须有对应的重定向条目。</p>
+<p>通过阅读源码，发现每个FDE对应的重定向地址都是offset + 0x8. 这个地址对应的DWARF属性是 - PC Begin。</p>
+<p>出错的原因到这里就很清楚了，做补丁的时候，我去除了没用到的symbol和relocation entry, 导致linker在处理.eh_frame时，校验失败。</p>
+<p>解决的办法也很简单，去除relocation entry之后，把对应的FDE也去除掉。</p>
+<p>代码实现看<a target="_blank" rel="noopener" href="https://gitee.com/openeuler/syscare/pulls/138">这里</a>。</p>
+<p>在生成新的.eh_frame时候，注意要同时更新PC Begin和eh_hdr_id，对应的relocation entry的offset也要更新。</p>
+<p>FDE的eh_hdr_id对应的值就是其本身的偏移，CIE的eh_hdr_id是0.</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><p><a target="_blank" rel="noopener" href="https://developer.ibm.com/articles/au-dwarf-debug-format/">dwarf-debug-format</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://refspecs.linuxbase.org/LSB_4.0.0/LSB-Core-generic/LSB-Core-generic/ehframechpt.html">LSB - Exception Frames</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://refspecs.linuxfoundation.org/LSB_1.3.0/gLSB/gLSB/ehframehdr.html">LSB - ehframe_hdr</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://github.com/mclinker/mclinker/blob/master/include/mcld/LD/EhFrameHdr.h">github - mclinker</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://maskray.me/blog/2021-08-29-all-about-global-offset-table">GOT</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://martin.uy/blog/understanding-the-gcc_except_table-section-in-elf-binaries-gcc/">.gcc_except_table</a> </p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://www.airs.com/blog/archives/166">airs - .gcc_execept_table</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://www.airs.com/blog/archives/460">airs - .gcc_execept_table</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://www.airs.com/blog/archives/462">airs - .gcc_execept_table</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://www.airs.com/blog/archives/464">airs - .gcc_execept_table</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/wuhui_gdnt/article/details/88737310">C++异常的幕后6</a></p>
+</li>
+</ul>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/linux-code-snippt/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2025-05-12 14:45:59
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/ELF/" title="ELF">
+                        #ELF
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/DWARF/" title="DWARF">
+                        #DWARF
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Debug/" title="Debug">
+                        #Debug
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/dnf-rpm-debug/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Introduction"><span class="toc-text">Introduction</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#DWARF-sections"><span class="toc-text">DWARF sections</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#DWARF-tools"><span class="toc-text">DWARF tools</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#C-C-%E7%9B%B8%E5%85%B3%E7%9A%84tag%E5%92%8Cattributes"><span class="toc-text">C&#x2F;C++相关的tag和attributes</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#eh-frame-section"><span class="toc-text">.eh_frame section</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/anatasluo">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+        <li>
+          
+            <a title="email" href="mailto:luolongjuna@gmail.com">
+              <i class="iconfont icon-envelope"></i>
+            </a>
+            
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">Copyright</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">© 2025 anatasluo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + DWARF%20and%20exception%20handling + '&url=' + https%3A%2F%2Fanatasluo.github.io%2Fdwarf-debug-format-information%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=https://anatasluo.github.io/dwarf-debug-format-information/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>

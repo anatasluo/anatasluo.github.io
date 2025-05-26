@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="zh" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="anatasluo" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      深入了解GCC的LTO机制 
+      
+      
+      |
+    
+     anatasluo
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.ico">
+    <link rel="icon" href="/images/favicon.ico">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/huahua.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">anatasluo</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.10/dist/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">深入了解GCC的LTO机制</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2025-05-13 17:30:25
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/GCC/" title="GCC">
+                    #GCC
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/LTO/" title="LTO">
+                    #LTO
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Livepatch/" title="Livepatch">
+                    #Livepatch
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <h2 id="经典的编译链接模型"><a href="#经典的编译链接模型" class="headerlink" title="经典的编译链接模型"></a>经典的编译链接模型</h2><p><img src="/./images/compiler-no-lto.png" title="经典的编译链接过程(见参考2)"></p>
+<p>经典的编译模型，有以下的几个特点：</p>
+<ol>
+<li>每一个源码文件通过汇编器(cc1)生成一个object文件</li>
+<li>所有的object文件经过linker生成binary</li>
+</ol>
+<p>这个模型有两个比较明显的缺点：</p>
+<ol>
+<li>主要的优化都在生成objects这个阶段完成，无法进行全局的优化</li>
+<li>在处理大规模的编译时，linker这一步耗时较长</li>
+</ol>
+<h2 id="LTO是什么"><a href="#LTO是什么" class="headerlink" title="LTO是什么"></a>LTO是什么</h2><p>通常来说，优化时掌握的信息越多，最终的效果就越好。由小及大，编译的优化思路大致可以分为语句级优化，函数级优化，程序级优化等等。</p>
+<p>在上面讨论经典的编译链接模型时，object内部的优化只需要修改汇编器(cc1)的实现即可。比较有难度的是进行objects之间的优化，比如去inline一个在其他源码文件中定义的全局函数。</p>
+<p>在computer programming中讨论这种跨越objects的优化时，常用的概念叫Interprocedural optimization(IPO)。</p>
+<p>与IPO相接近的一个概念，叫Whole Program Optimization(WPO)。</p>
+<p>从上面的经典模型可以知道，有能力看到全部objects信息的，是linker。因此，具体到GCC的实现时，这种优化思路最主要的体现就是Link Time Optimization(LTO)。</p>
+<h2 id="LTO的发展历史"><a href="#LTO的发展历史" class="headerlink" title="LTO的发展历史"></a>LTO的发展历史</h2><p>以下对LTO的发展历史整理，所用的资料都来自Honza Hubička的个人博客(见参考3)。</p>
+<h3 id="open64-2002-和LLVM-2003"><a href="#open64-2002-和LLVM-2003" class="headerlink" title="open64(2002)和LLVM(2003)"></a>open64(2002)和LLVM(2003)</h3><p>在2003年的GCC Summit上，Chris Lattner提出希望用LLVM取代当时正在开发中的Tree SSA，作为GCC的新middle-end，从而使GCC能够支持LTO。</p>
+<p>鲜为人知的一个事情，2002年的时候，open64已经开源，并且作为一个能够支持全部LTO机制的GCC可选后端。</p>
+<h3 id="GCC3-4-引入–combine参数-2004"><a href="#GCC3-4-引入–combine参数-2004" class="headerlink" title="GCC3.4 引入–combine参数(2004)"></a>GCC3.4 引入–combine参数(2004)</h3><p>2004年的时候，GCC3.4发布了。该版本开始，GCC通过实现LTO，开始支持了inter-module optimization(IMP)。</p>
+<p>一般来说，LTO的实现通过把中间语言(intermediate language, IL)加入了objects文件中实现(本质是集中相关的程序逻辑后一起处理)。</p>
+<p>当时的自由基金会担心这种IL的加入会让在不违反GPL2协议的情况下实现hook GCC成为可能。</p>
+<p>Apple的工程师Geoff Keating是最早在GCC中引入IMP的人，这种机制允许GCC的front-end同时处理多个源码文件，并将处理好的多个源码文件作为一个整体传递给back-end。这种机制算是早期的WPO实现。</p>
+<h3 id="GCC4-0-接受了新的IL-Tree-SSA-2005"><a href="#GCC4-0-接受了新的IL-Tree-SSA-2005" class="headerlink" title="GCC4.0 接受了新的IL - Tree SSA(2005)"></a>GCC4.0 接受了新的IL - Tree SSA(2005)</h3><h3 id="LTO在GCC中的早期实现-2005"><a href="#LTO在GCC中的早期实现-2005" class="headerlink" title="LTO在GCC中的早期实现(2005)"></a>LTO在GCC中的早期实现(2005)</h3><p>2005年的时候，来自Google、IBM和Codesoucery的工程师们在GCC的email list中发布了一个正式的proposal - “<a target="_blank" rel="noopener" href="http://gcc.gnu.org/projects/lto/lto.pdf">Link-Time Optimization in GCC: Requirements and High-Level design</a>“。这份文件列出了如果要支持LTO实现，现有的GCC需要做的一系列改变。</p>
+<h3 id="WHOPR-Whole-program-optization-2007"><a href="#WHOPR-Whole-program-optization-2007" class="headerlink" title="WHOPR: Whole program optization(2007)"></a>WHOPR: Whole program optization(2007)</h3><p>由于LTO的实现需要庞大的工作量，在此期间，Google的工程师考虑一个另外的问题 - 如何使LTO支持大规模程序的编译。于是，一个新的proposal被提出 - “<a target="_blank" rel="noopener" href="https://gcc.gnu.org/projects/lto/whopr.pdf">WHOPR - Fast and Scalable Whole Program Optimizations in GCC</a>“</p>
+<p>按照proposal中的提议，加入WHOPR之后，程序的编译链接模型变成了如下的形式：<br><img src="/./images/gcc-whopr.png"></p>
+<p>整个优化过程主要分为三个步骤：</p>
+<ol>
+<li><p>Local generation(LGEN)<br>这一步每个源码文件被单独编译成IL、local call-graph以及summary information。</p>
+</li>
+<li><p>Whole program analysis(WPA)<br>这一阶段会汇总上一步产生的信息，并进行必要的优化决策，产生global call-graph。最终的global call-graph可能会被划分成几块关系密切的部分，分别单独进行处理。</p>
+</li>
+<li><p>Local transformations(LTRANS)<br>这一步会单独处理上一步产生的几块关系密切的global call-graph子块，应用上一步做出的优化策略，产生最终的object文件。</p>
+</li>
+</ol>
+<h3 id="LIPO-Profile-Feedback-Based-Lightweight-IPO"><a href="#LIPO-Profile-Feedback-Based-Lightweight-IPO" class="headerlink" title="LIPO(Profile Feedback Based Lightweight IPO)"></a>LIPO(Profile Feedback Based Lightweight IPO)</h3><p>相比于编译时做优化的思路，LIPO利用运行时的结果去指导优化策略的选择。</p>
+<h3 id="GCC4-5正式发布了LTO机制-2010"><a href="#GCC4-5正式发布了LTO机制-2010" class="headerlink" title="GCC4.5正式发布了LTO机制(2010)"></a>GCC4.5正式发布了LTO机制(2010)</h3><p>在GCC4.5支持LTO之后，GCC4.6加入了对WHOPR的支持，同时移除了-fwhopr选项。该选项将作为-flto的默认子选项，用户仍让可以通过设置-flto-partition&#x3D;none来关闭fwhopr选项。</p>
+<h3 id="GCC4-7-的版本开始支持kernel使用LTO机制-2012"><a href="#GCC4-7-的版本开始支持kernel使用LTO机制-2012" class="headerlink" title="GCC4.7+的版本开始支持kernel使用LTO机制(2012)"></a>GCC4.7+的版本开始支持kernel使用LTO机制(2012)</h3><h3 id="GCC4-9-2014"><a href="#GCC4-9-2014" class="headerlink" title="GCC4.9(2014)"></a>GCC4.9(2014)</h3><p>GCC4.9对LTO机制做出了一系列的改进，用户感知最明显的是，LTO开启后，默认产生的是slim LTO文件，而不是fat LTO文件。所谓的fat LTO文件，是指同时产生原有的object源码以及LTO需要的IL文件。fat LTO文件的优点在于兼容性，对于那些不支持LTO的工具，依然可以继续按照object文件的原有流程去处理。缺点就是，fat LTO文件会带来双倍的编译耗时。随着工具链的发展完善，这种兼容性的设计就可以移除掉了。</p>
+<h3 id="GCC5-2015"><a href="#GCC5-2015" class="headerlink" title="GCC5(2015)"></a>GCC5(2015)</h3><p>GCC5.0支持了Feedback Directed optimization(FDO)</p>
+<p>按照<a target="_blank" rel="noopener" href="https://gcc.gnu.org/wiki/LightweightIpo">GCC wiki</a>的说法，GCC的实现叫做LIPO，LIPO综合了IPO和FDO的优点，换句话说，利用FDO来改进IPO导致的编译时间长和耗费磁盘空间的问题。通过FDO，必要的优化分析可以从link time转移到run time进行。</p>
+<p>完整的过程描述如图所示：</p>
+<p><img src="/./images/gcc-lipo.png"></p>
+<p>图片里的例子，build由4个source组成，经过run time的build analysis，source1需要cross module inline source2里的某些函数，source1在profile-use build时会把source2作为auxiliary一起编译。</p>
+<h3 id="GCC8-2018"><a href="#GCC8-2018" class="headerlink" title="GCC8(2018)"></a><a target="_blank" rel="noopener" href="https://hubicka.blogspot.com/2018/06/gcc-8-link-time-and-interprocedural.html">GCC8</a>(2018)</h3><p>从GCC8.1开始，linux发行版开始在构建中开启LTO机制。</p>
+<p>LTO机制长期存在的一个问题，就是编译输出和debug信息(主要是dwarf info)无法准确对应上。这一问题最终通过专门的项目<a target="_blank" rel="noopener" href="https://gcc.gnu.org/wiki/early-debug">early-debug</a>解决。</p>
+<p>完整的过程如图所示:<br><img src="/./images/gcc-early-debug.png"></p>
+<p>在Link阶段，会对early debug阶段产生的debug信息进行选择，只选择必要的部分。</p>
+<h3 id="GCC9-2019"><a href="#GCC9-2019" class="headerlink" title="GCC9(2019)"></a><a target="_blank" rel="noopener" href="https://hubicka.blogspot.com/2019/05/gcc-9-link-time-and-inter-procedural.html">GCC9</a>(2019)</h3><p>使用GCC9之后，针对测试使用的发行版版本，安装包的总量大小减少了5%，debug包减少了17%。</p>
+<p>GCC9支持设置LTO使用时的并行度(flto&#x3D;n)，这个并行度会影响WPA阶段之后，划分成的子objects的数量。</p>
+<p>可以认为，从GCC9开始，LTO机制逐渐稳定。</p>
+<h2 id="LTO相关的参数及编译产生的sections-GCC12"><a href="#LTO相关的参数及编译产生的sections-GCC12" class="headerlink" title="LTO相关的参数及编译产生的sections(GCC12)"></a>LTO相关的参数及编译产生的sections(GCC12)</h2><h3 id="LTO编译相关的参数"><a href="#LTO编译相关的参数" class="headerlink" title="LTO编译相关的参数"></a>LTO编译相关的参数</h3><ol>
+<li><p>开启LTO编译 - (-flto)</p>
+</li>
+<li><p>控制是否产生fat objects (-ffat-lto-objects)</p>
+</li>
+</ol>
+<p>所谓的fat object，是指产生的object中既包含了正常object code，还有LTO所需的IR。fat object的优点主要是兼容性，对于不支持LTO的工具链依然可以使用，在link阶段依然可以进行normal链接。缺点是编译耗时严重，产生的object过大。</p>
+<p>LTO发展早期，GCC使能LTO机制之后，默认产生的为fat object。后期随着GNU工作链发展成熟，默认产生的object为slim object，即object只包含LTO需要的IR。</p>
+<ol start="3">
+<li>LTO的编译模式</li>
+</ol>
+<ul>
+<li><p>LTO mode<br>整个程序作为一个源码文件进行优化，优点是进行最大程度的优化，缺点是编译并行度差。</p>
+</li>
+<li><p>WHOPR&#x2F;partition mode (-flto&#x3D;jobserver)<br>这种模式下，整个程序会被划分为几个object，这些object分别进行相应的优化。在这个模式下，整个编译分为三个阶段：<br>a. Local generation(LGEN)<br>b. Whole Program Analysis(WPA)<br>c. Local transformations(LTRANS)</p>
+</li>
+</ul>
+<ol start="4">
+<li><a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/gccint/Internal-flags.html">lto1的参数</a></li>
+</ol>
+<ul>
+<li>-fwpa</li>
+<li>-fltrans</li>
+<li>-fltrans-output-list&#x3D;file</li>
+<li>-fresolution&#x3D;file</li>
+</ul>
+<h3 id="LTO开启后，objects包含的相关section"><a href="#LTO开启后，objects包含的相关section" class="headerlink" title="LTO开启后，objects包含的相关section"></a><a target="_blank" rel="noopener" href="https://gcc.gnu.org/onlinedocs/gccint/LTO-object-file-layout.html">LTO开启后，objects包含的相关section</a></h3><ol>
+<li><p>.gnu.lto_.opts(Command line options)</p>
+</li>
+<li><p>.gnu.lto_.symtab(Symbol table)</p>
+</li>
+<li><p>.gnu.lto_.decls(Global declarations and types)</p>
+</li>
+<li><p>.gnu.lto_.cgraph(The callgraph)</p>
+</li>
+<li><p>.gnu.lto_.refs(IPA references)</p>
+</li>
+<li><p>.gnu.lto_.function_body.<name>(Function bodies)</p>
+</li>
+<li><p>.gnu.lto_.vars(Static variable initializers)</p>
+</li>
+<li><p>.gnu.lto_.&lt;jmpfuncs&#x2F;pureconst&#x2F;reference&gt;(Summaries and optimization summaries used by IPA passes)</p>
+</li>
+</ol>
+<h2 id="LTO开启后的编译过程"><a href="#LTO开启后的编译过程" class="headerlink" title="LTO开启后的编译过程"></a>LTO开启后的编译过程</h2><p>在不开启的LTO的情况下，C语言编译涉及到的组件有cc1，collect2，其中cc1生成objects文件，collect2被ld(linker)调用，生成最终的binary。</p>
+<p>在加入LTO之后，C语言编译的组件有cc1，collect2，lto1和lto-wrapper，其中lto1和lto-wrapper是针对LTO机制所增加的组件。</p>
+<p>在环境上打开execsnoop，运行以下命令，观察gcc命令的调用过程：</p>
+<blockquote>
+<p>gcc -o server a.c b.c c.c -v -flto&#x3D;auto -ffat-lto-objects  -fdata-sections -ffunction-sections -save-temps</p>
+</blockquote>
+<p>获得的exec调用结果输出为:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">gcc              398299  398005    0 /usr/lib64/ccache/gcc -o server a.c b.c c.c -v -flto=auto -ffat-lto-objects -fdata-sections -ffunction-sections -save-temps</span><br><span class="line">gcc              398299  398005    0 /usr/bin/gcc -o server a.c b.c c.c -v -flto=auto -ffat-lto-objects -fdata-sections -ffunction-sections -save-temps</span><br><span class="line">cc1              398300  398299    0 /usr/libexec/gcc/x86_64-redhat-linux/13/cc1 -E -quiet -v a.c -mtune=generic -march=x86-64 -flto=auto -ffat-lto-objects -fdata-sections -ffunction-sections -fpch-preprocess -o server-a.i</span><br><span class="line">cc1              398301  398299    0 /usr/libexec/gcc/x86_64-redhat-linux/13/cc1 -fpreprocessed server-a.i -quiet -dumpdir server- -dumpbase a.c -dumpbase-ext .c -mtune=generic -march=x86-64 -version -flto=auto -ffat-lto-objects -fdata-sections -ffunction-sections -o server-a.s</span><br><span class="line">as               398302  398299    0 /usr/bin/as -v --64 -o server-a.o server-a.s</span><br><span class="line">cc1              398303  398299    0 /usr/libexec/gcc/x86_64-redhat-linux/13/cc1 -E -quiet -v b.c -mtune=generic -march=x86-64 -flto=auto -ffat-lto-objects -fdata-sections -ffunction-sections -fpch-preprocess -o server-b.i</span><br><span class="line">cc1              398304  398299    0 /usr/libexec/gcc/x86_64-redhat-linux/13/cc1 -fpreprocessed server-b.i -quiet -dumpdir server- -dumpbase b.c -dumpbase-ext .c -mtune=generic -march=x86-64 -version -flto=auto -ffat-lto-objects -fdata-sections -ffunction-sections -o server-b.s</span><br><span class="line">as               398305  398299    0 /usr/bin/as -v --64 -o server-b.o server-b.s</span><br><span class="line">cc1              398306  398299    0 /usr/libexec/gcc/x86_64-redhat-linux/13/cc1 -E -quiet -v c.c -mtune=generic -march=x86-64 -flto=auto -ffat-lto-objects -fdata-sections -ffunction-sections -fpch-preprocess -o server-c.i</span><br><span class="line">cc1              398307  398299    0 /usr/libexec/gcc/x86_64-redhat-linux/13/cc1 -fpreprocessed server-c.i -quiet -dumpdir server- -dumpbase c.c -dumpbase-ext .c -mtune=generic -march=x86-64 -version -flto=auto -ffat-lto-objects -fdata-sections -ffunction-sections -o server-c.s</span><br><span class="line">as               398308  398299    0 /usr/bin/as -v --64 -o server-c.o server-c.s</span><br><span class="line">collect2         398309  398299    0 /usr/libexec/gcc/x86_64-redhat-linux/13/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/13/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/13/lto-wrapper -plugin-opt=-fresolution=server.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -flto=auto --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o </span><br><span class="line">ld               398310  398309    0 /usr/bin/ld -plugin /usr/libexec/gcc/x86_64-redhat-linux/13/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/13/lto-wrapper -plugin-opt=-fresolution=server.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o server </span><br><span class="line">lto-wrapper      398311  398310    0 /usr/libexec/gcc/x86_64-redhat-linux/13/lto-wrapper @server.lto_wrapper_args</span><br><span class="line">make             398312  398311    0 /usr/bin/make --version</span><br><span class="line">gcc              398313  398311    0 /usr/bin/gcc @./server.ltrans_args</span><br><span class="line">lto1             398314  398313    0 /usr/libexec/gcc/x86_64-redhat-linux/13/lto1 -quiet -dumpbase ./server.wpa -mtune=generic -march=x86-64 -version -fno-openmp -fno-openacc -fno-pie -fcf-protection=none -ffat-lto-objects -fdata-sections -ffunction-sections -fltrans-output-list=./server.ltrans.out -fwpa=8 -fresolution=server.res -flinker-output=exec @./server.wpa.args.0</span><br><span class="line">make             398315  398311    0 /usr/bin/make -f /tmp/ccSoHZVP.mk -j8 all</span><br><span class="line">gcc              398316  398315    0 /usr/bin/gcc -xlto -c -fno-openmp -fno-openacc -fno-pie -fcf-protection=none -mtune=generic -march=x86-64 -v -ffat-lto-objects -fdata-sections -ffunction-sections -save-temps -mtune=generic -march=x86-64 -dumpdir server. -dumpbase ./server.ltrans0.ltrans </span><br><span class="line">lto1             398317  398316    0 /usr/libexec/gcc/x86_64-redhat-linux/13/lto1 -quiet -dumpbase ./server.ltrans0.ltrans -mtune=generic -march=x86-64 -version -fno-openmp -fno-openacc -fno-pie -fcf-protection=none -ffat-lto-objects -fdata-sections -ffunction-sections -fltrans ./server.ltrans0.o -o ./server.ltrans0.ltrans.s</span><br><span class="line">as               398318  398316    0 /usr/bin/as -v --64 -o ./server.ltrans0.ltrans.o ./server.ltrans0.ltrans.s</span><br></pre></td></tr></table></figure>
+
+<p>分析pid以及ppid，可以得到以下的调用结构：</p>
+<p><img src="/./images/gcc-compile-lto.png"></p>
+<p>树的不同层次之间的箭头代表是父子进程，同一层次之间的箭头代表前者的输出是后者的输入。</p>
+<p>在这个样例里，由于源码数量较少，所有的源码都被编译到了一个object内。在处理更大的项目构建时，会观察到原有的objects被划分到若干个子object内。</p>
+<p>以openssh的sshd为例，产生的子objects的命名如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">/tmp/ccW5uCAJ.ltrans0.ltrans.o</span><br><span class="line">/tmp/ccW5uCAJ.ltrans7.ltrans.o</span><br><span class="line">/tmp/ccW5uCAJ.ltrans10.ltrans.o</span><br></pre></td></tr></table></figure>
+
+<p>该命令具有如下特点：</p>
+<ol>
+<li>具备统一的前缀 - ccW5uCAJ</li>
+<li>具备连续的编号，这些编号也是链接顺序，决定了在符号表中的排列次序</li>
+</ol>
+<p>这一过程的具体描述可以参考<a target="_blank" rel="noopener" href="https://gcc.gnu.org/wiki/whopr/driver">GCC-WHOPR</a>的描述，里面描述了LGEN,WPA,LTRANS阶段的详细行为以及LTO插件的具体实现。</p>
+<h2 id="发行版使用的LTO参数"><a href="#发行版使用的LTO参数" class="headerlink" title="发行版使用的LTO参数"></a>发行版使用的LTO参数</h2><p>fedora使用的编译参数通过rpm包redhat-rpm-config引入，解开这个包，可以发现以下LTO相关的编译参数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">%_gcc_lto_cflags        -flto=auto -ffat-lto-objects</span><br><span class="line">%_clang_lto_cflags      -flto=thin -ffat-lto-objects</span><br><span class="line">%_lto_cflags            %&#123;expand:%%&#123;_%&#123;toolchain&#125;_lto_cflags&#125;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其他发行版的使用情况可以参考以下wiki:</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://wiki.gentoo.org/wiki/LTO">gentoo</a></li>
+</ul>
+<h2 id="LTO的源码实现"><a href="#LTO的源码实现" class="headerlink" title="LTO的源码实现"></a>LTO的源码实现</h2><p>这部分实现比较复杂，参考<a href="../GCC15-LTO-Analysis">GCC15-LTO实现</a>。</p>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><ol>
+<li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Interprocedural_optimization">Interprocedural_optimization</a></li>
+<li><a target="_blank" rel="noopener" href="https://courses.grainger.illinois.edu/cs232/sp2009/lectures/Examples/lecture6/lecture6.html">CS232</a></li>
+<li><a target="_blank" rel="noopener" href="https://hubicka.blogspot.com/2014/04/linktime-optimization-in-gcc-1-brief.html">Honza Hubička’s Blog</a></li>
+</ol>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/fedora-kvm-bridge/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2025-05-13 17:30:25
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/GCC/" title="GCC">
+                        #GCC
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/LTO/" title="LTO">
+                        #LTO
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Livepatch/" title="Livepatch">
+                        #Livepatch
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/unexported-symbol-reference/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%8F%E5%85%B8%E7%9A%84%E7%BC%96%E8%AF%91%E9%93%BE%E6%8E%A5%E6%A8%A1%E5%9E%8B"><span class="toc-text">经典的编译链接模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LTO%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-text">LTO是什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LTO%E7%9A%84%E5%8F%91%E5%B1%95%E5%8E%86%E5%8F%B2"><span class="toc-text">LTO的发展历史</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#open64-2002-%E5%92%8CLLVM-2003"><span class="toc-text">open64(2002)和LLVM(2003)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#GCC3-4-%E5%BC%95%E5%85%A5%E2%80%93combine%E5%8F%82%E6%95%B0-2004"><span class="toc-text">GCC3.4 引入–combine参数(2004)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#GCC4-0-%E6%8E%A5%E5%8F%97%E4%BA%86%E6%96%B0%E7%9A%84IL-Tree-SSA-2005"><span class="toc-text">GCC4.0 接受了新的IL - Tree SSA(2005)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#LTO%E5%9C%A8GCC%E4%B8%AD%E7%9A%84%E6%97%A9%E6%9C%9F%E5%AE%9E%E7%8E%B0-2005"><span class="toc-text">LTO在GCC中的早期实现(2005)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#WHOPR-Whole-program-optization-2007"><span class="toc-text">WHOPR: Whole program optization(2007)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#LIPO-Profile-Feedback-Based-Lightweight-IPO"><span class="toc-text">LIPO(Profile Feedback Based Lightweight IPO)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#GCC4-5%E6%AD%A3%E5%BC%8F%E5%8F%91%E5%B8%83%E4%BA%86LTO%E6%9C%BA%E5%88%B6-2010"><span class="toc-text">GCC4.5正式发布了LTO机制(2010)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#GCC4-7-%E7%9A%84%E7%89%88%E6%9C%AC%E5%BC%80%E5%A7%8B%E6%94%AF%E6%8C%81kernel%E4%BD%BF%E7%94%A8LTO%E6%9C%BA%E5%88%B6-2012"><span class="toc-text">GCC4.7+的版本开始支持kernel使用LTO机制(2012)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#GCC4-9-2014"><span class="toc-text">GCC4.9(2014)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#GCC5-2015"><span class="toc-text">GCC5(2015)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#GCC8-2018"><span class="toc-text">GCC8(2018)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#GCC9-2019"><span class="toc-text">GCC9(2019)</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LTO%E7%9B%B8%E5%85%B3%E7%9A%84%E5%8F%82%E6%95%B0%E5%8F%8A%E7%BC%96%E8%AF%91%E4%BA%A7%E7%94%9F%E7%9A%84sections-GCC12"><span class="toc-text">LTO相关的参数及编译产生的sections(GCC12)</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#LTO%E7%BC%96%E8%AF%91%E7%9B%B8%E5%85%B3%E7%9A%84%E5%8F%82%E6%95%B0"><span class="toc-text">LTO编译相关的参数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#LTO%E5%BC%80%E5%90%AF%E5%90%8E%EF%BC%8Cobjects%E5%8C%85%E5%90%AB%E7%9A%84%E7%9B%B8%E5%85%B3section"><span class="toc-text">LTO开启后，objects包含的相关section</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LTO%E5%BC%80%E5%90%AF%E5%90%8E%E7%9A%84%E7%BC%96%E8%AF%91%E8%BF%87%E7%A8%8B"><span class="toc-text">LTO开启后的编译过程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%91%E8%A1%8C%E7%89%88%E4%BD%BF%E7%94%A8%E7%9A%84LTO%E5%8F%82%E6%95%B0"><span class="toc-text">发行版使用的LTO参数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LTO%E7%9A%84%E6%BA%90%E7%A0%81%E5%AE%9E%E7%8E%B0"><span class="toc-text">LTO的源码实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5"><span class="toc-text">参考链接</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/anatasluo">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+        <li>
+          
+            <a title="email" href="mailto:luolongjuna@gmail.com">
+              <i class="iconfont icon-envelope"></i>
+            </a>
+            
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">Copyright</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">© 2025 anatasluo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + %E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3GCC%E7%9A%84LTO%E6%9C%BA%E5%88%B6 + '&url=' + https%3A%2F%2Fanatasluo.github.io%2Flto-livepatch%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=https://anatasluo.github.io/lto-livepatch/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="anatasluo" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      C++中全局对象的初始化 
+      
+      
+      |
+    
+     anatasluo
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.ico">
+    <link rel="icon" href="/images/favicon.ico">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/huahua.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">anatasluo</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.10/dist/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">C++中全局对象的初始化</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2025-05-12 14:45:59
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/C/" title="C++">
+                    #C++
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Class/" title="Class">
+                    #Class
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <h2 id="全局对象初始化"><a href="#全局对象初始化" class="headerlink" title="全局对象初始化"></a>全局对象初始化</h2><p>查看如下C++代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;cstdio&gt;</span><br><span class="line"></span><br><span class="line">class A &#123;</span><br><span class="line">public:</span><br><span class="line">    int val;</span><br><span class="line">    A() &#123;</span><br><span class="line">        printf(&quot;construct ok \n&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">A g_al;</span><br><span class="line"></span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这段代码的运行结果是对象A的构造函数被调用，串口输出”construct ok”。根据全局对象的初始化规则，这个调用是发生在main函数之前的，而且可以是多个函数依次调用。那么，这种调用时如何实现的？</p>
+<p>通过gcc生成arm64汇编，汇编代码如下:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br></pre></td><td class="code"><pre><span class="line">	.arch armv8-a</span><br><span class="line">	.file	&quot;main.cpp&quot;</span><br><span class="line">	.text</span><br><span class="line">	.section	.rodata</span><br><span class="line">	.align	3</span><br><span class="line">.LC0:</span><br><span class="line">	.string	&quot;construct ok &quot;</span><br><span class="line">	.section	.text._ZN1AC2Ev,&quot;axG&quot;,@progbits,_ZN1AC5Ev,comdat</span><br><span class="line">	.align	2</span><br><span class="line">	.weak	_ZN1AC2Ev</span><br><span class="line">	.type	_ZN1AC2Ev, %function</span><br><span class="line">_ZN1AC2Ev:</span><br><span class="line">.LFB1:</span><br><span class="line">	.cfi_startproc</span><br><span class="line">	stp	x29, x30, [sp, -32]!</span><br><span class="line">	.cfi_def_cfa_offset 32</span><br><span class="line">	.cfi_offset 29, -32</span><br><span class="line">	.cfi_offset 30, -24</span><br><span class="line">	add	x29, sp, 0</span><br><span class="line">	.cfi_def_cfa_register 29</span><br><span class="line">	str	x0, [x29, 24]</span><br><span class="line">	adrp	x0, .LC0</span><br><span class="line">	add	x0, x0, :lo12:.LC0</span><br><span class="line">	bl	puts</span><br><span class="line">	nop</span><br><span class="line">	ldp	x29, x30, [sp], 32</span><br><span class="line">	.cfi_restore 30</span><br><span class="line">	.cfi_restore 29</span><br><span class="line">	.cfi_def_cfa 31, 0</span><br><span class="line">	ret</span><br><span class="line">	.cfi_endproc</span><br><span class="line">.LFE1:</span><br><span class="line">	.size	_ZN1AC2Ev, .-_ZN1AC2Ev</span><br><span class="line">	.weak	_ZN1AC1Ev</span><br><span class="line">	.set	_ZN1AC1Ev,_ZN1AC2Ev</span><br><span class="line">	.global	g_al</span><br><span class="line">	.bss</span><br><span class="line">	.align	3</span><br><span class="line">	.type	g_al, %object</span><br><span class="line">	.size	g_al, 4</span><br><span class="line">g_al:</span><br><span class="line">	.zero	4</span><br><span class="line">	.text</span><br><span class="line">	.align	2</span><br><span class="line">	.global	main</span><br><span class="line">	.type	main, %function</span><br><span class="line">main:</span><br><span class="line">.LFB3:</span><br><span class="line">	.cfi_startproc</span><br><span class="line">	mov	w0, 0</span><br><span class="line">	ret</span><br><span class="line">	.cfi_endproc</span><br><span class="line">.LFE3:</span><br><span class="line">	.size	main, .-main</span><br><span class="line">	.align	2</span><br><span class="line">	.type	_Z41__static_initialization_and_destruction_0ii, %function</span><br><span class="line">_Z41__static_initialization_and_destruction_0ii:</span><br><span class="line">.LFB4:</span><br><span class="line">	.cfi_startproc</span><br><span class="line">	stp	x29, x30, [sp, -32]!</span><br><span class="line">	.cfi_def_cfa_offset 32</span><br><span class="line">	.cfi_offset 29, -32</span><br><span class="line">	.cfi_offset 30, -24</span><br><span class="line">	add	x29, sp, 0</span><br><span class="line">	.cfi_def_cfa_register 29</span><br><span class="line">	str	w0, [x29, 28]</span><br><span class="line">	str	w1, [x29, 24]</span><br><span class="line">	ldr	w0, [x29, 28]</span><br><span class="line">	cmp	w0, 1</span><br><span class="line">	bne	.L6</span><br><span class="line">	ldr	w1, [x29, 24]</span><br><span class="line">	mov	w0, 65535</span><br><span class="line">	cmp	w1, w0</span><br><span class="line">	bne	.L6</span><br><span class="line">	adrp	x0, g_al</span><br><span class="line">	add	x0, x0, :lo12:g_al</span><br><span class="line">	bl	_ZN1AC1Ev</span><br><span class="line">.L6:</span><br><span class="line">	nop</span><br><span class="line">	ldp	x29, x30, [sp], 32</span><br><span class="line">	.cfi_restore 30</span><br><span class="line">	.cfi_restore 29</span><br><span class="line">	.cfi_def_cfa 31, 0</span><br><span class="line">	ret</span><br><span class="line">	.cfi_endproc</span><br><span class="line">.LFE4:</span><br><span class="line">	.size	_Z41__static_initialization_and_destruction_0ii, .-_Z41__static_initialization_and_destruction_0ii</span><br><span class="line">	.align	2</span><br><span class="line">	.type	_GLOBAL__sub_I_g_al, %function</span><br><span class="line">_GLOBAL__sub_I_g_al:</span><br><span class="line">.LFB5:</span><br><span class="line">	.cfi_startproc</span><br><span class="line">	stp	x29, x30, [sp, -16]!</span><br><span class="line">	.cfi_def_cfa_offset 16</span><br><span class="line">	.cfi_offset 29, -16</span><br><span class="line">	.cfi_offset 30, -8</span><br><span class="line">	add	x29, sp, 0</span><br><span class="line">	.cfi_def_cfa_register 29</span><br><span class="line">	mov	w1, 65535</span><br><span class="line">	mov	w0, 1</span><br><span class="line">	bl	_Z41__static_initialization_and_destruction_0ii</span><br><span class="line">	ldp	x29, x30, [sp], 16</span><br><span class="line">	.cfi_restore 30</span><br><span class="line">	.cfi_restore 29</span><br><span class="line">	.cfi_def_cfa 31, 0</span><br><span class="line">	ret</span><br><span class="line">	.cfi_endproc</span><br><span class="line">.LFE5:</span><br><span class="line">	.size	_GLOBAL__sub_I_g_al, .-_GLOBAL__sub_I_g_al</span><br><span class="line">	.section	.init_array,&quot;aw&quot;,%init_array</span><br><span class="line">	.align	3</span><br><span class="line">	.xword	_GLOBAL__sub_I_g_al</span><br><span class="line">	.ident	&quot;GCC: (Ubuntu/Linaro 7.5.0-3ubuntu1~18.04) 7.5.0&quot;</span><br><span class="line">	.section	.note.GNU-stack,&quot;&quot;,@progbits</span><br></pre></td></tr></table></figure>
+
+<p>关键的汇编代码是以下几部分；</p>
+<p>构造函数的具体实现如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">.LC0:</span><br><span class="line">	.string	&quot;construct ok &quot;</span><br><span class="line">	.section	.text._ZN1AC2Ev,&quot;axG&quot;,@progbits,_ZN1AC5Ev,comdat</span><br><span class="line">	.align	2</span><br><span class="line">	.weak	.</span><br><span class="line">	.type	_ZN1AC2Ev, %function</span><br><span class="line">_ZN1AC2Ev:</span><br><span class="line">.LFB1:</span><br><span class="line">	.cfi_startproc</span><br><span class="line">	stp	x29, x30, [sp, -32]!</span><br><span class="line">	.cfi_def_cfa_offset 32</span><br><span class="line">	.cfi_offset 29, -32</span><br><span class="line">	.cfi_offset 30, -24</span><br><span class="line">	add	x29, sp, 0</span><br><span class="line">	.cfi_def_cfa_register 29</span><br><span class="line">	str	x0, [x29, 24]</span><br><span class="line">	adrp	x0, .LC0</span><br><span class="line">	add	x0, x0, :lo12:.LC0</span><br><span class="line">	bl	puts</span><br><span class="line">	nop</span><br><span class="line">	ldp	x29, x30, [sp], 32</span><br><span class="line">	.cfi_restore 30</span><br><span class="line">	.cfi_restore 29</span><br><span class="line">	.cfi_def_cfa 31, 0</span><br><span class="line">	ret</span><br><span class="line">	.cfi_endproc</span><br></pre></td></tr></table></figure>
+
+<p>梳理汇编中的bl指令，可以得出以下的调用过程：</p>
+<p>_GLOBAL__sub_I_g_al -&gt; _Z41__static_initialization_and_destruction_0ii -&gt; _ZN1AC1Ev(_ZN1AC2Ev)</p>
+<p>其中_ZN1AC1Ev是一个弱符号，最终解析成_ZN1AC2Ev，即class A的构造函数</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">.weak	_ZN1AC1Ev</span><br><span class="line">.set	_ZN1AC1Ev,_ZN1AC2Ev</span><br></pre></td></tr></table></figure>
+
+<p>那现在问题就变成_GLOBAL__sub_I_g_al是谁调用的，查看汇编里的相关信息，如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">.LFE5:</span><br><span class="line">	.size	_GLOBAL__sub_I_g_al, .-_GLOBAL__sub_I_g_al</span><br><span class="line">	.section	.init_array,&quot;aw&quot;,%init_array</span><br><span class="line">	.align	3</span><br><span class="line">	.xword	_GLOBAL__sub_I_g_al</span><br><span class="line">	.ident	&quot;GCC: (Ubuntu/Linaro 7.5.0-3ubuntu1~18.04) 7.5.0&quot;</span><br><span class="line">	.section	.note.GNU-stack,&quot;&quot;,@progbits</span><br></pre></td></tr></table></figure>
+
+<p>可以发现，_GLOBAL__sub_I_g_al存在一个单独的，名为”init_array”的section中。</p>
+<p>关于这个section，ARM的官方文档中，描述如下:</p>
+<blockquote>
+<p>The C++ Standard places certain requirements on the construction and destruction of objects with static storage duration.</p>
+</blockquote>
+<blockquote>
+<p>The ARM C++ compiler uses the .init_array area to achieve this. This is a const data array of self-relative pointers to functions.</p>
+</blockquote>
+<blockquote>
+<p>The linker collects each .init_array from the various translation units together. It is important that the .init_array is accumulated in the same order.</p>
+</blockquote>
+<blockquote>
+<p>The library routine _<em>cpp_initialize__aeabi</em> is called from the C library startup code, __rt_lib_init, before main. _<em>cpp_initialize__aeabi</em> walks through the .init_array calling each function in turn. On exit, __rt_lib_shutdown calls __cxa_finalize.</p>
+</blockquote>
+<blockquote>
+<p>Usually, there is at most one function for T::T(), mangled name _ZN1TC1Ev, one function for T::~T(), mangled name _ZN1TD1Ev, one <strong>sti</strong> function, and four bytes of .init_array for each translation unit. The mangled name for the function f() is _Z1fv. There is no way to determine the initialization order between translation units.</p>
+</blockquote>
+<blockquote>
+<p>Function-local static objects with destructors are also handled using __aeabi_atexit.</p>
+</blockquote>
+<blockquote>
+<p>.init_array sections must be placed contiguously within the same region for their base and limit symbols to be accessible. If they are not, the linker generates an error.</p>
+</blockquote>
+<h2 id="查看init-array里的信息"><a href="#查看init-array里的信息" class="headerlink" title="查看init_array里的信息"></a>查看init_array里的信息</h2><p>通过以下命令，可以解析出具体调用的函数信息：</p>
+<blockquote>
+<p>objdump -D -j .init_array <your-application></p>
+</blockquote>
+<p>在我的环境中，输出如下:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">a.out:     file format elf64-littleaarch64</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">Disassembly of section .init_array:</span><br><span class="line"></span><br><span class="line">0000000000010d78 &lt;__frame_dummy_init_array_entry&gt;:</span><br><span class="line">   10d78:	00000770 	.word	0x00000770</span><br><span class="line">   10d7c:	00000000 	.word	0x00000000</span><br><span class="line">   10d80:	000007c0 	.word	0x000007c0</span><br><span class="line">   10d84:	00000000 	.word	0x00000000</span><br></pre></td></tr></table></figure>
+
+<p>通过以下命令，将具体的地址，解析成相应的函数符号:</p>
+<blockquote>
+<p>addr2line 0xc1000a68 -e <your-application></p>
+</blockquote>
+<p>在我的环境中，输出如下:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/tmp/tmp.KS3wdL1X4n/main.cpp:16</span><br></pre></td></tr></table></figure>
+
+<p>需要注意的是，这部分信息属于调试信息，编译的时候，加上”-g”，编译器才会生成这些额外信息。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ol>
+<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/21386125/what-goes-to-the-init-array">What goes to the __init_array?(StackOverflow)</a></li>
+<li><a target="_blank" rel="noopener" href="http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0475c/Chdfiffc.html">C++ initialization, construction and destruction(Arm)</a></li>
+</ol>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/atomic-op/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2025-05-12 14:45:59
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/C/" title="C++">
+                        #C++
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Class/" title="Class">
+                        #Class
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/note-skills-programmer/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%A8%E5%B1%80%E5%AF%B9%E8%B1%A1%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">全局对象初始化</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8Binit-array%E9%87%8C%E7%9A%84%E4%BF%A1%E6%81%AF"><span class="toc-text">查看init_array里的信息</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-text">参考</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/anatasluo">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+        <li>
+          
+            <a title="email" href="mailto:luolongjuna@gmail.com">
+              <i class="iconfont icon-envelope"></i>
+            </a>
+            
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">Copyright</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">© 2025 anatasluo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + C%2B%2B%E4%B8%AD%E5%85%A8%E5%B1%80%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96 + '&url=' + https%3A%2F%2Fanatasluo.github.io%2Fc-object-init%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=https://anatasluo.github.io/c-object-init/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>

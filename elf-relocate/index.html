@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="anatasluo" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      深入理解相对重定向 
+      
+      
+      |
+    
+     anatasluo
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.ico">
+    <link rel="icon" href="/images/favicon.ico">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/huahua.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">anatasluo</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.10/dist/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">深入理解相对重定向</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2025-05-12 14:45:59
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Linux/" title="Linux">
+                    #Linux
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/ELF/" title="ELF">
+                    #ELF
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Relocation/" title="Relocation">
+                    #Relocation
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <p>考察以下代码<em>reloc.c</em></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">extern int ext_func(void);</span><br><span class="line"></span><br><span class="line">extern int ext_var;</span><br><span class="line">int *ext_var_p = &amp;ext_var;</span><br><span class="line">static int *ext_var_sp = &amp;ext_var;</span><br><span class="line"></span><br><span class="line">static int sta_var = 0x05;</span><br><span class="line">int *stat_var_p = &amp;sta_var;</span><br><span class="line">static int *stat_var_sp = &amp;sta_var;</span><br><span class="line"></span><br><span class="line">static int sta_func(void)</span><br><span class="line">&#123;</span><br><span class="line">    ext_var += 0x08;</span><br><span class="line">    *ext_var_p += 0x10;</span><br><span class="line">    *ext_var_sp += 0x20;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">int glo_add_func(int* a)</span><br><span class="line">&#123;</span><br><span class="line">    a += 0x50;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">int glo_func(void)</span><br><span class="line">&#123;</span><br><span class="line">    sta_var += 0x30;</span><br><span class="line">    *stat_var_p += 0x40;</span><br><span class="line">    glo_add_func(stat_var_sp);</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">    ext_func();</span><br><span class="line">    sta_func();</span><br><span class="line">    glo_func();</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>通过以下命令进行编译</p>
+<blockquote>
+<p>gcc -c reloc.c</p>
+</blockquote>
+<p>这个代码涉及到大量的重定向条目，我们一个个的来讨论。</p>
+<p>先讨论glo_func是如何调用glo_add_func，通过objdump查看相关汇编，为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">000000000000005b &lt;glo_func&gt;:</span><br><span class="line">  5b:   55                      push   %rbp</span><br><span class="line">  5c:   48 89 e5                mov    %rsp,%rbp</span><br><span class="line">  5f:   8b 05 00 00 00 00       mov    0x0(%rip),%eax        # 65 &lt;glo_func+0xa&gt;</span><br><span class="line">  65:   83 c0 30                add    $0x30,%eax</span><br><span class="line">  68:   89 05 00 00 00 00       mov    %eax,0x0(%rip)        # 6e &lt;glo_func+0x13&gt;</span><br><span class="line">  6e:   48 8b 05 00 00 00 00    mov    0x0(%rip),%rax        # 75 &lt;glo_func+0x1a&gt;</span><br><span class="line">  75:   8b 10                   mov    (%rax),%edx</span><br><span class="line">  77:   48 8b 05 00 00 00 00    mov    0x0(%rip),%rax        # 7e &lt;glo_func+0x23&gt;</span><br><span class="line">  7e:   83 c2 40                add    $0x40,%edx</span><br><span class="line">  81:   89 10                   mov    %edx,(%rax)</span><br><span class="line">  83:   48 8b 05 00 00 00 00    mov    0x0(%rip),%rax        # 8a &lt;glo_func+0x2f&gt;</span><br><span class="line">  8a:   48 89 c7                mov    %rax,%rdi</span><br><span class="line">  8d:   e8 00 00 00 00          callq  92 &lt;glo_func+0x37&gt;</span><br><span class="line">  92:   b8 00 00 00 00          mov    $0x0,%eax</span><br><span class="line">  97:   5d                      pop    %rbp</span><br><span class="line">  98:   c3                      retq   </span><br></pre></td></tr></table></figure>
+<p>通过readelf查看相关的重定向规则，为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">00000000008e  000f00000004 R_X86_64_PLT32    0000000000000044 glo_add_func - 4</span><br></pre></td></tr></table></figure>
+
+<p>不考虑重定向，仅考虑callq指令本身，根据AMD spec的描述，callq的作用为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Call near, relative, displacement relative to next instruction.</span><br></pre></td></tr></table></figure>
+
+<p>callq指令会以重定向位置的下一条指令为基准，进行跳转。</p>
+<p>Q: <em>为什么是下一条指令，而不是当前的指令？</em></p>
+<p>A: 因为流水线(pipeline)的存在，为了提高指令的执行效率，当前指令在执行时，EIP是指向下一条指令。</p>
+<p>现在，引入以下变量值：</p>
+<p>addr1: 跳转的目标函数的地址，即上面的glo_add_func</p>
+<p>addr2: callq指令所在的地址，即上面的glo_func+0x8d</p>
+<p>addr3: callq指令的下一条指令所在的地址，即上面的glo_func+0x92</p>
+<p>offset: callq指令之后应该填入的跳转偏移</p>
+<p>假设callq能以当前指令的地址为基准，那么应该存在关系offset &#x3D; addr1 - addr2<br>但是实际由于流水线的存在，callq以下一条指令为基础，实际关系为offset &#x3D; addr1 - add3</p>
+<p>现在，引入以下变量和概念</p>
+<p>instruction_len: 重定向所在指令的长度，上文的例子中为callq本身的1bytes和offset的4bytes，为5bytes</p>
+<p>op_len: 重定向区域到指令开始的长度，上文的例子中为callq本身的指令长度，为1bytes</p>
+<p>relocation_len: 重定向区域到指令结束的长度，上文的例子为offset的长度，为4bytes</p>
+<p>实际上是以重定向区域为界，将所在的指令一分为二，容易得出instruction_len &#x3D; op_len + relocation_len。</p>
+<p>而addr3 &#x3D; addr2 + instruction_len，所以offset的计算变成offset &#x3D; addr1 - add3 &#x3D; addr1 - addr2 - instruction_len</p>
+<p>进而推导出offset &#x3D; addr1 - addr2 - instruction_len &#x3D; addr1 - addr2 - op_len - relocation_len &#x3D; addr1 - relocation_len - (addr2 + op_len)</p>
+<p>现在，我们再考虑重定向是如何规定的，根据type &#x3D; R_X86_64_PLT32，重定向规则为L + A - P。</p>
+<p>这里讲一个小知识点，编译器在编译阶段，不能确定当前编译结果是否是共享对象，因此对全局的函数引用都处理成R_X86_64_PLT32类型。<br>在后续的链接阶段，会根据函数符号是否处于共享对象进行不同的处理：</p>
+<ol>
+<li>函数符号位于共享对象</li>
+</ol>
+<p>按照R_X86_64_PLT32进行处理，需要设置PLT表格等等，具体过程本文不涉及。</p>
+<ol start="2">
+<li>函数符号不处于共享对象</li>
+</ol>
+<p>按照R_X86_64_PC32进行处理，R_X86_64_PC32的计算规则为S + A - P。即L + A - p -&gt; S + A - P</p>
+<p>本文的例子中，符号均不处于共享对象，因此实际的重定向规则为S + A - P，其中对S, A, P的定义为：</p>
+<blockquote>
+<p>S: Represents the value of the symbol whose index resides in the relocation entry</p>
+</blockquote>
+<blockquote>
+<p>P: Represents the place (section offset or address) of the storage unit being relocated (computed using r_offset).</p>
+</blockquote>
+<blockquote>
+<p>A: Represents the addend used to compute the value of the relocatable field.</p>
+</blockquote>
+<p>对应到上文的例子，S就是glo_add_func的地址，即addr1。P是重定向指令所在地址，即addr2 + op_len。(实际计算中，是通过section addr + r_offset)。<br>最终的重定向计算过程为：offset &#x3D; addr1 + A - (addr2 + op_len)<br>对比我们前文的公式：offset &#x3D; addr1 - relocation_len - (addr2 + op_len)</p>
+<p>可以得出一个结论： A &#x3D; -relocation_len</p>
+<p>这里的重定向是以glo_add_func的变量地址为基准，进行计算的。还存在一种情况，是以section的地址为基准，进行计算。</p>
+<p>继续考察上文的代码，通过readelf查看代码涉及到的重定向条目，发现以下条目：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Relocation section &#x27;.rela.text&#x27; at offset 0x410 contains 14 entries:</span><br><span class="line">  Offset          Info           Type           Sym. Value    Sym. Name + Addend</span><br><span class="line">000000000006  000d00000002 R_X86_64_PC32     0000000000000000 ext_var - 4</span><br><span class="line">00000000000f  000d00000002 R_X86_64_PC32     0000000000000000 ext_var - 4</span><br><span class="line">000000000016  000c00000002 R_X86_64_PC32     0000000000000000 ext_var_p - 4</span><br><span class="line">00000000001f  000c00000002 R_X86_64_PC32     0000000000000000 ext_var_p - 4</span><br><span class="line">00000000002b  000300000002 R_X86_64_PC32     0000000000000000 .data + 4</span><br><span class="line">000000000034  000300000002 R_X86_64_PC32     0000000000000000 .data + 4</span><br><span class="line">000000000061  000300000002 R_X86_64_PC32     0000000000000000 .data + c</span><br><span class="line">00000000006a  000300000002 R_X86_64_PC32     0000000000000000 .data + c</span><br></pre></td></tr></table></figure>
+
+<p>在对text段的重定向过程中，存在直接以data段为基址的条目，以重定向偏移为00000000002b的条目进行以下讨论。</p>
+<p>通过与汇编源码比较，可以知道，该重定向涉及的汇编为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">1c:   48 8b 05 00 00 00 00    mov    0x0(%rip),%rax        # 23 &lt;sta_func+0x23&gt;</span><br><span class="line">23:   83 c2 10                add    $0x10,%edx</span><br><span class="line">26:   89 10                   mov    %edx,(%rax)</span><br><span class="line">28:   48 8b 05 00 00 00 00    mov    0x0(%rip),%rax        # 2f &lt;sta_func+0x2f&gt;</span><br><span class="line">2f:   8b 10                   mov    (%rax),%edx</span><br><span class="line">31:   48 8b 05 00 00 00 00    mov    0x0(%rip),%rax        # 38 &lt;sta_func+0x38&gt;</span><br><span class="line">38:   83 c2 20                add    $0x20,%edx</span><br></pre></td></tr></table></figure>
+<p>涉及的源码为:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">*ext_var_sp += 0x20;</span><br></pre></td></tr></table></figure>
+<p>从0x28开始汇编，所做的事情为</p>
+<p>0x28 -&gt; 获取ext_var_sp的地址</p>
+<p>0x2f -&gt; 读取ext_var_sp指向的地址</p>
+<p>0x31 -&gt; 此处无关</p>
+<p>0x39 -&gt; 将指向地址的值加上0x20</p>
+<p>可以看出，此处重定向，要获取的是ext_var_sp的地址，观察汇编</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">28:   48 8b 05 00 00 00 00    mov    0x0(%rip),%rax        # 2f &lt;sta_func+0x2f&gt;</span><br></pre></td></tr></table></figure>
+<p>这里，是以RIP为基址，根据一个offset，读取ext_var_sp的地址。因此，重定向最终的输出，应该为offset &#x3D; ext_var_sp - RIP</p>
+<p>借用上文的变量和概念：</p>
+<p>addr1: 跳转的目标变量的地址，对于static变量，通常表示为section + symbol offset。通过readelf查看符号表，发现为.data + 0x8</p>
+<p>addr2: 取址指令所在的地址，即上面的sta_func+0x28</p>
+<p>addr3: 取址指令的下一条指令所在的地址，即上面的sta_func+0x31</p>
+<p>offset: 取址指令之后应该填入的跳转偏移</p>
+<p>instruction_len: 见上文</p>
+<p>op_len: 见上文</p>
+<p>relocation_len: 见上文</p>
+<p>因此，此时的offset &#x3D; ext_var_sp - RIP &#x3D; addr1 - addr3 &#x3D; addr1 - addr2 - instruction_len<br>充分展开后，结果为<br>offset &#x3D; section_addr + symbol_offset - relocation_len - (addr2 + op_len)</p>
+<p>此时对应的S为section_addr， P仍然为addr2 + op_len。<br>由于S的变化，A变成了symbol_offset - relocation_len</p>
+<p>S的变化，是因为此处以section为基址，而不是以具体的变量为base，Addend必须加上对应的symbol_offset。</p>
+<p>以section为基址的重定向通常为static变量，这种变量外部不可见，编译时的offset是固定的，不会在链接阶段改变。</p>
+<p>以section为基址的重定向可以在符号表中去除相关的static变量，减少最终生成的文件大小。</p>
+<p>总结：</p>
+<ol>
+<li>流水线的设计，使得IP寄存器总是指向下一条指令，计算offset时，需要考虑当前指令的长度</li>
+<li>相对偏移如果确定，则以section为基址进行重定向，可以减少符号表大小， Addend &#x3D; symbol_offset - relocation_len</li>
+<li>相对偏移如果不确定，则以symbol为基址进行重定向，Addend &#x3D; - relocation_len</li>
+</ol>
+<p>思考题：</p>
+<ol>
+<li>X86的指令是不定长的，而ARM指令是定长的，ARM下是如何处理相对重定向的？</li>
+<li>其他类型的重定向规则的作用？</li>
+<li>PLT和GOT表格的具体作用过程，以及其实如何解决共享库面对的问题？</li>
+</ol>
+<h2 id="References"><a href="#References" class="headerlink" title="References"></a>References</h2><ol>
+<li><a target="_blank" rel="noopener" href="https://www.felixcloutier.com/x86/call">call instruction描述</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/105936114">知乎专栏 - 静态链接与动态链接的宏观概述及微观详解</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.cloudflare.com/how-to-execute-an-object-file-part-1/">blog - How to execute an object file</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.amd.com/system/files/TechDocs/24592.pdf">AMD SPEC</a></li>
+</ol>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/shell-parameters/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2025-05-12 14:45:59
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Linux/" title="Linux">
+                        #Linux
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/ELF/" title="ELF">
+                        #ELF
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Relocation/" title="Relocation">
+                        #Relocation
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/linux-from-scratch/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#References"><span class="toc-text">References</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/anatasluo">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+        <li>
+          
+            <a title="email" href="mailto:luolongjuna@gmail.com">
+              <i class="iconfont icon-envelope"></i>
+            </a>
+            
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">Copyright</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">© 2025 anatasluo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + %E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E7%9B%B8%E5%AF%B9%E9%87%8D%E5%AE%9A%E5%90%91 + '&url=' + https%3A%2F%2Fanatasluo.github.io%2Felf-relocate%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=https://anatasluo.github.io/elf-relocate/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="anatasluo" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      context_switch and restart_syscall 
+      
+      
+      |
+    
+     anatasluo
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.ico">
+    <link rel="icon" href="/images/favicon.ico">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/huahua.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">anatasluo</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.10/dist/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">context_switch and restart_syscall</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2025-05-12 14:45:59
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Linux/" title="Linux">
+                    #Linux
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Syscall/" title="Syscall">
+                    #Syscall
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Schedule/" title="Schedule">
+                    #Schedule
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Signal/" title="Signal">
+                    #Signal
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <h2 id="问题背景"><a href="#问题背景" class="headerlink" title="问题背景"></a>问题背景</h2><p>考虑以下程序</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#include &lt;unistd.h&gt;</span><br><span class="line"></span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">    int ret;</span><br><span class="line">    printf(&quot;%d starts to work \n&quot;, getpid());</span><br><span class="line">    ret = sleep(200);</span><br><span class="line">    printf(&quot;sleep return with %d \n&quot;, ret);</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>尝试使用gdb单步该程序，在该程序进入sleep syscall之后，通过以下命令唤醒该程序：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kill -SIGCONT &lt;pid&gt;</span><br></pre></td></tr></table></figure>
+<p>发现程序在响应signal之后，接着继续执行之前的sleep syscall。更令人费解的地方在于，在响应signal的时候，通过检查寄存器，发现当前程序的pc寄存器是指向sleep syscall指令之后的。</p>
+<p>因此，可以确定的是，kernel里存在某种机制，可以重启被signal中断的syscall，且这个机制会修改context的pc寄存器。通过检索源码，发现这种机制叫做restart block。</p>
+<p>在理解这个机制的过程中，顺着一起整理了sleep过程中会遇到的所有情况。</p>
+<h2 id="sleep的核心实现"><a href="#sleep的核心实现" class="headerlink" title="sleep的核心实现"></a>sleep的核心实现</h2><p>sleep在内核中，最核心的实现是以下代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">static int __sched do_nanosleep(struct hrtimer_sleeper *t, enum hrtimer_mode mode)</span><br><span class="line">&#123;</span><br><span class="line">	struct restart_block *restart;</span><br><span class="line"></span><br><span class="line">	do &#123;</span><br><span class="line">		set_current_state(TASK_INTERRUPTIBLE|TASK_FREEZABLE);</span><br><span class="line">		hrtimer_sleeper_start_expires(t, mode);</span><br><span class="line"></span><br><span class="line">		if (likely(t-&gt;task))</span><br><span class="line">			schedule();</span><br><span class="line"></span><br><span class="line">		hrtimer_cancel(&amp;t-&gt;timer);</span><br><span class="line">		mode = HRTIMER_MODE_ABS;</span><br><span class="line"></span><br><span class="line">	&#125; while (t-&gt;task &amp;&amp; !signal_pending(current));</span><br><span class="line"></span><br><span class="line">	__set_current_state(TASK_RUNNING);</span><br><span class="line"></span><br><span class="line">	if (!t-&gt;task)</span><br><span class="line">		return 0;</span><br><span class="line"></span><br><span class="line">	restart = &amp;current-&gt;restart_block;</span><br><span class="line">	if (restart-&gt;nanosleep.type != TT_NONE) &#123;</span><br><span class="line">		ktime_t rem = hrtimer_expires_remaining(&amp;t-&gt;timer);</span><br><span class="line">		struct timespec64 rmt;</span><br><span class="line"></span><br><span class="line">		if (rem &lt;= 0)</span><br><span class="line">			return 0;</span><br><span class="line">		rmt = ktime_to_timespec64(rem);</span><br><span class="line"></span><br><span class="line">		return nanosleep_copyout(restart, &amp;rmt);</span><br><span class="line">	&#125;</span><br><span class="line">	return -ERESTART_RESTARTBLOCK;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>有两个细节值得关注：</p>
+<ol>
+<li>计时器的外面套了一个do-while循环，用于持续检查是否有signal到来</li>
+<li>假设在计时器结束之前，有signal被触发了，后续的逻辑会计算剩余时间，更新restart block结构体。</li>
+</ol>
+<p>这两个细节都触及到了我的知识盲区，一个个来讨论。</p>
+<h2 id="schedule和context-switch"><a href="#schedule和context-switch" class="headerlink" title="schedule和context switch"></a>schedule和context switch</h2><p>一开始我以为schedule在选中用户态的线程之后，会直接切入用户态继续执行。现在看来，这个想法是片面的。对于因为sleep未结束而block在kernel的用户态线程，在schedule之后，应该是继续在内核中。sleep此处的do-while就是用来做这种处理。</p>
+<p>为了更好的解答以上的困惑，我重新整理了对相关知识的理解。</p>
+<h3 id="syscall-instruction的本质是什么"><a href="#syscall-instruction的本质是什么" class="headerlink" title="syscall instruction的本质是什么"></a>syscall instruction的本质是什么</h3><p>interrupt是cpu在正常执行过程中，需要相应的一些事件。interrupt可以分为同步和异步。也可以分为软件和硬件。</p>
+<p><em>可以认为</em>(取决于具体的实现方式)，syscall的本质是一种同步的software interrput。</p>
+<h3 id="schedule和context-switch的过程"><a href="#schedule和context-switch的过程" class="headerlink" title="schedule和context switch的过程"></a>schedule和context switch的过程</h3><p>这里不会讨论太详细的细节，在context switch的过程中，内核会对比current和next线程的状态，来决定是否要更新mm table。存在四种可能的切换：</p>
+<blockquote>
+<p>&#x2F;*<br>    * kernel -&gt; kernel   lazy + transfer active<br>    *   user -&gt; kernel   lazy + mmgrab() active<br>    *<br>    * kernel -&gt;   user   switch + mmdrop() active<br>    *   user -&gt;   user   switch<br>*&#x2F;</p>
+</blockquote>
+<p>这里就是造成我误解的地方，此处的user并不是指直接切入用户态执行，而是指该线程是用户态的。在context swicth结束之后，假设切入到了user线程的上下文，此时仍然是内核态的，因为从内核态切换到用户态，并不是简单的jmp指令就可以完成的。</p>
+<h2 id="restart-block的实现"><a href="#restart-block的实现" class="headerlink" title="restart block的实现"></a>restart block的实现</h2><p>上面提到，所有restart相关的信息，会被记录到restart block中。在sleep被interrupt之后，剩余的时间会被更新到这部分结构体之中。</p>
+<p>剩下的一个问题在于，虽然记录了剩余的时间，是如何重新触发了syscall本身。阅读代码发现，在kernel的handle_signal实现中，存在以下逻辑：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">if (syscall_get_nr(current, regs) != -1) &#123;</span><br><span class="line">	/* If so, check system call restarting.. */</span><br><span class="line">	switch (syscall_get_error(current, regs)) &#123;</span><br><span class="line">	case -ERESTART_RESTARTBLOCK:</span><br><span class="line">	case -ERESTARTNOHAND:</span><br><span class="line">		regs-&gt;ax = -EINTR;</span><br><span class="line">		break;</span><br><span class="line"></span><br><span class="line">	case -ERESTARTSYS:</span><br><span class="line">		if (!(ksig-&gt;ka.sa.sa_flags &amp; SA_RESTART)) &#123;</span><br><span class="line">			regs-&gt;ax = -EINTR;</span><br><span class="line">			break;</span><br><span class="line">		&#125;</span><br><span class="line">		fallthrough;</span><br><span class="line">	case -ERESTARTNOINTR:</span><br><span class="line">		regs-&gt;ax = regs-&gt;orig_ax;</span><br><span class="line">		regs-&gt;ip -= 2;</span><br><span class="line">		break;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这也就解答了上面遇到的问题，是signal本身，检查到需要restart syscall之后，会去修改pc寄存器，这样在返回用户态之后，会重新执行syscall。</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ol>
+<li><a target="_blank" rel="noopener" href="https://prathamsahu52.github.io/post/linux_scheduler/">linux schedule and context switch</a></li>
+</ol>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/unexported-symbol-reference/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2025-05-12 14:45:59
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Linux/" title="Linux">
+                        #Linux
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Syscall/" title="Syscall">
+                        #Syscall
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Schedule/" title="Schedule">
+                        #Schedule
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Signal/" title="Signal">
+                        #Signal
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/loader/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF"><span class="toc-text">问题背景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#sleep%E7%9A%84%E6%A0%B8%E5%BF%83%E5%AE%9E%E7%8E%B0"><span class="toc-text">sleep的核心实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#schedule%E5%92%8Ccontext-switch"><span class="toc-text">schedule和context switch</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#syscall-instruction%E7%9A%84%E6%9C%AC%E8%B4%A8%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-text">syscall instruction的本质是什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#schedule%E5%92%8Ccontext-switch%E7%9A%84%E8%BF%87%E7%A8%8B"><span class="toc-text">schedule和context switch的过程</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#restart-block%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="toc-text">restart block的实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reference"><span class="toc-text">Reference</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/anatasluo">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+        <li>
+          
+            <a title="email" href="mailto:luolongjuna@gmail.com">
+              <i class="iconfont icon-envelope"></i>
+            </a>
+            
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">Copyright</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">© 2025 anatasluo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + context_switch%20and%20restart_syscall + '&url=' + https%3A%2F%2Fanatasluo.github.io%2Fcontext-switch-and-restart-syscall%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=https://anatasluo.github.io/context-switch-and-restart-syscall/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="anatasluo" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      X86-64下关闭MMU 
+      
+      
+      |
+    
+     anatasluo
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.ico">
+    <link rel="icon" href="/images/favicon.ico">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/huahua.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">anatasluo</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.10/dist/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">X86-64下关闭MMU</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2025-05-12 14:45:59
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/X86/" title="X86">
+                    #X86
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/AMD/" title="AMD">
+                    #AMD
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Kexec/" title="Kexec">
+                    #Kexec
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Long-mode/" title="Long mode">
+                    #Long mode
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <h2 id="kexec-X86-64下的执行过程"><a href="#kexec-X86-64下的执行过程" class="headerlink" title="kexec X86-64下的执行过程"></a>kexec X86-64下的执行过程</h2><p>kexec的代码是有两部分的，一部分在Linux内核中(编译时需要打开相关的编译选项)，一部分在<a target="_blank" rel="noopener" href="https://github.com/horms/kexec-tools">kexec-tools</a>中。</p>
+<p>kexec的流程主要分为两个部分，首先是内核加载，通过以下命令实现</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cmdline=$(cat /proc/cmdline)</span><br><span class="line">kexec -l /boot/vmlinuz-linux-lts --initrd=/boot/initramfs-linux-lts.img --append=&quot;$cmdline&quot;</span><br></pre></td></tr></table></figure>
+<p>-l指定了kernel的路径，–initrd指定了根文件系统路径，–append指定了cmdline参数</p>
+<p>接着是开始内核切换，通过以下命令实现</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kexec -e</span><br></pre></td></tr></table></figure>
+
+<p>内核的执行入口为&#x2F;kernel&#x2F;kexec_core.c的kernel_kexec函数，详细过程如下:</p>
+<ol>
+<li>通过migrate_to_reboot_cpu将kexec的执行主体迁移到主核</li>
+<li>通过machine_shutdown发送IPI中断来关闭所有从核，从核最终会执行stop_this_cpu使cpu进入hlt状态</li>
+<li>通过machine_kexec使主核继续进行后续的流程</li>
+</ol>
+<p>machine_kexec相关的逻辑实现位于&#x2F;arch&#x2F;x86&#x2F;kernel&#x2F;machine_kexec_64.c，详细过程如下:</p>
+<ol>
+<li>进行关中断，清除断点之类的环境准备工作</li>
+<li>将relocate_kernel函数的实现拷贝到过渡区域(关于过渡区域的说明，见下文)</li>
+<li>设置段寄存器，gdt表和idt表为无效状态(long mode下内存访问不涉及段机制)</li>
+<li>跳转进入relocate_kernel</li>
+</ol>
+<p>relocate_kernel的实现是一段汇编，位于&#x2F;arch&#x2F;x86&#x2F;kernel&#x2F;relocate_kernel_64.S，relocate_kernel接受五个参数，比较重要的是两个，是一致性映射的pgt页表地址，以及处于一致性映射区域的入口地址，至于什么是一致性映射，以及如何实现一致性映射和如何使用一致性映射，见下文部分。</p>
+<p>需要注意的是，这个一致性映射区域的入口不是新内核，而是kexec-tools里面的一段汇编，这段汇编位于kexec-tools源码下的&#x2F;purgatory&#x2F;arch&#x2F;x86_64&#x2F;setup-x86_64.S，入口为purgatory_start(至于如何判定入口为purgatory_start，见参考2)。</p>
+<p>这段逻辑最后会跳转到新内核的入口中执行，从relocate_kernel开始的汇编，直到跳转到新内核入口前，主核所做的事情主要是退出long mode，关闭mmu，设置gdt表，进入protection mode，详细过程见下文。</p>
+<h2 id="X86-64的CPU模式"><a href="#X86-64的CPU模式" class="headerlink" title="X86-64的CPU模式"></a>X86-64的CPU模式</h2><p>X86-64下CPU有以下几种模式:</p>
+<ul>
+<li>Long Mode<ul>
+<li>64-bit mode(Long mode下的一种子模式，系统正常运行的模式)</li>
+<li>Compatibility mode(Long mode下的一种子模式，可运行32位程序)</li>
+</ul>
+</li>
+<li>Legacy Mode<ul>
+<li>Protected Mode(32位程序运行时的一般模式)</li>
+<li>Virtual-8086 Mode</li>
+<li>Real Mode(16位程序运行时的一般模式)</li>
+</ul>
+</li>
+<li>System Management Mode (SMM，系统管理模式，由外设触发)</li>
+</ul>
+<p>模式之间的转换关系，见下图(来自AMD64 Architecture Programmer’s Manual Volume 2:System Programming):</p>
+<p><img src="/images/cpu-mode.png" alt="X86-64下CPU模式转换"></p>
+<h2 id="X86-64下的内存访问机制"><a href="#X86-64下的内存访问机制" class="headerlink" title="X86-64下的内存访问机制"></a>X86-64下的内存访问机制</h2><p>X86-64下内存机制有两个:</p>
+<ol>
+<li>段机制</li>
+<li>页机制</li>
+</ol>
+<p>一般情况下，段机制会首先对地址进行转换，其次才是页机制。相对应的，在不同阶段，内存地址有着不同的名称，分别为:</p>
+<ol>
+<li>Logical Addresses(虚拟地址)</li>
+<li>Linear(Virtual) Addresses(线性地址)</li>
+<li>Physical Addresses(物理地址)</li>
+</ol>
+<p>Logical Addresses经过段机制的作用，变成Linear Addresses，Linear Addresses经过页机制的作用，变成Physical Addresses。</p>
+<p>内存地址，是一个相对偏移，在不同的坐标系中，同一个内存地址有着不同的偏移值。比较特殊的是物理地址(Physical Addresses)，可以认为是绝对地址(通用地址)。</p>
+<p>需要说明的是，段机制在64-bit mode下是没有发挥作用的，因此64-bit运行的一般情况下，虚拟地址就是线性地址。</p>
+<p>段机制和页机制的本质，都是对内存在不同坐标系之间进行了映射，如果这种映射是一对一的，即映射前后，没有发生变化，这种内存模式被称之为flat mode，一般用于关闭某种内存机制前后进行过渡。</p>
+<h3 id="段机制"><a href="#段机制" class="headerlink" title="段机制"></a>段机制</h3><p>段机制发挥作用，需要gdt(idt)表和段寄存器同时发挥作用，段寄存器指向gdt(idt)表中的某一项。gdt(idt)表的切换，通过lgdt(lidt)实现，lgdt(lidt)接受一个十字节的元数据，前两个字节描述表的大小，后八个字节描述表的虚拟地址。gdt(idt)表中的每一项，描述了段的基础地址，段大小，权限信息和控制信息。</p>
+<p>以下是一种gdt表的书写技巧，gdt表的第一项通常不用，空出第二项，两项共16个字节，前10个字节用于放置gdt表的元数据，即gdt表中放置了gdt表的描述信息(该表实现了上文所说的flat mode):</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">	.balign	16</span><br><span class="line">	.globl tr_gdt</span><br><span class="line">tr_gdt:</span><br><span class="line">	.short	tr_gdt_end - tr_gdt - 1	# gdt limit</span><br><span class="line">	.long	pa_tr_gdt</span><br><span class="line">	.short	0</span><br><span class="line">	.quad	0x00cf9b000000ffff	# __KERNEL32_CS</span><br><span class="line">	.quad	0x00af9b000000ffff	# __KERNEL_CS</span><br><span class="line">	.quad	0x00cf93000000ffff	# __KERNEL_DS</span><br><span class="line">tr_gdt_end:</span><br></pre></td></tr></table></figure>
+
+<p>当执行完lgdt(lidt)，还需要进一步刷新段寄存器，除CS段寄存器外，都可以通过以下方式实现:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mov 0x18, %ds</span><br></pre></td></tr></table></figure>
+<p>CS段寄存器需要通过far jmp实现，需要注意的是，每个段寄存器都存在一个不可见的缓存，只有段寄存器被改变时，才会从最新的gdt(idt)表中刷新缓存，也就是说，如果只是改变了gdt(idt)表，发挥作用的仍然是原有的段表，一般情况下，在段表被刷新后，就应该及时刷新段寄存器，以防止后续进行刷新时，段表地址不可用。</p>
+<p>far jmp的实现，有三种方式，分别为:</p>
+<ul>
+<li>lret</li>
+<li>lcall</li>
+<li>ljmp</li>
+</ul>
+<p>以下是一种lret的示例:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">leaq	stack_init(%rip), %rsp</span><br><span class="line">pushq	$0x10 /* CS */</span><br><span class="line">leaq	new_cs_exit(%rip), %rax</span><br><span class="line">pushq	%rax</span><br><span class="line">lretq</span><br></pre></td></tr></table></figure>
+
+<h3 id="页机制"><a href="#页机制" class="headerlink" title="页机制"></a>页机制</h3><p>页机制借助pgt表实现，pgt表中存在了多重映射关系，pgt表的切换通过以下方式实现:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">movq	%r9, %cr3</span><br></pre></td></tr></table></figure>
+<p>其中r9寄存器存放了新pgt表的物理地址。</p>
+<h2 id="如何关闭MMU"><a href="#如何关闭MMU" class="headerlink" title="如何关闭MMU"></a>如何关闭MMU</h2><p>所谓关闭MMU，即无效化页机制，直接使用物理地址访问内存。关闭MMU，仅需要一条指令即可实现。问题在于，在该指令之前，页机制生效，在该指令之后，页机制不生效，但是，PC的值是连续自增的，因此需要在一致性映射区域中关闭MMU。在一致性映射中，虚拟地址和物理地址相等，此时关闭MMU，不会影响PC的自增。</p>
+<p>正常系统运行时，使用的不是一致性映射，同理，从原有的页表切换到一致性映射页表，也需要一个过渡区域。在该过渡区域中，既存在部分以前页表的映射关系(页表切换前后的指令所在函数)，也要存在一致性映射区域。</p>
+<p>设计上，可以直接在一致性映射页表的基础上，加上原有页表的一段映射。一致性映射的添加，Linux内核通过kernel_ident_mapping_init实现，kexec中相关实现位于&#x2F;arch&#x2F;x86&#x2F;kernel&#x2F;machine_kexec_64.c中的init_pgtable函数。</p>
+<p>因此，关闭MMU过程中，需要经历以下过程:</p>
+<ol>
+<li>跳转到过渡区域</li>
+<li>在过渡区域中切换一致性映射页表，并跳转到一致性映射区域</li>
+<li>在一致性映射区域关闭MMU</li>
+</ol>
+<h2 id="如何在X86-64下关闭MMU"><a href="#如何在X86-64下关闭MMU" class="headerlink" title="如何在X86-64下关闭MMU"></a>如何在X86-64下关闭MMU</h2><p>X86-64的正常运行模式为64 bit mode，该模式下不能直接关闭MMU。按照手册的描述，Long mode下关闭MMU，需要经过以下过程:</p>
+<ol>
+<li>进入一致性映射区域(参考上文说明)</li>
+<li>设置段机制为flat mode，并且刷新段寄存器</li>
+<li>通过far jmp切换cpu mode为Compatibility mode</li>
+<li>关闭MMU</li>
+<li>退出long mode(此时进入protection mode)</li>
+<li>关闭PAE</li>
+</ol>
+<p>进入一致性映射区域可以参考kexec的relocate_kernel，后续流程参考kexec-tools的purgatory_start。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ol>
+<li><a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000016433947">符号的重定位</a></li>
+<li><a target="_blank" rel="noopener" href="https://eastrivervillage.com/kexec-tools-with-the-hidden-purgatory/">A travel to the purgatory</a></li>
+</ol>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/note-skills-programmer/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2025-05-12 14:45:59
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/X86/" title="X86">
+                        #X86
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/AMD/" title="AMD">
+                        #AMD
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Kexec/" title="Kexec">
+                        #Kexec
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Long-mode/" title="Long mode">
+                        #Long mode
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/linux-execute-buffer/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#kexec-X86-64%E4%B8%8B%E7%9A%84%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B"><span class="toc-text">kexec X86-64下的执行过程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#X86-64%E7%9A%84CPU%E6%A8%A1%E5%BC%8F"><span class="toc-text">X86-64的CPU模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#X86-64%E4%B8%8B%E7%9A%84%E5%86%85%E5%AD%98%E8%AE%BF%E9%97%AE%E6%9C%BA%E5%88%B6"><span class="toc-text">X86-64下的内存访问机制</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AE%B5%E6%9C%BA%E5%88%B6"><span class="toc-text">段机制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A1%B5%E6%9C%BA%E5%88%B6"><span class="toc-text">页机制</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E5%85%B3%E9%97%ADMMU"><span class="toc-text">如何关闭MMU</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E5%9C%A8X86-64%E4%B8%8B%E5%85%B3%E9%97%ADMMU"><span class="toc-text">如何在X86-64下关闭MMU</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-text">参考</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/anatasluo">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+        <li>
+          
+            <a title="email" href="mailto:luolongjuna@gmail.com">
+              <i class="iconfont icon-envelope"></i>
+            </a>
+            
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">Copyright</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">© 2025 anatasluo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + X86-64%E4%B8%8B%E5%85%B3%E9%97%ADMMU + '&url=' + https%3A%2F%2Fanatasluo.github.io%2Fx86-64-mmu%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=https://anatasluo.github.io/x86-64-mmu/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>

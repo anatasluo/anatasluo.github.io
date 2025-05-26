@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="anatasluo" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      嵌入式系统概述 
+      
+      
+      |
+    
+     anatasluo
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/favicon.ico">
+    <link rel="icon" href="/images/favicon.ico">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/js/fancybox.js"></script>
+
+
+  
+
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/huahua.jpg" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">anatasluo</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/">
+          <a href="/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          <a href="/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/tags/">
+          <a href="/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/about/">
+          <a href="/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.10/dist/clipboard.min.js"></script>
+  
+  
+<script src="/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">嵌入式系统概述</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2025-05-12 14:45:59
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Linux/" title="Linux">
+                    #Linux
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Note/" title="Note">
+                    #Note
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Embeded-System/" title="Embeded System">
+                    #Embeded System
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/tags/Mooc/" title="Mooc">
+                    #Mooc
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <p><a target="_blank" rel="noopener" href="https://www.icourse163.org/course/DLUT-1002607070">嵌入式系统概述(中国大学Mooc)</a>的课堂笔记</p>
+<br/>
+
+
+<h2 id="嵌入式系统的定义，组成及一般开发流程"><a href="#嵌入式系统的定义，组成及一般开发流程" class="headerlink" title="嵌入式系统的定义，组成及一般开发流程"></a>嵌入式系统的定义，组成及一般开发流程</h2><p>目前国内普遍接受的概念<sup>[1]</sup>：嵌入式系统是以应用为中心，以计算机技术为基础，软硬件可裁剪，适于应用系统对功能、可靠性、成本、体积、功耗严格要求的专用计算机系统。</p>
+<p>嵌入式系统的一般设计过程<sup>[1]</sup>： </p>
+<ol>
+<li>硬件原理图的设计</li>
+<li>PCB设计</li>
+<li>硬件制板</li>
+<li>硬件元器件的安装</li>
+<li>嵌入式操作系统的移植</li>
+<li>嵌入式软件设计</li>
+</ol>
+<p>嵌入式系统的设计，通常要考虑到实时性、可靠性、稳定性。具体的问题包括：</p>
+<ul>
+<li>硬件资源、运行环境和设计指标</li>
+<li>升级方式</li>
+<li>开发和测试策略</li>
+</ul>
+<p>嵌入式的概念，是相对于通用计算机的，当然，这种通用也是相对的，嵌入式强调的是一种专用用途，应用场景常常是资源受限的，优先考虑的也不是用户友好性，是安全性和可靠性。嵌入式系统的用途非常广，包括但不限于无人驾驶、通信设备、军事武器等等。</p>
+<br/>
+
+<h2 id="嵌入式C语言编程写法及优化技巧"><a href="#嵌入式C语言编程写法及优化技巧" class="headerlink" title="嵌入式C语言编程写法及优化技巧"></a>嵌入式C语言编程写法及优化技巧</h2><p>嵌入式开发过程中，最为常用的编程语言是C语言，原因很多，很重要的一个原因，内核通常是用C语言写的。</p>
+<p>一般的单任务嵌入式程序典型架构是：</p>
+<ol>
+<li>从cpu复位时的指定地址开始执行</li>
+<li>跳转至汇编代码startup处执行，完成部分初始化动作</li>
+<li>跳转至用户主程序main执行，在main中完成：<ul>
+<li>初始化部分硬件设备</li>
+<li>初始化各软件模块</li>
+<li>进入死循环(无线循环)，调用各模块的处理函数</li>
+</ul>
+</li>
+</ol>
+<p>尽管C语言并不是一门面向对象的语言，但是，通过sturct和函数指针，仍然可以很好的模拟”类”的写法，使得写出的代码，具备很好的维护性。</p>
+<p>以下，是这种写法的一种实例：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">#define C_Class struct</span><br><span class="line"></span><br><span class="line">C_Class A&#123;</span><br><span class="line">    C_Class A *A_this;</span><br><span class="line"></span><br><span class="line">    void (*foo)(C_Class A*A_this);</span><br><span class="line">    int (*parea)(int length, int width);</span><br><span class="line"></span><br><span class="line">    int a;</span><br><span class="line">    int b;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>嵌入式平台中，最常用的芯片是arm系列，因此，如果需要处理一些性能敏感的场景，需要结合生成的arm汇编代码一起查看。</p>
+<p>尽管现在的编译器已经非常智能，能够帮助程序员处理很多情况。但是，在一些存在歧义的情况下，编译器一般会采取保守的判断，以防止程序行为超出预期。因此需要对编译器有一定的了解，了解编译器在哪些方面是保守的，了解编译器对应的处理器体系结构。</p>
+<p>以指针别名为例，来展示编译器的保守方面以及对应的优化策略：</p>
+<p>考虑以下代码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">void timers_v1(int *timer1, int *timer2, int *step)</span><br><span class="line">&#123;</span><br><span class="line">    *timer1 += *step;</span><br><span class="line">    *timer2 += *step;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>对应的arm汇编为</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">LDR r3, [r0, #0]     --&gt; r3 = *timer1</span><br><span class="line">LDR r12,[r2, #0]     --&gt; r12 = *step</span><br><span class="line">ADD r3, r3, r12      --&gt; r3 += r12</span><br><span class="line">STR r3, [r0, #0]     --&gt; *timer1 = r3</span><br><span class="line">LDR r0, [r1, #0]     --&gt; r0 = *timer2</span><br><span class="line">LDR r2, [r2, #0]     --&gt; r2 = *step</span><br><span class="line">ADD r0, r0, r2       --&gt; r0 += r2</span><br><span class="line">STR r0, [r1, #0]     --&gt; *timer2 = r0</span><br><span class="line">MOV pc, r14          --&gt; return</span><br></pre></td></tr></table></figure>
+<p>可以看到, step指针指向的值被取出来两次，有一次是明显多余的。出现这种情况的原因，是编译器必须考虑所有可能的情况，假设step跟timer1指向同一个地址，那么第一次运算后，timer和step的值都被更新了，所以第2次重取step的值，才能保证在这种情况下，行为也符合预期。</p>
+<p>但是如果程序员确定step和timer指向不同的地址，那么可以采取下面的写法，来减少一次step取值：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">void timers_v2(int *timer1, int *timer2, int *step)</span><br><span class="line">&#123;</span><br><span class="line">    int tmp = *step;</span><br><span class="line">    *timer1 += tmp;</span><br><span class="line">    *timer2 += tmp;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>除此之外，数据结构在内存中的布局也能极大影响程序的效率，如果结构的成员变量不全是内存对齐的，那么在取值时，就需要多余的操作。</p>
+<p>总之，嵌入式程序的优化，是在基于对所写程序面向的场景，编译器和程序语言的了解上，使得生成的arm汇编最为精简。需要说明的是，效率最优并不总是程序首先考虑的事情，代码的可维护性以及优化所要付出的努力和优化带来的效果对比，这些都是优化前所要考虑的事情。</p>
+<br/>
+
+<h2 id="Linux-C的编程工具链以及构建系统"><a href="#Linux-C的编程工具链以及构建系统" class="headerlink" title="Linux C的编程工具链以及构建系统"></a>Linux C的编程工具链以及构建系统</h2><p>嵌入式开发过程中，涉及到的编译器，调试器，构建工具等等一系列的工具，被称之为工具链。</p>
+<p>嵌入式系统开发中，开发环境和运行环境常常是不同架构的，因此就需要交叉编译，即在开发环境中编译出与之不同的运行环境的可执行文件。</p>
+<p>当前使用最为广泛的为GNU工具链，GNU支持本地程序开发，也交叉编译，即GNU工具链包括  ：</p>
+<ul>
+<li>GNU Tools (GNU Development Toolchains)</li>
+<li>GNU Tools交叉开发环境 (GNU Cross-Platform Development Toolchains)</li>
+</ul>
+<p>嵌入式C语言最早流行的构建系统是make，后来进一步发展出了CMake，CMake足够处理一些常见的项目场景，但在更复杂的构建场景中，比如系统的生成需要从多个仓库获取源码，进行编译链接时。对于这种复杂的场景，当前比较主流的构建系统是yocto。</p>
+<p>一个嵌入式系统通常由3部分构成：</p>
+<ul>
+<li>Bootloader</li>
+<li>嵌入式操作系统内核</li>
+<li>文件系统</li>
+</ul>
+<p>Bootloader可以分为单阶段和多阶段。多阶段的Bootloader能提供更加复杂的功能，以及更好的移植性。大多数Bootloader都有两种工作模式，分别是Bootloader自动加载操作系统运行，全程不需要用户介入，即正常工作模式;以及通过串口或者网络等方式首先下载所需文件，再进行后续引导，即下载模式，通常首次启动时使用。</p>
+<br/>
+
+<h2 id="嵌入式系统书籍推荐"><a href="#嵌入式系统书籍推荐" class="headerlink" title="嵌入式系统书籍推荐"></a>嵌入式系统书籍推荐</h2><ol>
+<li>嵌入式软件设计(清华大学出版社)</li>
+<li>ARM嵌入式系统开发 - 软件设计与优化(北京航空航天大学出版社)</li>
+<li>Linux程序设计(人民邮电出版社)</li>
+<li>Linux设备驱动程序(中国电力出版社)</li>
+<li>Linux设备驱动开发详解(人民邮电出版社)</li>
+<li>Proteus电子电路设计及仿真(电子工业出版社)</li>
+</ol>
+<br/>
+
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ol>
+<li><a target="_blank" rel="noopener" href="https://www.icourse163.org/course/DLUT-1002607070">嵌入式系统概述(中国大学MOOC)</a></li>
+</ol>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/ic221-uana/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2025-05-12 14:45:59
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Linux/" title="Linux">
+                        #Linux
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Note/" title="Note">
+                        #Note
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Embeded-System/" title="Embeded System">
+                        #Embeded System
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/tags/Mooc/" title="Mooc">
+                        #Mooc
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+              <a href="/note-program-language/" target="_self">
+                <span>Next</span>
+                <i class="iconfont icon-chevronright"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B5%8C%E5%85%A5%E5%BC%8F%E7%B3%BB%E7%BB%9F%E7%9A%84%E5%AE%9A%E4%B9%89%EF%BC%8C%E7%BB%84%E6%88%90%E5%8F%8A%E4%B8%80%E8%88%AC%E5%BC%80%E5%8F%91%E6%B5%81%E7%A8%8B"><span class="toc-text">嵌入式系统的定义，组成及一般开发流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B5%8C%E5%85%A5%E5%BC%8FC%E8%AF%AD%E8%A8%80%E7%BC%96%E7%A8%8B%E5%86%99%E6%B3%95%E5%8F%8A%E4%BC%98%E5%8C%96%E6%8A%80%E5%B7%A7"><span class="toc-text">嵌入式C语言编程写法及优化技巧</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Linux-C%E7%9A%84%E7%BC%96%E7%A8%8B%E5%B7%A5%E5%85%B7%E9%93%BE%E4%BB%A5%E5%8F%8A%E6%9E%84%E5%BB%BA%E7%B3%BB%E7%BB%9F"><span class="toc-text">Linux C的编程工具链以及构建系统</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B5%8C%E5%85%A5%E5%BC%8F%E7%B3%BB%E7%BB%9F%E4%B9%A6%E7%B1%8D%E6%8E%A8%E8%8D%90"><span class="toc-text">嵌入式系统书籍推荐</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-text">参考</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/anatasluo">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+        <li>
+          
+            <a title="email" href="mailto:luolongjuna@gmail.com">
+              <i class="iconfont icon-envelope"></i>
+            </a>
+            
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">Copyright</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/anatasluo">© 2025 anatasluo</a>
+        
+    </div>
+  
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + %E5%B5%8C%E5%85%A5%E5%BC%8F%E7%B3%BB%E7%BB%9F%E6%A6%82%E8%BF%B0 + '&url=' + https%3A%2F%2Fanatasluo.github.io%2Fmooc-embbed%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=https://anatasluo.github.io/mooc-embbed/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>
