@@ -1,6 +1,6 @@
 ---
 title: 深入了解GCC的LTO机制
-date: 2024-08-01 10:55:45
+date: 2025-06-24 01:03:29
 tags:
     - GCC
     - LTO
@@ -223,6 +223,26 @@ as               398318  398316    0 /usr/bin/as -v --64 -o ./server.ltrans0.ltr
 
 这一过程的具体描述可以参考[GCC-WHOPR](https://gcc.gnu.org/wiki/whopr/driver)的描述，里面描述了LGEN,WPA,LTRANS阶段的详细行为以及LTO插件的具体实现。
 
+
+## LTO编译过程拆解
+以[simple-ftp](https://github.com/sunaku/simple-ftp)为例，安装上一章节的概况，具体分析LTO过程的执行过程，以及生成中间文件的内容。
+
+这里我们只观察server的生成过程，编译命令如下:
+```
+gcc -v --save-temps -g -flto -fdump-earlydebug server.c service.c siftp.c -o server
+```
+
+观察对应的日志输出，gcc大致进行了以下过程：
+1. 分别将每个源码文件编译成汇编文件
+2. 以collect2为入口，调用ld，尝试链接生成可执行文件
+
+到以上过程，LTO/no LTO的流程都是一样。
+
+对于开启LTO的编译来说
+
+## LTO的源码实现
+
+
 ## 发行版使用的LTO参数
 
 fedora使用的编译参数通过rpm包redhat-rpm-config引入，解开这个包，可以发现以下LTO相关的编译参数：
@@ -235,9 +255,7 @@ fedora使用的编译参数通过rpm包redhat-rpm-config引入，解开这个包
 其他发行版的使用情况可以参考以下wiki:
 + [gentoo](https://wiki.gentoo.org/wiki/LTO)
 
-## LTO的源码实现
 
-这部分内容过于庞大，需要进一步整理。
 
 ## 参考链接
 
