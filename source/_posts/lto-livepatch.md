@@ -124,15 +124,23 @@ GCC9支持设置LTO使用时的并行度(flto=n)，这个并行度会影响WPA�
 
 ### LTO编译相关的参数
 
-1. 开启LTO编译 - (-flto)
+1. 开启LTO编译 - -flto
 
-2. 控制是否产生fat objects (-ffat-lto-objects)
+2. 设置partion agrithom - -flto-partition=alg
+
+3. 开启LTO的增量编译 (supported from GCC 15)
++ -flto-incremental=path
++ -flto-incremental-cache-size=n
+
+4. LTO objects生成时的压缩参数 - -flto-compression-level=n
+
+5. 控制是否产生fat objects - -ffat-lto-objects
 
 所谓的fat object，是指产生的object中既包含了正常object code，还有LTO所需的IR。fat object的优点主要是兼容性，对于不支持LTO的工具链依然可以使用，在link阶段依然可以进行normal链接。缺点是编译耗时严重，产生的object过大。
 
 LTO发展早期，GCC使能LTO机制之后，默认产生的为fat object。后期随着GNU工作链发展成熟，默认产生的object为slim object，即object只包含LTO需要的IR。
 
-3. LTO的编译模式
+6. LTO的编译模式
 
 + LTO mode
 整个程序作为一个源码文件进行优化，优点是进行最大程度的优化，缺点是编译并行度差。
@@ -143,11 +151,14 @@ a. Local generation(LGEN)
 b. Whole Program Analysis(WPA)
 c. Local transformations(LTRANS)
 
-4. [lto1的参数](https://gcc.gnu.org/onlinedocs/gccint/Internal-flags.html)
+7. [lto1的参数](https://gcc.gnu.org/onlinedocs/gccint/Internal-flags.html)
 + -fwpa
 + -fltrans
 + -fltrans-output-list=file
 + -fresolution=file
+
+5. dwarf相关的 - -fdump-earlydebug
+LTO objects的dwarf信息不够准确，earlydebug项目致力于解决该问题。这个选项可以dump出中间过程使用的earlydebug信息。
 
 ### [LTO开启后，objects包含的相关section](https://gcc.gnu.org/onlinedocs/gccint/LTO-object-file-layout.html)
 
@@ -169,79 +180,42 @@ c. Local transformations(LTRANS)
 
 ## LTO开启后的编译过程
 
-在不开启的LTO的情况下，C语言编译涉及到的组件有cc1，collect2，其中cc1生成objects文件，collect2被ld(linker)调用，生成最终的binary。
+在不开启的LTO的情况下，C语言编译涉及到的组件有cc1，collect2，其中cc1生成objects文件，再通过collect2的调用，生成最终的binary。
 
-在加入LTO之后，C语言编译的组件有cc1，collect2，lto1和lto-wrapper，其中lto1和lto-wrapper是针对LTO机制所增加的组件。
+在加入LTO之后，C语言编译的组件有cc1，collect2，lto1和lto-wrapper，其中lto1和lto-wrapper是针对LTO机制所增加的组件，以编译器插件的形式引入。
 
-在环境上打开execsnoop，运行以下命令，观察gcc命令的调用过程：
-> gcc -o server a.c b.c c.c -v -flto=auto -ffat-lto-objects  -fdata-sections -ffunction-sections -save-temps
-
-获得的exec调用结果输出为:
-
-```
-gcc              398299  398005    0 /usr/lib64/ccache/gcc -o server a.c b.c c.c -v -flto=auto -ffat-lto-objects -fdata-sections -ffunction-sections -save-temps
-gcc              398299  398005    0 /usr/bin/gcc -o server a.c b.c c.c -v -flto=auto -ffat-lto-objects -fdata-sections -ffunction-sections -save-temps
-cc1              398300  398299    0 /usr/libexec/gcc/x86_64-redhat-linux/13/cc1 -E -quiet -v a.c -mtune=generic -march=x86-64 -flto=auto -ffat-lto-objects -fdata-sections -ffunction-sections -fpch-preprocess -o server-a.i
-cc1              398301  398299    0 /usr/libexec/gcc/x86_64-redhat-linux/13/cc1 -fpreprocessed server-a.i -quiet -dumpdir server- -dumpbase a.c -dumpbase-ext .c -mtune=generic -march=x86-64 -version -flto=auto -ffat-lto-objects -fdata-sections -ffunction-sections -o server-a.s
-as               398302  398299    0 /usr/bin/as -v --64 -o server-a.o server-a.s
-cc1              398303  398299    0 /usr/libexec/gcc/x86_64-redhat-linux/13/cc1 -E -quiet -v b.c -mtune=generic -march=x86-64 -flto=auto -ffat-lto-objects -fdata-sections -ffunction-sections -fpch-preprocess -o server-b.i
-cc1              398304  398299    0 /usr/libexec/gcc/x86_64-redhat-linux/13/cc1 -fpreprocessed server-b.i -quiet -dumpdir server- -dumpbase b.c -dumpbase-ext .c -mtune=generic -march=x86-64 -version -flto=auto -ffat-lto-objects -fdata-sections -ffunction-sections -o server-b.s
-as               398305  398299    0 /usr/bin/as -v --64 -o server-b.o server-b.s
-cc1              398306  398299    0 /usr/libexec/gcc/x86_64-redhat-linux/13/cc1 -E -quiet -v c.c -mtune=generic -march=x86-64 -flto=auto -ffat-lto-objects -fdata-sections -ffunction-sections -fpch-preprocess -o server-c.i
-cc1              398307  398299    0 /usr/libexec/gcc/x86_64-redhat-linux/13/cc1 -fpreprocessed server-c.i -quiet -dumpdir server- -dumpbase c.c -dumpbase-ext .c -mtune=generic -march=x86-64 -version -flto=auto -ffat-lto-objects -fdata-sections -ffunction-sections -o server-c.s
-as               398308  398299    0 /usr/bin/as -v --64 -o server-c.o server-c.s
-collect2         398309  398299    0 /usr/libexec/gcc/x86_64-redhat-linux/13/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/13/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/13/lto-wrapper -plugin-opt=-fresolution=server.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -flto=auto --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o 
-ld               398310  398309    0 /usr/bin/ld -plugin /usr/libexec/gcc/x86_64-redhat-linux/13/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/13/lto-wrapper -plugin-opt=-fresolution=server.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o server 
-lto-wrapper      398311  398310    0 /usr/libexec/gcc/x86_64-redhat-linux/13/lto-wrapper @server.lto_wrapper_args
-make             398312  398311    0 /usr/bin/make --version
-gcc              398313  398311    0 /usr/bin/gcc @./server.ltrans_args
-lto1             398314  398313    0 /usr/libexec/gcc/x86_64-redhat-linux/13/lto1 -quiet -dumpbase ./server.wpa -mtune=generic -march=x86-64 -version -fno-openmp -fno-openacc -fno-pie -fcf-protection=none -ffat-lto-objects -fdata-sections -ffunction-sections -fltrans-output-list=./server.ltrans.out -fwpa=8 -fresolution=server.res -flinker-output=exec @./server.wpa.args.0
-make             398315  398311    0 /usr/bin/make -f /tmp/ccSoHZVP.mk -j8 all
-gcc              398316  398315    0 /usr/bin/gcc -xlto -c -fno-openmp -fno-openacc -fno-pie -fcf-protection=none -mtune=generic -march=x86-64 -v -ffat-lto-objects -fdata-sections -ffunction-sections -save-temps -mtune=generic -march=x86-64 -dumpdir server. -dumpbase ./server.ltrans0.ltrans 
-lto1             398317  398316    0 /usr/libexec/gcc/x86_64-redhat-linux/13/lto1 -quiet -dumpbase ./server.ltrans0.ltrans -mtune=generic -march=x86-64 -version -fno-openmp -fno-openacc -fno-pie -fcf-protection=none -ffat-lto-objects -fdata-sections -ffunction-sections -fltrans ./server.ltrans0.o -o ./server.ltrans0.ltrans.s
-as               398318  398316    0 /usr/bin/as -v --64 -o ./server.ltrans0.ltrans.o ./server.ltrans0.ltrans.s
-```
-
-分析pid以及ppid，可以得到以下的调用结构：
+以[redis](https://github.com/redis/redis)源码为例，开启LTO后，通过execsnoop观察进程的执行过程，可以得到以下的进程树(有省略):
 
 ![](./images/gcc-compile-lto.png)
 
-树的不同层次之间的箭头代表是父子进程，同一层次之间的箭头代表前者的输出是后者的输入。
 
-在这个样例里，由于源码数量较少，所有的源码都被编译到了一个object内。在处理更大的项目构建时，会观察到原有的objects被划分到若干个子object内。
+可以看到，在原有的linker基础上，通过插件的方式引入lto-wrapper，对应上面的讨论，lto-wrapper分为两个过程：
+1. WPA阶段：这阶段会读取全部的object信息，并且按照LTO的partion设置，重新划分成*一定数量*的新object
+2. ltrans阶段：将划分后的新object以一定的*并发设置*重新进行编译
 
-以openssh的sshd为例，产生的子objects的命名如下：
+下面，我们以[simple-ftp](https://github.com/sunaku/simple-ftp)的源码为例，来具体分析LTO的编译过程，以及中间文件的生成情况。
+
+通过以下命令，编译server二进制:
 ```
-/tmp/ccW5uCAJ.ltrans0.ltrans.o
-/tmp/ccW5uCAJ.ltrans7.ltrans.o
-/tmp/ccW5uCAJ.ltrans10.ltrans.o
-```
-
-该命令具有如下特点：
-1. 具备统一的前缀 - ccW5uCAJ
-2. 具备连续的编号，这些编号也是链接顺序，决定了在符号表中的排列次序
-
-这一过程的具体描述可以参考[GCC-WHOPR](https://gcc.gnu.org/wiki/whopr/driver)的描述，里面描述了LGEN,WPA,LTRANS阶段的详细行为以及LTO插件的具体实现。
-
-
-## LTO编译过程拆解
-以[simple-ftp](https://github.com/sunaku/simple-ftp)为例，安装上一章节的概况，具体分析LTO过程的执行过程，以及生成中间文件的内容。
-
-这里我们只观察server的生成过程，编译命令如下:
-```
-gcc -v --save-temps -g -flto -fdump-earlydebug server.c service.c siftp.c -o server
+gcc -v --save-temps -g -flto -ffat-lto-objects  -fdata-sections -ffunction-sections -fdump-earlydebug server.c service.c siftp.c -o server
 ```
 
-观察对应的日志输出，gcc大致进行了以下过程：
-1. 分别将每个源码文件编译成汇编文件
-2. 以collect2为入口，调用ld，尝试链接生成可执行文件
+观察日志输出，可以得到以下编译输出(截取链接相关的部分)：
+```
 
-到以上过程，LTO/no LTO的流程都是一样。
+```
 
-对于开启LTO的编译来说
+### WPA的执行过程，以及生成的中间文件
 
-## LTO的源码实现
+### ltrans的执行过程，以及生成的中间文件
 
+## 以GCC15为例，分析LTO的源码实现
+
+1. collect2如何调用lto-wrapper
+
+2. LTO的partion过程
+
+3. 经过ltrans生成的object如何对应dwarf信息 - early debug
 
 ## 发行版使用的LTO参数
 
@@ -255,14 +229,11 @@ fedora使用的编译参数通过rpm包redhat-rpm-config引入，解开这个包
 其他发行版的使用情况可以参考以下wiki:
 + [gentoo](https://wiki.gentoo.org/wiki/LTO)
 
-
-
 ## 参考链接
 
 1. [Interprocedural_optimization](https://en.wikipedia.org/wiki/Interprocedural_optimization)
 2. [CS232](https://courses.grainger.illinois.edu/cs232/sp2009/lectures/Examples/lecture6/lecture6.html)
 3. [Honza Hubička's Blog](https://hubicka.blogspot.com/2014/04/linktime-optimization-in-gcc-1-brief.html)
-
 
 
 
