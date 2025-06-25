@@ -202,20 +202,314 @@ gcc -v --save-temps -g -flto -ffat-lto-objects  -fdata-sections -ffunction-secti
 
 观察日志输出，可以得到以下编译输出(截取链接相关的部分)：
 ```
+/usr/libexec/gcc/x86_64-redhat-linux/15/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/15/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -plugin-opt=-fresolution=server.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -flto --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o server /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/15 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../.. -L/lib -L/usr/lib server-server.o server-service.o server-siftp.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-redhat-linux/15/crtend.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o
+/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -fresolution=server.res -flinker-output=exec server-server.o server-service.o server-siftp.o 
+/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -fresolution=server.res -flinker-output=exec server-server.o server-service.o server-siftp.o 
+gcc @./server.ltrans_args
+Using built-in specs.
+COLLECT_GCC=gcc
+OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa
+OFFLOAD_TARGET_DEFAULT=1
+Target: x86_64-redhat-linux
+Configured with: ../configure --enable-bootstrap --enable-languages=c,c++,fortran,objc,obj-c++,ada,go,d,m2,cobol,lto --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=http://bugzilla.redhat.com/bugzilla --enable-shared --enable-threads=posix --enable-checking=release --enable-multilib --with-system-zlib --enable-__cxa_atexit --disable-libunwind-exceptions --enable-gnu-unique-object --enable-linker-build-id --with-gcc-major-version-only --enable-libstdcxx-backtrace --with-libstdcxx-zoneinfo=/usr/share/zoneinfo --with-linker-hash-style=gnu --enable-plugin --enable-initfini-array --with-isl=/builddir/build/BUILD/gcc-15.0.1-build/gcc-15.0.1-20250329/obj-x86_64-redhat-linux/isl-install --enable-offload-targets=nvptx-none,amdgcn-amdhsa --enable-offload-defaulted --without-cuda-driver --enable-gnu-indirect-function --enable-cet --with-tune=generic --with-arch_32=i686 --build=x86_64-redhat-linux --with-build-config=bootstrap-lto --enable-link-serialization=1
+Thread model: posix
+Supported LTO compression algorithms: zlib zstd
+gcc version 15.0.1 20250329 (Red Hat 15.0.1-0) (GCC) 
+COLLECT_GCC_OPTIONS='-c' '-fno-openmp' '-fno-openacc' '-fno-pie' '-fcf-protection=none' '-g' '-v' '-save-temps' '-g' '-ffat-lto-objects' '-fdata-sections' '-ffunction-sections' '-fdump-earlydebug' '-mtune=generic' '-march=x86-64'   '-fltrans-output-list=./server.ltrans.out' '-fwpa' '-fresolution=server.res' '-flinker-output=exec'
+ /usr/libexec/gcc/x86_64-redhat-linux/15/lto1 -quiet -dumpbase ./server.wpa -mtune=generic -march=x86-64 -g -g -version -fno-openmp -fno-openacc -fno-pie -fcf-protection=none -ffat-lto-objects -fdata-sections -ffunction-sections -fdump-earlydebug -fltrans-output-list=./server.ltrans.out -fwpa -fresolution=server.res -flinker-output=exec @./server.wpa.args.0
+GNU GIMPLE (GCC) version 15.0.1 20250329 (Red Hat 15.0.1-0) (x86_64-redhat-linux)
+        compiled by GNU C version 15.0.1 20250329 (Red Hat 15.0.1-0), GMP version 6.3.0, MPFR version 4.2.2, MPC version 1.3.1, isl version isl-0.24-GMP
 
+GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/:/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/
+LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/../lib64/:/lib/../lib64/../lib64/:/usr/lib/../lib64/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../:/lib/:/usr/lib/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-c' '-fno-openmp' '-fno-openacc' '-fno-pie' '-fcf-protection=none' '-g' '-v' '-save-temps' '-g' '-ffat-lto-objects' '-fdata-sections' '-ffunction-sections' '-fdump-earlydebug' '-mtune=generic' '-march=x86-64'   '-fltrans-output-list=./server.ltrans.out' '-fwpa' '-fresolution=server.res' '-flinker-output=exec' '-dumpdir' './server.wpa.'
+[Leaving LTRANS ./server.ltrans.out]
+gcc @./server.ltrans0.ltrans_args
+Using built-in specs.
+COLLECT_GCC=gcc
+OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa
+OFFLOAD_TARGET_DEFAULT=1
+Target: x86_64-redhat-linux
+Configured with: ../configure --enable-bootstrap --enable-languages=c,c++,fortran,objc,obj-c++,ada,go,d,m2,cobol,lto --prefix=/usr --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=http://bugzilla.redhat.com/bugzilla --enable-shared --enable-threads=posix --enable-checking=release --enable-multilib --with-system-zlib --enable-__cxa_atexit --disable-libunwind-exceptions --enable-gnu-unique-object --enable-linker-build-id --with-gcc-major-version-only --enable-libstdcxx-backtrace --with-libstdcxx-zoneinfo=/usr/share/zoneinfo --with-linker-hash-style=gnu --enable-plugin --enable-initfini-array --with-isl=/builddir/build/BUILD/gcc-15.0.1-build/gcc-15.0.1-20250329/obj-x86_64-redhat-linux/isl-install --enable-offload-targets=nvptx-none,amdgcn-amdhsa --enable-offload-defaulted --without-cuda-driver --enable-gnu-indirect-function --enable-cet --with-tune=generic --with-arch_32=i686 --build=x86_64-redhat-linux --with-build-config=bootstrap-lto --enable-link-serialization=1
+Thread model: posix
+Supported LTO compression algorithms: zlib zstd
+gcc version 15.0.1 20250329 (Red Hat 15.0.1-0) (GCC) 
+COLLECT_GCC_OPTIONS='-c' '-fno-openmp' '-fno-openacc' '-fno-pie' '-fcf-protection=none' '-g' '-v' '-save-temps' '-g' '-ffat-lto-objects' '-fdata-sections' '-ffunction-sections' '-fdump-earlydebug' '-mtune=generic' '-march=x86-64'   '-fltrans' '-o' './server.ltrans0.ltrans.o'
+ /usr/libexec/gcc/x86_64-redhat-linux/15/lto1 -quiet -dumpbase ./server.ltrans0.ltrans -mtune=generic -march=x86-64 -g -g -version -fno-openmp -fno-openacc -fno-pie -fcf-protection=none -ffat-lto-objects -fdata-sections -ffunction-sections -fdump-earlydebug -fltrans @./server.ltrans0.ltrans.args.0 -o ./server.ltrans0.ltrans.s
+GNU GIMPLE (GCC) version 15.0.1 20250329 (Red Hat 15.0.1-0) (x86_64-redhat-linux)
+        compiled by GNU C version 15.0.1 20250329 (Red Hat 15.0.1-0), GMP version 6.3.0, MPFR version 4.2.2, MPC version 1.3.1, isl version isl-0.24-GMP
+
+GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+COLLECT_GCC_OPTIONS='-c' '-fno-openmp' '-fno-openacc' '-fno-pie' '-fcf-protection=none' '-g' '-v' '-save-temps' '-g' '-ffat-lto-objects' '-fdata-sections' '-ffunction-sections' '-fdump-earlydebug' '-mtune=generic' '-march=x86-64'   '-fltrans' '-o' './server.ltrans0.ltrans.o'
+ as -v --gdwarf-5 --64 -o ./server.ltrans0.ltrans.o ./server.ltrans0.ltrans.s
+GNU assembler version 2.44 (x86_64-redhat-linux) using BFD version version 2.44-3.fc42
+COMPILER_PATH=/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/:/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/15/:/usr/libexec/gcc/x86_64-redhat-linux/:/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/
+LIBRARY_PATH=/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/../lib64/:/lib/../lib64/../lib64/:/usr/lib/../lib64/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/15/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../:/lib/:/usr/lib/:/usr/lib/gcc/x86_64-redhat-linux/15/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-c' '-fno-openmp' '-fno-openacc' '-fno-pie' '-fcf-protection=none' '-g' '-v' '-save-temps' '-g' '-ffat-lto-objects' '-fdata-sections' '-ffunction-sections' '-fdump-earlydebug' '-mtune=generic' '-march=x86-64'   '-fltrans' '-o' './server.ltrans0.ltrans.o' '-dumpdir' './server.ltrans0.ltrans.'
+[Leaving LTRANS ./server.ltrans0.o]
+[Leaving server.lto_wrapper_args]
+[Leaving ./server.ltrans0.ltrans.o]
+[Leaving server-server.o.debug.temp.o]
+[Leaving server-service.o.debug.temp.o]
+[Leaving server-siftp.o.debug.temp.o]
+COLLECT_GCC_OPTIONS='-v' '-save-temps' '-g' '-flto' '-ffat-lto-objects' '-fdata-sections' '-ffunction-sections' '-fdump-earlydebug' '-o' 'server' '-mtune=generic' '-march=x86-64' '-dumpdir' 'server.'
+```
+
+接下来，按照执行的先后顺序，分为三个阶段，讨论上面的日志。
+
+### lto-wrapper的执行命令，以及生成的中间文件
+
+详细的命令可以在上面的日志内查看，当前目录下会生成一个server.lto_wrapper_args，其中的内容为:
+```
+-fresolution=server.res
+-flinker-output=exec
+server-server.o
+server-service.o
+server-siftp.o
+```
+
+server.res 按照文档的说法，叫linker resolution file，包含的内容如下:
+```
+3
+server-server.o 40
+195 95b25203115d8f9a PREVAILING_DEF_IRONLY sigchld_handler
+206 95b25203115d8f9a PREVAILING_DEF_IRONLY service_create
+210 95b25203115d8f9a PREVAILING_DEF_IRONLY session_create
+348 95b25203115d8f9a PREVAILING_DEF_IRONLY service_handleCmd
+355 95b25203115d8f9a PREVAILING_DEF_IRONLY g_pwd
+359 95b25203115d8f9a PREVAILING_DEF_IRONLY service_loop
+365 95b25203115d8f9a PREVAILING_DEF main
+339 95b25203115d8f9a RESOLVED_DYN stderr
+373 95b25203115d8f9a RESOLVED_DYN wait
+377 95b25203115d8f9a RESOLVED_DYN close
+385 95b25203115d8f9a RESOLVED_DYN perror
+394 95b25203115d8f9a RESOLVED_DYN listen
+412 95b25203115d8f9a RESOLVED_DYN bind
+422 95b25203115d8f9a RESOLVED_DYN setsockopt
+430 95b25203115d8f9a RESOLVED_DYN socket
+442 95b25203115d8f9a RESOLVED_DYN htons
+451 95b25203115d8f9a RESOLVED_DYN htonl
+493 95b25203115d8f9a RESOLVED_IR siftp_send
+515 95b25203115d8f9a RESOLVED_IR service_query
+520 95b25203115d8f9a RESOLVED_IR siftp_recv
+526 95b25203115d8f9a RESOLVED_IR service_sendStatus
+551 95b25203115d8f9a RESOLVED_IR service_writeFile
+556 95b25203115d8f9a RESOLVED_IR siftp_recvData
+562 95b25203115d8f9a RESOLVED_IR service_statTest
+567 95b25203115d8f9a RESOLVED_IR service_permTest
+573 95b25203115d8f9a RESOLVED_IR service_getAbsolutePath
+579 95b25203115d8f9a RESOLVED_IR siftp_sendData
+584 95b25203115d8f9a RESOLVED_IR service_readFile
+589 95b25203115d8f9a RESOLVED_IR service_handleCmd_chdir
+605 95b25203115d8f9a RESOLVED_IR service_readDir
+611 95b25203115d8f9a RESOLVED_IR service_freeArgs
+616 95b25203115d8f9a RESOLVED_IR service_parseArgs
+618 95b25203115d8f9a RESOLVED_IR session_destroy
+634 95b25203115d8f9a RESOLVED_DYN inet_ntoa
+639 95b25203115d8f9a RESOLVED_DYN ntohs
+649 95b25203115d8f9a RESOLVED_DYN accept
+663 95b25203115d8f9a RESOLVED_DYN sigaction
+675 95b25203115d8f9a RESOLVED_DYN sigemptyset
+701 95b25203115d8f9a RESOLVED_DYN __isoc23_strtol
+709 95b25203115d8f9a RESOLVED_DYN realpath
+server-service.o 30
+201 bea4b8cdcb05e1ce PREVAILING_DEF_IRONLY session_destroy
+216 bea4b8cdcb05e1ce PREVAILING_DEF_IRONLY service_query
+230 bea4b8cdcb05e1ce PREVAILING_DEF_IRONLY service_getAbsolutePath
+236 bea4b8cdcb05e1ce PREVAILING_DEF_IRONLY service_sendStatus
+242 bea4b8cdcb05e1ce PREVAILING_DEF_IRONLY service_freeArgs
+247 bea4b8cdcb05e1ce PREVAILING_DEF_IRONLY service_parseArgs
+249 bea4b8cdcb05e1ce PREVAILING_DEF_IRONLY service_recvStatus
+254 bea4b8cdcb05e1ce PREVAILING_DEF_IRONLY remote_exec
+259 bea4b8cdcb05e1ce PREVAILING_DEF_IRONLY service_readDir
+387 bea4b8cdcb05e1ce PREVAILING_DEF_IRONLY service_writeFile
+392 bea4b8cdcb05e1ce PREVAILING_DEF_IRONLY service_permTest
+398 bea4b8cdcb05e1ce PREVAILING_DEF_IRONLY service_statTest
+403 bea4b8cdcb05e1ce PREVAILING_DEF_IRONLY service_handleCmd_chdir
+405 bea4b8cdcb05e1ce PREVAILING_DEF_IRONLY service_readFile
+381 bea4b8cdcb05e1ce RESOLVED_DYN stderr
+410 bea4b8cdcb05e1ce RESOLVED_IR siftp_send
+445 bea4b8cdcb05e1ce RESOLVED_IR siftp_recv
+454 bea4b8cdcb05e1ce RESOLVED_DYN realpath
+495 bea4b8cdcb05e1ce RESOLVED_DYN strtok
+552 bea4b8cdcb05e1ce RESOLVED_DYN closedir
+561 bea4b8cdcb05e1ce RESOLVED_DYN readdir
+577 bea4b8cdcb05e1ce RESOLVED_DYN perror
+587 bea4b8cdcb05e1ce RESOLVED_DYN opendir
+620 bea4b8cdcb05e1ce RESOLVED_DYN fclose
+639 bea4b8cdcb05e1ce RESOLVED_DYN fopen
+652 bea4b8cdcb05e1ce RESOLVED_DYN stat
+663 bea4b8cdcb05e1ce RESOLVED_DYN fread
+669 bea4b8cdcb05e1ce RESOLVED_DYN rewind
+675 bea4b8cdcb05e1ce RESOLVED_DYN ftell
+683 bea4b8cdcb05e1ce RESOLVED_DYN fseek
+server-siftp.o 14
+210 a37c7c5be2356b4 PREVAILING_DEF_IRONLY Message_create
+214 a37c7c5be2356b4 PREVAILING_DEF_IRONLY Message_destroy
+219 a37c7c5be2356b4 PREVAILING_DEF_IRONLY siftp_escape
+343 a37c7c5be2356b4 PREVAILING_DEF_IRONLY siftp_unescape
+356 a37c7c5be2356b4 PREVAILING_DEF_IRONLY siftp_serialize
+361 a37c7c5be2356b4 PREVAILING_DEF_IRONLY siftp_deserialize
+366 a37c7c5be2356b4 PREVAILING_DEF_IRONLY siftp_send
+371 a37c7c5be2356b4 PREVAILING_DEF_IRONLY siftp_recv
+377 a37c7c5be2356b4 PREVAILING_DEF_IRONLY siftp_sendData
+382 a37c7c5be2356b4 PREVAILING_DEF_IRONLY siftp_recvData
+341 a37c7c5be2356b4 RESOLVED_DYN stderr
+477 a37c7c5be2356b4 RESOLVED_DYN perror
+486 a37c7c5be2356b4 RESOLVED_DYN send
+493 a37c7c5be2356b4 RESOLVED_DYN recv
 ```
 
 ### WPA的执行过程，以及生成的中间文件
 
+通过lto-wrapper，通过以下gcc命令发起WPA分析:
+```
+/usr/bin/gcc @./server.ltrans_args 
+```
+
+server.ltrans_args对应的内容为:
+```
+-xlto
+-c
+-fno-openmp
+-fno-openacc
+-fno-pie
+-fcf-protection=none
+-g
+-mtune=generic
+-march=x86-64
+-v
+-save-temps
+-g
+-ffat-lto-objects
+-fdata-sections
+-ffunction-sections
+-fdump-earlydebug
+-mtune=generic
+-march=x86-64
+-dumpdir
+server.
+-dumpbase
+./server.wpa
+-fltrans-output-list=./server.ltrans.out
+-fwpa
+-fresolution=server.res
+-flinker-output=exec
+server-server.o
+server-service.o
+server-siftp.o
+```
+
+接下来，gcc会调用lto1，命令为:
+```
+/usr/libexec/gcc/x86_64-redhat-linux/15/lto1 -quiet -dumpbase ./server.wpa -mtune=generic -march=x86-64 -g -g -version -fno-openmp -fno-openacc -fno-pie -fcf-protection=none -ffat-lto-objects -fdata-sections -ffunction-sections -fdump-earlydebug -fltrans-output-list=./server.ltrans.out -fwpa -fresolution=server.res -flinker-output=exec @./server.wpa.args.0
+```
+
+server.wpa.args.0对应的内容为:
+```
+server-server.o
+server-service.o
+server-siftp.o
+```
+
+server.wpa.args.0包含的内容对应了input objects，即原始的object文件列表。
+-fltrans-output-list对应的是WPA结束后，划分的output objects列表，本文用的例子只有三个源码文件，都划分到了一个ltrans文件中，server.ltrans.out对应的内容为:
+```
+1321
+./server.ltrans0.o
+```
+
+此处的server.ltrans0.o是wpa阶段的输入，作为ltrans的输入，进入下一阶段的处理。
+
 ### ltrans的执行过程，以及生成的中间文件
+
+根据WPA阶段的划分结果，会生成一个make文件，make文件里生成了每个ltrans文件的编译命令，按照并行度设置，这里每个ltrans文件的编译是单独运行的。本文的例子里，只生成了一个ltrans文件，直接运行的gcc命令。
+
+对应的gcc命令为：
+```
+/usr/bin/gcc @./server.ltrans0.ltrans_args
+```
+
+server.ltrans0.ltrans_args对应的内容为:
+```
+-xlto
+-c
+-fno-openmp
+-fno-openacc
+-fno-pie
+-fcf-protection=none
+-g
+-mtune=generic
+-march=x86-64
+-v
+-save-temps
+-g
+-ffat-lto-objects
+-fdata-sections
+-ffunction-sections
+-fdump-earlydebug
+-mtune=generic
+-march=x86-64
+-dumpdir
+server.
+-dumpbase
+./server.ltrans0.ltrans
+-fltrans
+-o
+./server.ltrans0.ltrans.o
+./server.ltrans0.o
+```
+
+gcc接下来会调用lto1，对应的命令为:
+```
+ /usr/libexec/gcc/x86_64-redhat-linux/15/lto1 -quiet -dumpbase ./server.ltrans0.ltrans -mtune=generic -march=x86-64 -g -g -version -fno-openmp -fno-openacc -fno-pie -fcf-protection=none -ffat-lto-objects -fdata-sections -ffunction-sections -fdump-earlydebug -fltrans @./server.ltrans0.ltrans.args.0 -o ./server.ltrans0.ltrans.s
+```
+
+server.ltrans0.ltrans.args.0的内容为:
+```
+./server.ltrans0.o
+```
+
+lto1结束后，gcc会调用as生成最终的object，对应的命令为:
+```
+as -v --gdwarf-5 --64 -o ./server.ltrans0.ltrans.o ./server.ltrans0.ltrans.s
+```
 
 ## 以GCC15为例，分析LTO的源码实现
 
 1. collect2如何调用lto-wrapper
 
+lto-wrapper的源码由两部分组成，一部分以so的形式，在linker运行时，以插件的形式引入，另一部分则是编译成lto-wrapper可执行文件。gcc和lto-wrapper之间存在嵌套的调用关系，因此理解起来有点困难。个人理解，lto-wrapper的引入，在链接的时候需要进行再次编译，让编译和链接之间的关系变得界限没有那么清晰。
+
 2. LTO的partion过程
 
+partion的过程在WPA阶段完成，此处有两个参数需要区别，一个是最终划分的lto objects数量，另一个是在ltrans阶段编译时的并行度。这两者没有关联关系，后者主要有系统的核数决定，前者则是有一个默认值。一开始我把这两个参数搞混了，一直在纠结第一个参数跟核数相关的话，如何保证二进制的编译一致性。
+
+lto1的实现入口为: gcc/lto/lto.cc
+
+当前支持的partion algorithm如下:
+```
+if (flag_ipa_reorder_for_locality)
+  lto_locality_map (param_max_locality_partition_size);
+else if (flag_lto_partition == LTO_PARTITION_1TO1)
+  lto_1_to_1_map ();
+else if (flag_lto_partition == LTO_PARTITION_MAX)
+  lto_max_map ();
+else if (flag_lto_partition == LTO_PARTITION_ONE)
+  lto_balanced_map (1, INT_MAX);
+else if (flag_lto_partition == LTO_PARTITION_BALANCED)
+  lto_balanced_map (param_lto_partitions,
+    param_max_partition_size);
+else if (flag_lto_partition == LTO_PARTITION_CACHE)
+  lto_cache_map (param_lto_partitions, param_max_partition_size);
+```
+
+具体的划分过程就不在此处赘述了，直接看对应的函数即可。
+
 3. 经过ltrans生成的object如何对应dwarf信息 - early debug
+
+实际使用的时候，发现最终生成的lto objects对应的dwarf信息缺失很多。经过对dwarf标准的阅读，发现这是LTO项目本身的问题。为了解决这一问题，LTO项目使用了earlydebug，通过参数-fdump-earlydebug，可以把每个lto object对应的earlydebug信息dump出来。当前没有发现工具可以把earlydebug信息和lto object merge到一起的工具，这部分内容还需要继续阅读dwarf标准和gcc的earlydebug实现来补充。
 
 ## 发行版使用的LTO参数
 
