@@ -5,6 +5,7 @@ tags:
     - GCC
     - LTO
     - Livepatch
+    - DWARF
 
 ---
 
@@ -511,6 +512,18 @@ else if (flag_lto_partition == LTO_PARTITION_CACHE)
 
 实际使用的时候，发现最终生成的lto objects对应的dwarf信息缺失很多。经过对dwarf标准的阅读，发现这是LTO项目本身的问题。为了解决这一问题，LTO项目使用了earlydebug，通过参数-fdump-earlydebug，可以把每个lto object对应的earlydebug信息dump出来。当前没有发现工具可以把earlydebug信息和lto object merge到一起的工具，这部分内容还需要继续阅读dwarf标准和gcc的earlydebug实现来补充。
 
+补充信息 - DWARF信息的组成以及占用的大小比例
+
++ Debug Information Entries - .debug_info (11%): This table contains the debug info for subprograms and variables defined in the program, and many of the trivial types used.
++ Type Units - .debug_types (12%): This table contains the debug info for most of the non-trivial types (e.g., structs and classes, enums, typedefs), keyed by a hashed type signature so that duplicate type definitions can be eliminated by the linker. During the link, about 85% of this data is discarded as duplicate. These sections have the same structure as the .debug_info sections.
++ Strings - .debug_str (25%): This table contains strings that are not placed inline in the .debug_info and .debug_types sections. The linker merges the string tables to eliminate duplicates, discarding about 93% of the data as duplicate.
++ Range tables - .debug_ranges (2%) and .debug_aranges (0.1%): These tables contain range lists to define what pieces of a program's text belong to which subprograms and compilation units.
++ Location lists - .debug_loc (2%): These tables contain lists of expressions that describe to the debugger the location of a variable based on the PC value.
++ Line number tables - .debug_line (1%): These tables contain a description of the mapping from PC values to source locations.
++ Debug abbreviation codes - .debug_abbrev (<1%): These tables provide the definitions for abbreviation codes used in describing the debug info in the .debug_info and .debug_types sections.
++ Public names - .debug_pubnames (<1%): These tables provide a list of public names defined in the compilation unit, intended to allow the debugger to find the appropriate compilation units quickly for a given name. (In practice, these tables are unused by gdb.)
++ Relocations for debug information (46%): The relocations identify to the linker where all the relocatable references are in the debug information. Of the 46%, about 20 percentage points are for the .debug_info section and about 17 are for the .debug_types section. Nine of ten of these relocations are for references to the .debug_str section; the remaining tenth are mostly references to locations in the program. Another 9 percentage points are for the .debug_ranges and .debug_loc sections; these are entirely references to locations in the program. These relocations are used by the linker and are not copied to the output file.
+
 ## 发行版使用的LTO参数
 
 fedora使用的编译参数通过rpm包redhat-rpm-config引入，解开这个包，可以发现以下LTO相关的编译参数：
@@ -523,11 +536,13 @@ fedora使用的编译参数通过rpm包redhat-rpm-config引入，解开这个包
 其他发行版的使用情况可以参考以下wiki:
 + [gentoo](https://wiki.gentoo.org/wiki/LTO)
 
+
 ## 参考链接
 
 1. [Interprocedural_optimization](https://en.wikipedia.org/wiki/Interprocedural_optimization)
 2. [CS232](https://courses.grainger.illinois.edu/cs232/sp2009/lectures/Examples/lecture6/lecture6.html)
 3. [Honza Hubička's Blog](https://hubicka.blogspot.com/2014/04/linktime-optimization-in-gcc-1-brief.html)
+4. [GCC-Wiki-DebugFission](https://gcc.gnu.org/wiki/DebugFission)
 
 
 
