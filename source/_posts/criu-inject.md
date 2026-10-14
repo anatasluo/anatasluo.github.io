@@ -1,5 +1,6 @@
 ---
 title: criu代码注入原理解析
+permalink: criu-injection/
 date: 2022-02-23 16:13:30
 tags:
     - Criu

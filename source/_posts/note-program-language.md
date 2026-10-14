@@ -1,5 +1,6 @@
 ---
 title: '[note]理解编程语言'
+permalink: programming-languages/
 date: 2020-02-14 00:06:01
 tags:
     - Program Language

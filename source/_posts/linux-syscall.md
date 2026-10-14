@@ -1,5 +1,6 @@
 ---
 title: syscall的执行过程简析以及如何在内核模块中发起调用
+permalink: linux-syscalls/
 date: 2023-05-17 10:23:55
 tags:
     - Syscall

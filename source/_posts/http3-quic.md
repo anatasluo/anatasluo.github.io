@@ -1,5 +1,6 @@
 ---
 title: HTTP3(QUIC)-HTTP发展历史整理
+permalink: http3-quic/
 date: 2022-01-15 16:43:01
 tags:
   - HTTP
@@ -9,9 +10,9 @@ tags:
 
 ## PPT链接
 
-+ [QUIC protocol.pdf](pdf/quic演示.pdf)
++ [QUIC protocol.pdf](/pdf/quic.pdf)
 
-+ [QUIC protocol.pptx](pdf/quic演示.pptx)
++ [QUIC protocol.pptx](/pdf/quic.pptx)
 
 ## 总结
 

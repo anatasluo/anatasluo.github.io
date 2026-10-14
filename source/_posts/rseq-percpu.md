@@ -1,5 +1,6 @@
 ---
 title: Per-CPU及RSEQ机制分析
+permalink: percpu-rseq/
 tags:
   - Per-CPU
   - RSEQ

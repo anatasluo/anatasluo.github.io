@@ -1,5 +1,6 @@
 ---
 title: 体系结构对原子操作的实现和支持
+permalink: atomic-operations/
 date: 2020-06-25 04:09:13
 tags:
     - ARM

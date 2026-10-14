@@ -1,5 +1,6 @@
 ---
 title: Binary.hacks技巧整理
+permalink: binary-hacks/
 date: 2023-08-31 09:50:26
 tags:
   - Binary
@@ -7,7 +8,7 @@ tags:
   - Hack
 ---
 
-[Binary.Hacks 黑客秘笈100选](pdf/Binary-Hacks.pdf) 是一本比较老的书，里面记录了一些有意思的技巧，本篇blog是对该书的一些总结和补充。
+[Binary.Hacks 黑客秘笈100选](/pdf/Binary-Hacks.pdf) 是一本比较老的书，里面记录了一些有意思的技巧，本篇blog是对该书的一些总结和补充。
 
 ## [Hack 14] demangle C++的symbol
 
@@ -108,7 +109,7 @@ int main()
 
 ## [Hack 32] GCC在栈中生成运行时代码，进行跳转
 
-参考[GCC编译器通过stack执行代码](https://anatasluo.github.io/66174d84bdc2/)
+参考[GCC编译器通过stack执行代码](/gcc-stack-code/)
 
 ## [HACK 35] PIE and PIC
 
@@ -145,7 +146,7 @@ int main()
 
 ## [Hack 67] 使用libbf处理ELF文件
 
-[相关文档](pdf/bfd.pdf)
+[相关文档](/pdf/bfd.pdf)
 
 ## [Hack 69] 通过ffcall/libffi动态调用函数
 
@@ -153,7 +154,7 @@ int main()
 
 ## [Hack 70] 通过libdwarf读取调试信息
 
-[相关文档](pdf/DWARF5.pdf)
+[相关文档](/pdf/DWARF5.pdf)
 
 ## [Hack 71] [dumper](https://shinh.skr.jp/binary/dumper.tgz)显示结构体内容
 
@@ -191,11 +192,11 @@ dumper的工作原理是读取进程空间的内存，然后根据debug信息对
 
 原理是改写了PLT表格，但是这种改写不能用于替换运行进程的动态库，因为可能有函数地址或者变量地址被使用在地址空间中。
 
-## [Hack 84] [使用Jockey记录，再生Linux的程序运行](pdf/Jockey.pdf)
+## [Hack 84] [使用Jockey记录，再生Linux的程序运行](/pdf/Jockey.pdf)
 
 原理是记录了外部调用的结果，并对结果进行重放。论文还没有仔细看过，看原理有点打桩的意思。
 
-## [Hack 85] [使用prelink加速程序启动](pdf/prelink.pdf)
+## [Hack 85] [使用prelink加速程序启动](/pdf/prelink.pdf)
 
 程序的重定向在确定地址随机化的load_bias后，是可以提前进行的。
 

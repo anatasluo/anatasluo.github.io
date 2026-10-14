@@ -1,6 +1,7 @@
 
 ---
 title: libcare实现live patch的要点总结
+permalink: libcare-livepatch/
 date: 2022-02-23 16:13:30
 tags:
     - Libcare

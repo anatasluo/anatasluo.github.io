@@ -1,5 +1,6 @@
 ---
 title: C/C++代码扩张
+permalink: code-size/
 date: 2020-06-15 17:01:01
 tags:
     - C

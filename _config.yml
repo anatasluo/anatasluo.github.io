@@ -14,6 +14,7 @@ timezone: 'Asia/Shanghai'
 # URL
 ## Set your site url here. For example, if you use GitHub Page, set url as 'https://username.github.io/project'
 url: https://anatasluo.github.io
+# 每篇文章用 front matter 的 permalink 固定英文短路径，不随标题或文件名变化。
 permalink: :name/
 permalink_defaults:
 pretty_urls:
@@ -31,6 +32,7 @@ i18n_dir: :lang
 skip_render:
 
 # Writing
+# 新文章：npx hexo new "中文标题" --slug short-english-name
 new_post_name: :title.md # File name of new posts
 default_layout: post
 titlecase: false # Transform title into titlecase
@@ -68,6 +70,7 @@ index_generator:
 default_category: uncategorized
 category_map:
 tag_map:
+  "C++": cpp
 
 # Metadata elements
 ## https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta

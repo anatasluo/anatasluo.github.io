@@ -1,5 +1,6 @@
 ---
 title: '[note]高效程序员的45个习惯'
+permalink: programmer-habits/
 date: 2020-09-25 21:08:06
 tags:
     - Programmer

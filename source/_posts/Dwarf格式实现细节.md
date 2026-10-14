@@ -1,5 +1,6 @@
 ---
 title: Dwarf格式实现细节
+permalink: dwarf-format-details/
 date: 2025-09-16 18:20:48
 tags:
   - DWARF

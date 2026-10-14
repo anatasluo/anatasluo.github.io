@@ -1,5 +1,6 @@
 ---
 title: Linux-代码及命令小抄
+permalink: linux-cheatsheet/
 date: 2022-10-19 18:14:01
 tags:
     - Linux

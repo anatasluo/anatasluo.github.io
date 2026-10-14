@@ -1,5 +1,6 @@
 ---
 title: shell执行命令时参数传递过程
+permalink: shell-arguments/
 date: 2022-05-25 00:43:44
 tags:
     - Bash

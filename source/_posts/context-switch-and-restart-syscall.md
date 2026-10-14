@@ -1,5 +1,6 @@
 ---
 title: context_switch and restart_syscall
+permalink: context-switch-syscalls/
 date: 2024-10-31 23:25:07
 tags:
     - Linux

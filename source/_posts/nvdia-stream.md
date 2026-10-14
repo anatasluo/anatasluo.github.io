@@ -1,5 +1,6 @@
 ---
 title: NVDIA Steam初体验
+permalink: nvidia-streaming/
 tags:
   - NVDIA
   - Cloud Game

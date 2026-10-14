@@ -1,5 +1,6 @@
 ---
 title: C++中全局对象的初始化
+permalink: cpp-global-init/
 date: 2020-06-25 04:10:28
 tags:
     - C++

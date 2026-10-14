@@ -1,5 +1,6 @@
 ---
 title: 深入理解相对重定向
+permalink: elf-relocations/
 date: 2022-06-22 18:30:00
 tags:
     - Linux

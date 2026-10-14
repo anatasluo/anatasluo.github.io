@@ -1,5 +1,6 @@
 ---
 title: 嵌入式设备中的Linux引导方式
+permalink: embedded-linux-boot/
 date: 2019-11-03 00:28:28
 tags:
     - Linux

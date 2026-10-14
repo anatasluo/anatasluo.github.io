@@ -1,5 +1,6 @@
 ---
 title: Linux修改进程使用资源限制办法
+permalink: linux-resource-limits/
 date: 2023-08-29 17:02:21
 tags:
   - Linux

@@ -1,5 +1,6 @@
 ---
 title: 深入了解GCC的LTO机制
+permalink: gcc-lto/
 date: 2025-06-24 01:03:29
 tags:
     - GCC

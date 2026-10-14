@@ -1,5 +1,6 @@
 ---
 title: 使用Virtiofs进行内核开发
+permalink: virtiofs/
 date: 2022-10-09 15:13:24
 tags:
     - Linux

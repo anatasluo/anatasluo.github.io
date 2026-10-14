@@ -1,5 +1,6 @@
 ---
 title: Linux From Scratch实验过程记录
+permalink: linux-from-scratch/
 date: 2022-10-05 19:27:26
 tags:
     - LFS

@@ -1,5 +1,6 @@
 ---
 title: '[note]Practical Binary Analysis(二进制分析实战)'
+permalink: practical-binary-analysis/
 date: 2025-06-28 16:55:15
 tags:
     - Binary

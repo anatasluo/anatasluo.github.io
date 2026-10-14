@@ -1,5 +1,6 @@
 ---
 title: Flexible array in C/C++
+permalink: flexible-arrays/
 date: 2020-06-12 13:16:43
 tags:
     - C

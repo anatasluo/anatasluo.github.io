@@ -1,5 +1,6 @@
 ---
 title: BPF usage in malicious software
+permalink: bpf-malware/
 date: 2023-03-09 14:54:41
 tags:
     - Ebpf

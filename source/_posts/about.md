@@ -1,5 +1,6 @@
 ---
 title: About
+permalink: about/
 date: 2021-03-31 03:01:12
 type: about
 comments: false
@@ -18,8 +19,6 @@ Senior Engineer
 
 - Maintainer, [openEuler SIG-ops](https://gitcode.com/openeuler/community/blob/master/sig/sig-ops/README.md).
 - [SysCare](https://atomgit.com/openeuler/syscare) — kernel and userspace live-patch generation and management.
-- 2022 — [Livepatch in Userspace Based on Uprobe](https://www.youtube.com/watch?v=6TH7kh3pS0E), Open Source Summit Europe.
-- 2022 — [Seamless Kernel Update](https://archive.fosdem.org/2022/schedule/event/security_seamless_kernel/), FOSDEM.
 
 ## Recent Work
 

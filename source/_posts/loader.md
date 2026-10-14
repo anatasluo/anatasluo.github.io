@@ -1,5 +1,6 @@
 ---
 title: Dynamic-Loader设计中需要关注的部分
+permalink: dynamic-loader/
 date: 2024-11-29 11:08:54
 tags:
     - ELF

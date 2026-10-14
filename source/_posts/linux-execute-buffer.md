@@ -1,5 +1,6 @@
 ---
 title: Linux下如何执行buffer中的一段代码
+permalink: execute-code-buffer/
 date: 2020-11-23 17:47:30
 tags:
     - Linux

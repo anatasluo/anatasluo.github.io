@@ -1,5 +1,6 @@
 ---
 title: C/C++中的内存泄露检测
+permalink: memory-leak-detection/
 date: 2020-06-25 04:06:24
 tags:
     - C

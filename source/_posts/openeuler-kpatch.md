@@ -1,5 +1,6 @@
 ---
 title: openEuler 21.09 下运行kpatch
+permalink: openeuler-kpatch/
 date: 2022-04-25 01:43:44
 tags:
     - openEuler

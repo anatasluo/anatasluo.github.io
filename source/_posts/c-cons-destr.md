@@ -1,5 +1,6 @@
 ---
 title: GNU C语言中的构造和析构函数
+permalink: c-constructors-destructors/
 date: 2021-05-03 18:02:34
 tags:
   - GNU

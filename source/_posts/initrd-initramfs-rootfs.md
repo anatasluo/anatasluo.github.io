@@ -1,5 +1,6 @@
 ---
 title: 'initrd, initramfs, rootfs'
+permalink: linux-rootfs/
 date: 2021-02-21 06:15:10
 tags:
     - Linux

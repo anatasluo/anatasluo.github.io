@@ -1,5 +1,6 @@
 ---
 title: 如何对inode结构执行mmap操作
+permalink: inode-mmap/
 tags:
   - Linux
   - VFS

@@ -1,5 +1,6 @@
 ---
 title: 嵌入式系统概述
+permalink: embedded-systems/
 date: 2020-02-08 18:40:34
 tags:
     - Linux

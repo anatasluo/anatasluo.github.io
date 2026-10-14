@@ -1,5 +1,6 @@
 ---
 title: 一行打印引出的Linux信号知识
+permalink: linux-signals/
 date: 2020-01-03 23:31:50
 tags:
     - Linux

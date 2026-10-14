@@ -1,5 +1,6 @@
 ---
 title: dnf包管理系统中debug包的使用
+permalink: rpm-debug-packages/
 date: 2022-11-03 00:01:35
 tags:
     - dnf

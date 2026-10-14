@@ -1,5 +1,6 @@
 ---
 title: GCC编译器通过stack执行代码
+permalink: gcc-stack-code/
 date: 2023-08-24 00:52:37
 tags:
   - GNU

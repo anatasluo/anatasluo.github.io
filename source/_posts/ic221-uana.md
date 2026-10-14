@@ -1,5 +1,6 @@
 ---
 title: '[IC221]USNA/Systems Programming'
+permalink: usna-ic221/
 date: 2020-01-09 00:52:41
 tags:
     - USNA

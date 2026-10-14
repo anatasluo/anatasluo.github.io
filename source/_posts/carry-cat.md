@@ -1,5 +1,6 @@
 ---
 title: 国内宠物托运指南
+permalink: pet-transport/
 tags:
   - Life
 date: 2021-04-06 22:58:43

@@ -1,6 +1,7 @@
 ---
 
 title: 使用Linux内核unexported symbol的办法
+permalink: kernel-unexported-symbols/
 
 date: 2024-08-28 10:22:06
 

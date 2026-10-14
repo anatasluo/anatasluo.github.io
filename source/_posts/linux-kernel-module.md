@@ -1,5 +1,6 @@
 ---
 title: Linux Kernel Module加载卸除过程分析
+permalink: kernel-modules/
 tags:
   - Linux
   - Kernel Module

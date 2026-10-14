@@ -1,5 +1,6 @@
 ---
 title: Weak Symbol in C/C++
+permalink: weak-symbols/
 date: 2020-06-22 14:46:53
 tags:
     - C

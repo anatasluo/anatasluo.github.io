@@ -1,5 +1,6 @@
 ---
 title: return handler的断点原理
+permalink: return-handler/
 tags:
   - Linux
   - Live patch

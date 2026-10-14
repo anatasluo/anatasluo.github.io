@@ -1,5 +1,6 @@
 ---
 title: Empty struct/class in C/C++
+permalink: empty-structs-classes/
 date: 2020-06-11 16:34:36
 tags:
     - C

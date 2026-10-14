@@ -1,5 +1,6 @@
 ---
 title: Linux ELF规范整理
+permalink: elf/
 tags:
   - Linux
   - Live patch

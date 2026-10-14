@@ -1,5 +1,6 @@
 ---
 title: fedora下kvm的bridge网络设置
+permalink: kvm-bridge/
 tags:
   - Fedora
   - KVM

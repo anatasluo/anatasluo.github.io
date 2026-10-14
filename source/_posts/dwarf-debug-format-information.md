@@ -1,5 +1,6 @@
 ---
 title: DWARF and exception handling
+permalink: dwarf-unwinding/
 date: 2022-10-25 00:34:51
 tags:
   - DWARF
