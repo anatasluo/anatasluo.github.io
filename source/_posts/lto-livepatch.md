@@ -197,12 +197,14 @@ LTO objects的dwarf信息不够准确，earlydebug项目致力于解决该问题
 下面，我们以[simple-ftp](https://github.com/sunaku/simple-ftp)的源码为例，来具体分析LTO的编译过程，以及中间文件的生成情况。
 
 通过以下命令，编译server二进制:
-```
+
+```bash
 gcc -v --save-temps -g -flto -ffat-lto-objects  -fdata-sections -ffunction-sections -fdump-earlydebug server.c service.c siftp.c -o server
 ```
 
 观察日志输出，可以得到以下编译输出(截取链接相关的部分)：
-```
+
+```text
 /usr/libexec/gcc/x86_64-redhat-linux/15/collect2 -plugin /usr/libexec/gcc/x86_64-redhat-linux/15/liblto_plugin.so -plugin-opt=/usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -plugin-opt=-fresolution=server.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -flto --build-id --no-add-needed --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o server /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crt1.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/15/crtbegin.o -L/usr/lib/gcc/x86_64-redhat-linux/15 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/15/../../.. -L/lib -L/usr/lib server-server.o server-service.o server-siftp.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-redhat-linux/15/crtend.o /usr/lib/gcc/x86_64-redhat-linux/15/../../../../lib64/crtn.o
 /usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -fresolution=server.res -flinker-output=exec server-server.o server-service.o server-siftp.o 
 /usr/libexec/gcc/x86_64-redhat-linux/15/lto-wrapper -fresolution=server.res -flinker-output=exec server-server.o server-service.o server-siftp.o 
@@ -262,7 +264,8 @@ COLLECT_GCC_OPTIONS='-v' '-save-temps' '-g' '-flto' '-ffat-lto-objects' '-fdata-
 ### lto-wrapper的执行命令，以及生成的中间文件
 
 详细的命令可以在上面的日志内查看，当前目录下会生成一个server.lto_wrapper_args，其中的内容为:
-```
+
+```text
 -fresolution=server.res
 -flinker-output=exec
 server-server.o
@@ -271,7 +274,8 @@ server-siftp.o
 ```
 
 server.res 按照文档的说法，叫linker resolution file，包含的内容如下:
-```
+
+```text
 3
 server-server.o 40
 195 95b25203115d8f9a PREVAILING_DEF_IRONLY sigchld_handler
@@ -365,12 +369,14 @@ server-siftp.o 14
 ### WPA的执行过程，以及生成的中间文件
 
 通过lto-wrapper，通过以下gcc命令发起WPA分析:
-```
+
+```bash
 /usr/bin/gcc @./server.ltrans_args 
 ```
 
 server.ltrans_args对应的内容为:
-```
+
+```text
 -xlto
 -c
 -fno-openmp
@@ -403,12 +409,14 @@ server-siftp.o
 ```
 
 接下来，gcc会调用lto1，命令为:
-```
+
+```bash
 /usr/libexec/gcc/x86_64-redhat-linux/15/lto1 -quiet -dumpbase ./server.wpa -mtune=generic -march=x86-64 -g -g -version -fno-openmp -fno-openacc -fno-pie -fcf-protection=none -ffat-lto-objects -fdata-sections -ffunction-sections -fdump-earlydebug -fltrans-output-list=./server.ltrans.out -fwpa -fresolution=server.res -flinker-output=exec @./server.wpa.args.0
 ```
 
 server.wpa.args.0对应的内容为:
-```
+
+```text
 server-server.o
 server-service.o
 server-siftp.o
@@ -416,7 +424,8 @@ server-siftp.o
 
 server.wpa.args.0包含的内容对应了input objects，即原始的object文件列表。
 -fltrans-output-list对应的是WPA结束后，划分的output objects列表，本文用的例子只有三个源码文件，都划分到了一个ltrans文件中，server.ltrans.out对应的内容为:
-```
+
+```text
 1321
 ./server.ltrans0.o
 ```
@@ -428,12 +437,14 @@ server.wpa.args.0包含的内容对应了input objects，即原始的object文�
 根据WPA阶段的划分结果，会生成一个make文件，make文件里生成了每个ltrans文件的编译命令，按照并行度设置，这里每个ltrans文件的编译是单独运行的。本文的例子里，只生成了一个ltrans文件，直接运行的gcc命令。
 
 对应的gcc命令为：
-```
+
+```bash
 /usr/bin/gcc @./server.ltrans0.ltrans_args
 ```
 
 server.ltrans0.ltrans_args对应的内容为:
-```
+
+```text
 -xlto
 -c
 -fno-openmp
@@ -463,17 +474,20 @@ server.
 ```
 
 gcc接下来会调用lto1，对应的命令为:
-```
+
+```bash
  /usr/libexec/gcc/x86_64-redhat-linux/15/lto1 -quiet -dumpbase ./server.ltrans0.ltrans -mtune=generic -march=x86-64 -g -g -version -fno-openmp -fno-openacc -fno-pie -fcf-protection=none -ffat-lto-objects -fdata-sections -ffunction-sections -fdump-earlydebug -fltrans @./server.ltrans0.ltrans.args.0 -o ./server.ltrans0.ltrans.s
 ```
 
 server.ltrans0.ltrans.args.0的内容为:
-```
+
+```text
 ./server.ltrans0.o
 ```
 
 lto1结束后，gcc会调用as生成最终的object，对应的命令为:
-```
+
+```bash
 as -v --gdwarf-5 --64 -o ./server.ltrans0.ltrans.o ./server.ltrans0.ltrans.s
 ```
 
@@ -490,7 +504,8 @@ partion的过程在WPA阶段完成，此处有两个参数需要区别，一个�
 lto1的实现入口为: gcc/lto/lto.cc
 
 当前支持的partion algorithm如下:
-```
+
+```cpp
 if (flag_ipa_reorder_for_locality)
   lto_locality_map (param_max_locality_partition_size);
 else if (flag_lto_partition == LTO_PARTITION_1TO1)
@@ -527,7 +542,8 @@ else if (flag_lto_partition == LTO_PARTITION_CACHE)
 ## 发行版使用的LTO参数
 
 fedora使用的编译参数通过rpm包redhat-rpm-config引入，解开这个包，可以发现以下LTO相关的编译参数：
-```
+
+```text
 %_gcc_lto_cflags        -flto=auto -ffat-lto-objects
 %_clang_lto_cflags      -flto=thin -ffat-lto-objects
 %_lto_cflags            %{expand:%%{_%{toolchain}_lto_cflags}}

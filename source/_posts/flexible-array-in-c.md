@@ -20,7 +20,7 @@ tags:
 
 查看如下代码，C99标准中可变数组的使用
 
-```
+```c
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -49,7 +49,8 @@ int main()
 在可变数组成为ISO C一部分之前，其使用方式通过是如下方式实现的(以下代码来自[Nuttx](https://github.com/apache/incubator-nuttx))
 
 包含可变数组的结构体定义:
-```
+
+```c
 struct tmpfs_file_s
 {
   /* First fields must match common TMPFS object layout */
@@ -70,7 +71,8 @@ struct tmpfs_file_s
 ```
 
 大小计算方式如下
-```
+
+```c
 #define SIZEOF_TMPFS_FILE(n) (sizeof(struct tmpfs_file_s) + (n) - 1)
 ```
 

@@ -9,7 +9,8 @@ tags:
 ## 全局对象初始化
 
 查看如下C++代码：
-```
+
+```cpp
 #include <cstdio>
 
 class A {
@@ -31,7 +32,8 @@ int main()
 这段代码的运行结果是对象A的构造函数被调用，串口输出"construct ok"。根据全局对象的初始化规则，这个调用是发生在main函数之前的，而且可以是多个函数依次调用。那么，这种调用时如何实现的？
 
 通过gcc生成arm64汇编，汇编代码如下:
-```
+
+```armasm
 	.arch armv8-a
 	.file	"main.cpp"
 	.text
@@ -151,7 +153,8 @@ _GLOBAL__sub_I_g_al:
 关键的汇编代码是以下几部分；
 
 构造函数的具体实现如下：
-```
+
+```armasm
 .LC0:
 	.string	"construct ok "
 	.section	.text._ZN1AC2Ev,"axG",@progbits,_ZN1AC5Ev,comdat
@@ -186,13 +189,15 @@ _ZN1AC2Ev:
 _GLOBAL__sub_I_g_al -> _Z41__static_initialization_and_destruction_0ii -> _ZN1AC1Ev(_ZN1AC2Ev)
 
 其中_ZN1AC1Ev是一个弱符号，最终解析成_ZN1AC2Ev，即class A的构造函数
-```
+
+```armasm
 .weak	_ZN1AC1Ev
 .set	_ZN1AC1Ev,_ZN1AC2Ev
 ```
 
 那现在问题就变成_GLOBAL__sub_I_g_al是谁调用的，查看汇编里的相关信息，如下：
-```
+
+```armasm
 .LFE5:
 	.size	_GLOBAL__sub_I_g_al, .-_GLOBAL__sub_I_g_al
 	.section	.init_array,"aw",%init_array
@@ -227,7 +232,8 @@ _GLOBAL__sub_I_g_al -> _Z41__static_initialization_and_destruction_0ii -> _ZN1AC
 > objdump -D -j .init_array <your-application>
 
 在我的环境中，输出如下:
-```
+
+```text
 a.out:     file format elf64-littleaarch64
 
 
@@ -246,7 +252,7 @@ Disassembly of section .init_array:
 
 在我的环境中，输出如下:
 
-```
+```text
 /tmp/tmp.KS3wdL1X4n/main.cpp:16
 ```
 

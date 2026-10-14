@@ -41,7 +41,20 @@ gtag:
 # 文章评论系统
 comments:
   enable: true
-  # 目前仅支持gitalk, valine, disqus评论，选择喜欢的一种开启即可
+  # 只开启一种评论服务；单篇文章可在 front matter 中设置 comments: false。
+  # giscus 接入由博客自己的 scripts/comments.js 和 layout/_partial/comments.ejs 维护。
+  giscus:
+    enable: true
+    repo: anatasluo/anatasluo.github.io
+    repo_id: MDEwOlJlcG9zaXRvcnkyMTI2MDcyMTM=
+    category: Announcements
+    category_id: DIC_kwDODKwg7c4Ccfcu
+    # 按文章路径关联讨论；已有评论后应保持文章 URL 稳定。
+    mapping: pathname
+    strict: 1
+    reactions_enabled: 1
+    input_position: top
+    lang: zh-CN
 
   gitalk:
     # https://github.com/gitalk/gitalk#usage查看官方教程
@@ -180,11 +193,11 @@ footer:
       name: © {thisYear} anatasluo
       path: https://github.com/anatasluo
 
-  # 浏览量统计
-  # http://busuanzi.ibruce.info/
+  # 不蒜子全站访问统计，仅作参考；加载失败时隐藏，不影响正文。
+  # https://busuanzi.ibruce.info/
   views:
-    enable: false
-    provider: '//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js'
+    enable: true
+    provider: 'https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js'
     item:
       -
         enable: true
@@ -192,7 +205,7 @@ footer:
         name: 本站总访问量
         unit: 次
       -
-        enable: true
+        enable: false
         id: busuanzi_value_page_pv
         name: 本文总阅读量
         unit: 次

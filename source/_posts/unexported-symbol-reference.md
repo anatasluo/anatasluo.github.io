@@ -22,7 +22,7 @@ tags:
 
 在编写内核驱动时，如果使用到了未被export的函数，kbuild在modpost这一步会报如下错误：
 
-```
+```text
 
 ERROR: modpost: "kernel_clone" [/data/simple.ko] undefined!
 
@@ -64,7 +64,7 @@ klp(kernel livepatch)对符号的处理，分成两大部分。
 
 处理过程的函数调用链为：
 
-```
+```text
 
 load_module
 
@@ -90,7 +90,7 @@ load_module
 
 对应以下代码:
 
-```
+```c
 
 info->sechdrs[i].sh_flags & SHF_RELA_LIVEPATCH
 
@@ -112,7 +112,7 @@ info->sechdrs[i].sh_flags & SHF_RELA_LIVEPATCH
 
 对应以下代码:
 
-```
+```c
 
 sym->st_shndx != SHN_LIVEPATCH
 
@@ -138,7 +138,7 @@ sym->st_shndx != SHN_LIVEPATCH
 
 对于loaded的模块，符号的解析路径为(由当前的klp ko触发)：
 
-```
+```text
 
 klp_enable_patch
 
@@ -152,7 +152,7 @@ klp_enable_patch
 
 对于unloade的模块，符号的解析路径为(由该ko被loaded时触发)：
 
-```
+```text
 
 klp_module_coming
 

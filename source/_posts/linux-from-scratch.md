@@ -24,7 +24,8 @@ Linux From Scratch(LFS)的项目主页，点击[此处](https://www.linuxfromscr
 这个问题，是由于chroot过程中，没有挂载虚拟内核文件系统。
 
 进入LFS文件系统的完整过程如下:
-```
+
+```bash
 mkdir -pv $LFS/{dev,proc,sys,run}
 
 mount -v --bind /dev/pts $LFS/dev/pts
@@ -46,7 +47,8 @@ fi
 ```
 
 离开LFS环境后的清理过程如下:
-```
+
+```bash
 exit
 
 umount $LFS/dev/pts
@@ -55,12 +57,13 @@ umount $LFS/{sys,proc,run,dev}
 ```
 
 3. 备份和还原LFS环境的命令
-```
+
+```bash
 cd $LFS
 tar -cJpf $HOME/lfs-temp-tools-11.2.tar.xz .
 ```
 
-```
+```bash
 cd $LFS
 rm -rf ./*
 tar -xpf $HOME/lfs-temp-tools-11.2.tar.xz
@@ -84,18 +87,21 @@ tar -xpf $HOME/lfs-temp-tools-11.2.tar.xz
 1. 通过ramfs运行qemu
 
 qemu运行命令如下
-```
+
+```bash
 qemu-system-x86_64  -s -nographic -no-reboot -m 4G -kernel ./kernel/bzImage -initrd ./rootfs/rootfs.cpio.gz -append "nokaslr panic=1 HOST=x86_64 console=ttyS0"
 ```
 
 将LFS环境生成cpio的命令
-```
+
+```bash
 cd ./fs
 find . | cpio -o -H newc | gzip > ../rootfs.cpio.gz
 ```
 
 将cpio解压成LFS环境的命令
-```
+
+```bash
 cd fs
 gzip -dc ../rootfs.cpio.gz > rootfs.cpio
 cpio -idmv < ./rootfs.cpio
@@ -107,12 +113,14 @@ cpio -idmv < ./rootfs.cpio
 2. 通过硬盘运行qemu
 
 qemu运行命令如下
-```
+
+```bash
 qemu-system-x86_64  -s -nographic -no-reboot -m 4G -kernel ./kernel/bzImage -hda ./rootfs/rootfs.img -append "panic=1 HOST=x86_64 console=ttyS0 root=/dev/sda rw"
 ```
 
 将LFS环境生成img的命令
-```
+
+```bash
 dd if=/dev/zero of=rootfs.img bs=1M count=4096
 mkfs.ext4 rootfs.img
 mkdir fs
@@ -120,7 +128,8 @@ sudo mount -t ext4 -o loop rootfs.img ./fs
 ```
 
 对应的解除挂载命令
-```
+
+```bash
 sudo umount fs
 ```
 

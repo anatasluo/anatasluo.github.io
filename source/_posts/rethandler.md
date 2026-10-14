@@ -29,7 +29,7 @@ date: 2022-01-27 15:34:36
 
 ## X64 return handler的原理示例程序
 
-```
+```c
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>

@@ -18,7 +18,8 @@ tags:
 在标准C中，对empty struct的大小没有做出规定，该行为是未定义的。然而，gcc做了拓展，在gcc中，empty struct的sizeof结果为0，更多的信息见参考1。
 
 事实上，即使是gcc中，empty struct的行为还有再复杂一些，查看如下代码
-```
+
+```c
 #include <stdio.h>
 
 struct T {};
@@ -37,6 +38,7 @@ int main()
     return 0;
 }
 ```
+
 输出结果是
 > second is equal
 
@@ -48,7 +50,7 @@ int main()
 
 对于大部分C++编译器来说，一般还会做一个称之为"empty base class optimization"的优化，查看如下代码
 
-```
+```cpp
 #include <iostream>
 
 class T {};
@@ -69,7 +71,8 @@ int main() {
 也就是说，如果一个class继承自empty class，那么empty class多余的那个1就不会出现，以避免预期之外的行为。
 
 那问题来了，C++中存在sizeof为0的class吗？答案是C++标准中是不允许存在，但是在g++中，可以构造一个出来，查看如下代码
-```
+
+```cpp
 #include <iostream>
 
 class T {

@@ -25,7 +25,8 @@ date: 2022-01-20 15:34:36
 3. 每一个path都对应一个struct dentry，一个struct inode对应多个struct dentry。
 
 以下代码，仅考虑映射struct inode对应的文件(如果需要指定路径，则需要多一个遍历过程):
-```
+
+```c
 struct file *d_open_inode(struct inode *inode)
 {
     struct  dentry *alias;

@@ -9,7 +9,8 @@ tags:
 
 
 考虑以下代码
-```
+
+```c
 #include <stdio.h>
 
 void other(void (*funcp)()) {
@@ -45,7 +46,8 @@ int main()
 关于该warning，详情见Referfence-1。
 
 编译之后，通过反汇编查看outer函数和inner函数的实现，可以发现outer函数有很长的一段逻辑，是往栈中写入了特定的内容，相关实现截取如下:
-```
+
+```text
   40115d:       48 8d 45 10             lea    0x10(%rbp),%rax
   401161:       48 89 45 f0             mov    %rax,-0x10(%rbp)
   401165:       48 8d 45 d0             lea    -0x30(%rbp),%rax
@@ -69,21 +71,25 @@ int main()
 ```
 
 这一段的实现比较晦涩，通过GDB追踪outer函数的执行，当执行到other函数时，并没有直接调用inner函数，而是跳入了栈上的某一个地址，对该地址进行反汇编，出现了以下代码:
-```
+
+```text
    0x7fffffffe034:	mov    $0x401140,%r11d
    0x7fffffffe03a:	movabs $0x7fffffffe030,%r10
    0x7fffffffe044:	rex.WB jmp *%r11
 ```
+
 这段栈上的代码做了两件事情，传递了inner函数以及局部变量的真实地址，接着跳入inner函数执行，outer函数那一堆操作栈的代码就是在栈上生成该代码。
 
 而inner函数的实现特别之处如下:
-```
+
+```text
   401144:       4c 89 d0                mov    %r10,%rax
   401147:       4c 89 55 f8             mov    %r10,-0x8(%rbp)
   40114b:       8b 10                   mov    (%rax),%edx
   40114d:       83 c2 33                add    $0x33,%edx
   401150:       89 10                   mov    %edx,(%rax)
 ```
+
 inner函数从r10寄存器读取了局部变量的值，并完成了修改，这种读取行为跟生成的栈上代码是强相关的。
 
 ## 总结
@@ -91,4 +97,5 @@ inner函数从r10寄存器读取了局部变量的值，并完成了修改，这
 GCC为了支持这种在函数中定义函数的用法，在栈上生成了代码，这种行为是极度不安全的。
 
 ## Reference
+
 1. [Linker's warnings](https://www.redhat.com/en/blog/linkers-warnings-about-executable-stacks-and-segments)

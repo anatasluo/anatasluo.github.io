@@ -12,7 +12,8 @@ tags:
 ## 问题背景
 
 考虑以下程序
-```
+
+```c
 #include <stdio.h>
 #include <unistd.h>
 
@@ -27,9 +28,11 @@ int main()
 ```
 
 尝试使用gdb单步该程序，在该程序进入sleep syscall之后，通过以下命令唤醒该程序：
-```
+
+```bash
 kill -SIGCONT <pid>
 ```
+
 发现程序在响应signal之后，接着继续执行之前的sleep syscall。更令人费解的地方在于，在响应signal的时候，通过检查寄存器，发现当前程序的pc寄存器是指向sleep syscall指令之后的。
 
 因此，可以确定的是，kernel里存在某种机制，可以重启被signal中断的syscall，且这个机制会修改context的pc寄存器。通过检索源码，发现这种机制叫做restart block。
@@ -39,7 +42,8 @@ kill -SIGCONT <pid>
 ## sleep的核心实现
 
 sleep在内核中，最核心的实现是以下代码：
-```
+
+```c
 static int __sched do_nanosleep(struct hrtimer_sleeper *t, enum hrtimer_mode mode)
 {
 	struct restart_block *restart;
@@ -115,7 +119,8 @@ interrupt是cpu在正常执行过程中，需要相应的一些事件。interrup
 上面提到，所有restart相关的信息，会被记录到restart block中。在sleep被interrupt之后，剩余的时间会被更新到这部分结构体之中。
 
 剩下的一个问题在于，虽然记录了剩余的时间，是如何重新触发了syscall本身。阅读代码发现，在kernel的handle_signal实现中，存在以下逻辑：
-```
+
+```c
 if (syscall_get_nr(current, regs) != -1) {
 	/* If so, check system call restarting.. */
 	switch (syscall_get_error(current, regs)) {
@@ -142,4 +147,5 @@ if (syscall_get_nr(current, regs) != -1) {
 
 
 ## Reference
+
 1. [linux schedule and context switch](https://prathamsahu52.github.io/post/linux_scheduler/)

@@ -6,20 +6,25 @@ tags:
     - Code Snippt
 ---
 
-#### GCC从标准输入中读取源码并且编译
-```
+## GCC从标准输入中读取源码并且编译
+
+```bash
 echo "void main(){}" | gcc -v -x c -
 ```
+
 这种用法可以参考criu中的try-cc，用途是用来检测系统以及GCC的一些参数支持。
 
 通过这种办法生成的object，在其debug信息中，会显示如下内容：
-```
+
+```text
 <12>   DW_AT_name        : (indirect line string, offset: 0x1b): <stdin>
 ```
+
 表示gcc编译的源码来自标准输入。
 
-#### [kernel-module]filename --> unlink对应的文件
-```
+## [kernel-module]filename --> unlink对应的文件
+
+```c
 static int unlink_filename(const char *filename)
 {
     struct file *filp;
@@ -42,9 +47,9 @@ static int unlink_filename(const char *filename)
 }
 ```
 
-#### [kernel-module]oldname + newname --> 创建soft link
+## [kernel-module]oldname + newname --> 创建soft link
 
-```
+```c
 /* check init_symlink for more info */
 static int create_symlink(const char *oldname, const char *newname)
 {

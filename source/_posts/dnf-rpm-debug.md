@@ -14,7 +14,8 @@ tags:
 3. debuginfo rpm
 
 以redis为例，以下四条命令用于下载不同类型的包：
-```
+
+```bash
 yumdownloader redis
 yumdownloader --source redis
 yumdownloader --debugsource redis
@@ -30,8 +31,10 @@ yumdownloader --debuginfo redis
 通过rpm -qlp <xxx.rpm>可以查看对应rpm包里的内容
 
 ## redis-6.2.7-1.fc35.x86_64.rpm
+
 主要包括的文件为：
-```
+
+```text
 /usr/bin/redis-benchmark
 /usr/bin/redis-check-aof
 /usr/bin/redis-check-rdb
@@ -42,8 +45,10 @@ yumdownloader --debuginfo redis
 ```
 
 ## redis-6.2.7-1.fc35.src.rpm
+
 包括的文件为:
-```
+
+```text
 macros.redis
 redis-6.2.7.tar.gz
 redis-doc-3fdb6df.tar.gz
@@ -68,8 +73,10 @@ source rpm通常包括:
 debugsource包含了对应binary包的源码
 
 ## redis-debuginfo-6.2.7-1.fc35.x86_64.rpm
+
 主要包括的文件为:
-```
+
+```text
 /usr/lib/debug/.build-id/e1/1ff8dbe598e32dd7fbe1fb6bd57f5ad84bebc5.debug
 /usr/lib/debug/.dwz
 /usr/lib/debug/.dwz/redis-6.2.7-1.fc35.x86_64
@@ -79,9 +86,11 @@ debugsource包含了对应binary包的源码
 /usr/lib/debug/usr/bin/redis-cli-6.2.7-1.fc35.x86_64.debug
 /usr/lib/debug/usr/bin/redis-server-6.2.7-1.fc35.x86_64.debug
 ```
+
 debugsource包提供了dwarf格式的debug information。
 
 ## Reference
+
 1. [source rpm](https://blog.packagecloud.io/working-with-source-rpms/)
 2. [source rpm](https://fedoramagazine.org/how-rpm-packages-are-made-the-source-rpm/)
 3. [debug rpm](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/developing_c_and_cpp_applications_in_rhel_8/debugging-applications_developing-applications)

@@ -25,7 +25,8 @@ openEuler实现了两种打补丁策略，CONFIG_LIVEPATCH_PER_TASK_CONSISTENCY=
 我在自己的分支上，实现了kpatch对openEuler 21.09的支持，相关PR在[这里](https://github.com/dynup/kpatch/pull/1263)。
 
 测试的补丁文件为0001-kpatch-test.patch
-```
+
+```diff
 From cff0bb0b98b156b2fd27f45af292e3f9649cac23 Mon Sep 17 00:00:00 2001
 From: anatasluo <anatasluo@localhost.localdomain>
 Date: Sun, 24 Apr 2022 10:30:49 +0800
@@ -62,7 +63,7 @@ index b449f18..ad10ef7 100644
 
 如果没有使能，通过以下命令获取源码，重新编译。
 
-```
+```bash
 
 yumdownloader --source kernel-5.10.0-5.10.0.24.oe1.x86_64
 
@@ -80,15 +81,17 @@ rpmbuild -D '_topdir /home/anatasluo/buildroot' -bp --nodeps --target=x86_64 /ho
 
 执行内核编译命令
 
-```
+```bash
 make LOCALVERSION=-5.10.0.24.oe1.x86_64 -j28
 make modules_install
 make install
 ```
+
 5.10.0.24.oe1.x86_64与当前环境的内核版本有关，请替换成当前环境里的参数。
 
 3. 将以下内容添加到/etc/yum.repos.d/openEuler.repo末尾
-```
+
+```ini
 [source-update]
 name=source-update
 baseurl=https://repo.openeuler.org/openEuler-21.09/update/source/
@@ -100,24 +103,28 @@ gpgcheck=0
 ## 测试过程
 
 1. 下载源码
-```
+
+```bash
 git clone https://github.com/anatasluo/kpatch
 cd kpatch
 ```
 
 2. 安装相关依赖
-```
+
+```bash
 source ./test/integration/lib.sh
 kpatch_dependencies
 ```
 
 3. 编译kpatch
-```
+
+```bash
 make
 ```
 
 4. 生成补丁
-```
+
+```bash
 ./kpatch-build/kpatch-build 0001-kpatch-test.patch
 ```
 
@@ -127,7 +134,7 @@ make
 
 5. 测试补丁效果
 
-```
+```bash
 sudo insmod livepatch-0001-kpatch-test.ko
 cat /proc/version
 ```

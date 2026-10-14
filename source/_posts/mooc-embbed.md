@@ -10,7 +10,6 @@ tags:
 
 [嵌入式系统概述(中国大学Mooc)](https://www.icourse163.org/course/DLUT-1002607070)的课堂笔记
 
-<br/>
 
 
 ## 嵌入式系统的定义，组成及一般开发流程
@@ -32,7 +31,6 @@ tags:
 
 嵌入式的概念，是相对于通用计算机的，当然，这种通用也是相对的，嵌入式强调的是一种专用用途，应用场景常常是资源受限的，优先考虑的也不是用户友好性，是安全性和可靠性。嵌入式系统的用途非常广，包括但不限于无人驾驶、通信设备、军事武器等等。
 
-<br/>
 
 ## 嵌入式C语言编程写法及优化技巧
 
@@ -50,7 +48,7 @@ tags:
 
 以下，是这种写法的一种实例：
 
-```
+```c
 #define C_Class struct
 
 C_Class A{
@@ -72,7 +70,7 @@ C_Class A{
 
 考虑以下代码
 
-```
+```c
 void timers_v1(int *timer1, int *timer2, int *step)
 {
     *timer1 += *step;
@@ -82,7 +80,7 @@ void timers_v1(int *timer1, int *timer2, int *step)
 
 对应的arm汇编为
 
-```
+```text
 LDR r3, [r0, #0]     --> r3 = *timer1
 LDR r12,[r2, #0]     --> r12 = *step
 ADD r3, r3, r12      --> r3 += r12
@@ -93,11 +91,12 @@ ADD r0, r0, r2       --> r0 += r2
 STR r0, [r1, #0]     --> *timer2 = r0
 MOV pc, r14          --> return
 ```
+
 可以看到, step指针指向的值被取出来两次，有一次是明显多余的。出现这种情况的原因，是编译器必须考虑所有可能的情况，假设step跟timer1指向同一个地址，那么第一次运算后，timer和step的值都被更新了，所以第2次重取step的值，才能保证在这种情况下，行为也符合预期。
 
 但是如果程序员确定step和timer指向不同的地址，那么可以采取下面的写法，来减少一次step取值：
 
-```
+```c
 void timers_v2(int *timer1, int *timer2, int *step)
 {
     int tmp = *step;
@@ -110,7 +109,6 @@ void timers_v2(int *timer1, int *timer2, int *step)
 
 总之，嵌入式程序的优化，是在基于对所写程序面向的场景，编译器和程序语言的了解上，使得生成的arm汇编最为精简。需要说明的是，效率最优并不总是程序首先考虑的事情，代码的可维护性以及优化所要付出的努力和优化带来的效果对比，这些都是优化前所要考虑的事情。
 
-<br/>
 
 ## Linux C的编程工具链以及构建系统
 
@@ -131,7 +129,6 @@ void timers_v2(int *timer1, int *timer2, int *step)
 
 Bootloader可以分为单阶段和多阶段。多阶段的Bootloader能提供更加复杂的功能，以及更好的移植性。大多数Bootloader都有两种工作模式，分别是Bootloader自动加载操作系统运行，全程不需要用户介入，即正常工作模式;以及通过串口或者网络等方式首先下载所需文件，再进行后续引导，即下载模式，通常首次启动时使用。
 
-<br/>
 
 ## 嵌入式系统书籍推荐
 
@@ -142,7 +139,6 @@ Bootloader可以分为单阶段和多阶段。多阶段的Bootloader能提供更
 5. Linux设备驱动开发详解(人民邮电出版社)
 6. Proteus电子电路设计及仿真(电子工业出版社)
 
-<br/>
 
 ## 参考
 

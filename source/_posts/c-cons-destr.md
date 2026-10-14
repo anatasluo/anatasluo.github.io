@@ -8,7 +8,8 @@ tags:
 ---
 
 考虑以下代码：
-```
+
+```c
 #include <stdio.h>
 
 void __attribute__((constructor)) calledFirst();

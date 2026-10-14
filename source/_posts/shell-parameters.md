@@ -9,7 +9,8 @@ tags:
 ---
 
 考虑以下代码 *main.c* ：
-```
+
+```c
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -29,13 +30,15 @@ int main(int argc, char *argv[], char *envp[])
 ```
 
 编译之后，运行:
-```
+
+```bash
 gcc main.c -o main
 VAR=VALUE ./main arg1 arg2
 ```
 
 结果输出为:
-```
+
+```text
 / # VAR=VALUE ./main arg1 arg2
 I am running here 0x7ffda5290e68 
 arg [0]: ./main 
@@ -88,7 +91,8 @@ load_elf_binary -> start_thread
 start_thread会进入ELF设置entry point执行， start_point的函数原型为: start_thread(struct pt_regs *regs, unsigned long new_ip, unsigned long new_sp)
 
 进程的栈构造过程看load_elf_binary实现就比较清晰，大致结构如下:
-```
+
+```text
     ------------------------------------------------------------- 0x7fff6c845000
      0x7fff6c844ff8: 0x0000000000000000
             _  4fec: './stackdump\0'                      <------+
@@ -136,6 +140,7 @@ start_thread会进入ELF设置entry point执行， start_point的函数原型为
 事实上，当新进程从entry point开始执行时，此时的栈称为Initial process Stack。Initial process Stack的内存分布在[此处](https://refspecs.linuxbase.org/elf/x86_64-abi-0.99.pdf)进行了规定。
 
 ### ELF的入口函数逐步传递到main函数中
+
 这部分转递过程都是通过寄存器完成的，看汇编就很清晰了。
 如果ELF是动态链接的，大致过程为entry point of ld-linux -> _start(entry point of libc) -> __libc_start_main -> main
 如果是静态链接的，则没有第一步interpreter的处理。

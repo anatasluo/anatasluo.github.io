@@ -10,7 +10,7 @@ tags:
 
 参考的文档查看[此处](https://refspecs.linuxbase.org/elf/x86_64-abi-0.99.pdf)
 
-### Code Models
+## Code Models
 
 因为不同的寻址模式所要求的限制不一样，而不同的限制所要求的性能损耗不一样。因此，为了最大程度上优化性能，在不同的场景下会使用不同的模式。当前AMD64定义了以下几种code models:
 1. Small code model
@@ -44,7 +44,8 @@ PIC的特性要求符号的virtual virtual到dynamic link time才能确定，允
 为了解决偏移过大时的数据存取和函数调用问题，出现了GOT和PLT机制。
 
 
-### 符号表和栈解析
+## 符号表和栈解析
+
 STT_GNU_IFUNC： ifunc相关的符号类型
 
 .eh_frame section记录了用于unwinding stack的信息。
@@ -64,7 +65,7 @@ STT_GNU_IFUNC： ifunc相关的符号类型
 .cfi_rel_offset REGISTER, OFFSET
 .cfi_escape EXPRESSION[, ...]
 
-### 重定向
+## 重定向
 
 _GLOBAL_OFFSET_TABLE_有可能位于.got section的中间部分，从而同时允许对于偏移数组的正向和负向寻址。
 
@@ -86,14 +87,18 @@ _GLOBAL_OFFSET_TABLE_有可能位于.got section的中间部分，从而同时�
 
 在small和medium model里，当PLT和GOT同时引用同一个function symbol时，一般情况下，linker会在PLT里创建一个GOTPLT slot，在GOT里创建一个GOT slot。一个runtime JUMP_SLOT重定向会被创建，用来更新对应的GOTPLT slot。一个runtime GLOB_DAT重定向会被创建去更新GOT slot。在runtime时，JUMP_SLOT和GLOB_DAT重定向都会使用同样的symbol value去更新GOTPLT和GOT slot。
 作为一个优化，linker可能会把GOTPLT slot和GOT slot合并成一个GOT slot，并且移除JUMP_SLOT重定向。这种优化会把以下常规的PLT entry:
-```
+
+```text
 .PLT: 	jmp [GOTPLT slot]
 		pushq relocation index
 		jmp .PLT0
 ```
+
 借助GOT slot通过间接跳转替换成一个GOT PLT enrty：
-```
+
+```text
 .PLT: 	jmp [GOT slot]
 		nop
 ```
+
 然后，把PLT的引用解析到GOT PLT entry。间接跳转指令是5个字节，剩余的部分用nop指令填充。在这种优化中，指针比较是必须要避免的。否则，有可能会导致binary在运行时进入死循环。

@@ -39,7 +39,8 @@ PIC共享库的优点如下:
 通过最准确的语义，最大化编译器的优化效果。比如，const的使用决定了编译器对strlen的优化。
 
 ### 第一种情况，字符串指针被const修饰
-```
+
+```c
 #include <stdio.h>
 #include <string.h>
 
@@ -53,7 +54,8 @@ int main()
 ```
 
 对应的反汇编代码为:
-```
+
+```text
 0000000000401126 <main>:
   401126:	55                   	push   %rbp
   401127:	48 89 e5             	mov    %rsp,%rbp
@@ -70,7 +72,8 @@ int main()
 可以看到产生了一次strlen函数调用。
 
 ### 第二种情况，字符串指针和字符串同时被const修饰
-```
+
+```c
 #include <stdio.h>
 #include <string.h>
 
@@ -84,7 +87,8 @@ int main()
 ```
 
 对应的反汇编为:
-```
+
+```text
 0000000000401106 <main>:
   401106:	55                   	push   %rbp
   401107:	48 89 e5             	mov    %rsp,%rbp

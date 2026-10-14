@@ -9,7 +9,8 @@ tags:
 ---
 
 考察以下代码*reloc.c*
-```
+
+```c
 extern int ext_func(void);
 
 extern int ext_var;
@@ -57,7 +58,8 @@ int main()
 这个代码涉及到大量的重定向条目，我们一个个的来讨论。
 
 先讨论glo_func是如何调用glo_add_func，通过objdump查看相关汇编，为：
-```
+
+```text
 000000000000005b <glo_func>:
   5b:   55                      push   %rbp
   5c:   48 89 e5                mov    %rsp,%rbp
@@ -76,13 +78,16 @@ int main()
   97:   5d                      pop    %rbp
   98:   c3                      retq   
 ```
+
 通过readelf查看相关的重定向规则，为：
-```
+
+```text
 00000000008e  000f00000004 R_X86_64_PLT32    0000000000000044 glo_add_func - 4
 ```
 
 不考虑重定向，仅考虑callq指令本身，根据AMD spec的描述，callq的作用为：
-```
+
+```text
 Call near, relative, displacement relative to next instruction.
 ```
 
@@ -149,7 +154,8 @@ relocation_len: 重定向区域到指令结束的长度，上文的例子为offs
 这里的重定向是以glo_add_func的变量地址为基准，进行计算的。还存在一种情况，是以section的地址为基准，进行计算。
 
 继续考察上文的代码，通过readelf查看代码涉及到的重定向条目，发现以下条目：
-```
+
+```text
 Relocation section '.rela.text' at offset 0x410 contains 14 entries:
   Offset          Info           Type           Sym. Value    Sym. Name + Addend
 000000000006  000d00000002 R_X86_64_PC32     0000000000000000 ext_var - 4
@@ -165,7 +171,8 @@ Relocation section '.rela.text' at offset 0x410 contains 14 entries:
 在对text段的重定向过程中，存在直接以data段为基址的条目，以重定向偏移为00000000002b的条目进行以下讨论。
 
 通过与汇编源码比较，可以知道，该重定向涉及的汇编为：
-```
+
+```text
   1c:   48 8b 05 00 00 00 00    mov    0x0(%rip),%rax        # 23 <sta_func+0x23>
   23:   83 c2 10                add    $0x10,%edx
   26:   89 10                   mov    %edx,(%rax)
@@ -174,10 +181,13 @@ Relocation section '.rela.text' at offset 0x410 contains 14 entries:
   31:   48 8b 05 00 00 00 00    mov    0x0(%rip),%rax        # 38 <sta_func+0x38>
   38:   83 c2 20                add    $0x20,%edx
 ```
+
 涉及的源码为:
-```
+
+```c
 *ext_var_sp += 0x20;
 ```
+
 从0x28开始汇编，所做的事情为
 
 0x28 -> 获取ext_var_sp的地址
@@ -190,9 +200,11 @@ Relocation section '.rela.text' at offset 0x410 contains 14 entries:
 
 
 可以看出，此处重定向，要获取的是ext_var_sp的地址，观察汇编
-```
+
+```text
 28:   48 8b 05 00 00 00 00    mov    0x0(%rip),%rax        # 2f <sta_func+0x2f>
 ```
+
 这里，是以RIP为基址，根据一个offset，读取ext_var_sp的地址。因此，重定向最终的输出，应该为offset = ext_var_sp - RIP
 
 借用上文的变量和概念：
@@ -235,6 +247,7 @@ S的变化，是因为此处以section为基址，而不是以具体的变量为
 3. PLT和GOT表格的具体作用过程，以及其实如何解决共享库面对的问题？
 
 ## References
+
 1. [call instruction描述](https://www.felixcloutier.com/x86/call)
 2. [知乎专栏 - 静态链接与动态链接的宏观概述及微观详解](https://zhuanlan.zhihu.com/p/105936114)
 3. [blog - How to execute an object file](https://blog.cloudflare.com/how-to-execute-an-object-file-part-1/)

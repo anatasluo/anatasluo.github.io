@@ -1,70 +1,104 @@
 ---
-title: About Author
+title: About
 date: 2021-03-31 03:01:12
-comments: true
+type: about
+comments: false
 ---
 
-#### Introduction
+## About Me
 
-My interests include:
+- GitHub: [anatasluo](https://github.com/anatasluo)
+- Email: [luolongjuna@gmail.com](mailto:luolongjuna@gmail.com)
 
-+ operating system, mainly about linux
-+ ELF/linker
-+ livepatch
-+ network
+### Since 2024 · Tencent
 
-#### Project
+Senior Engineer
 
-+ [ant](https://github.com/anatasluo/ant)
+### 2019–2023 · Huawei / openEuler
 
-#### Patch
+- Maintainer, [openEuler SIG-ops](https://gitcode.com/openeuler/community/blob/master/sig/sig-ops/README.md).
+- [SysCare](https://atomgit.com/openeuler/syscare) — kernel and userspace live-patch generation and management.
+- 2022 — [Livepatch in Userspace Based on Uprobe](https://www.youtube.com/watch?v=6TH7kh3pS0E), Open Source Summit Europe.
+- 2022 — [Seamless Kernel Update](https://archive.fosdem.org/2022/schedule/event/security_seamless_kernel/), FOSDEM.
 
-##### OPTIMIZATION
+## Recent Work
 
-+ [linux-x86(in debate)](https://lkml.org/lkml/2020/12/15/486)
+### Livepatching with LTO
 
-##### IMPLEMENTATION
+[Kernel objtool/klp](https://lore.kernel.org/all/20260910085218.66565-1-luolongjuna@gmail.com/T/) — Missed changes to same-named call and data references in klp-build.
 
-+ [toybox-ping](https://github.com/landley/toybox/commit/896fa846b1ec8cd4895f6320b56942f129e54bc9)
-+ [kpatch-openEuler](https://github.com/dynup/kpatch/commit/6a0dcb0da8e2960559afc33ecefc22ce39e49e2b)
+[GCC PR126841](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=126841) — Defer GIMPLE wrapper section naming until final assembler names are available. ([Commit](https://gcc.gnu.org/g:543617c93595e0cb45ff7ee52c635ca30a2fe361))
 
-##### DOCUMENT
+[GCC PR126355](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=126355) — Emit address-bearing DWARF entries for IPA ICF wrappers. ([Commit](https://gcc.gnu.org/g:b6477e6c4efd6df2719190cb048cf300ff31af46))
 
-+ [elixir-selinux](https://github.com/bootlin/elixir/commit/514fa38ed8eced5bea900ef3748cd82d2306043b)
+[LLVM/LLD #211062](https://github.com/llvm/llvm-project/pull/211062) — Save ThinLTO objects on cache hits with `--lto-obj-path`.
 
-##### BUG FIX
+### AutoFDO Optimization Potential
 
-+ [nuttx-vfs](https://github.com/apache/incubator-nuttx/commit/ab37b149729639fc96a9987f711d18f5286c5541)
-+ [criu-asm](https://github.com/checkpoint-restore/criu/commit/e0da8b895ede46e197e9813dc87b55f4b1a7e93c)
-+ [criu-arch](https://github.com/checkpoint-restore/criu/commit/2cb1156e6afba4baeab5b945b0c15036af3b3a8c)
-+ [criu-smaps](https://github.com/checkpoint-restore/criu/commit/d203b57357e68447964cad6b6542ebefda832504)
-+ [openssh-log](https://github.com/openssh/openssh-portable/commit/1050109b4b2884bf50fd1b3aa084c7fd0a42ae90)
-+ [linux-fs](https://lore.kernel.org/linux-fsdevel/685386c2840b76c49b060bf7dcea1fefacf18176.1614322182.git.luolongjun@huawei.com/)
-+ [readelf-section](https://sourceware.org/pipermail/binutils/2021-April/116183.html)
-+ [kpatch-rela](https://github.com/dynup/kpatch/pull/1301)
-+ [kpatch-rela2](https://github.com/dynup/kpatch/pull/1303)
-+ [linux-uprobe(in debate)](https://www.spinics.net/lists/kernel/msg4516532.html)
-+ [linux-uprobe(in debate)](https://lore.kernel.org/lkml/eb310620-3913-b673-d35a-cc7d50a74610@huawei.com/T/)
-+ [gcc-LINE macro](https://gcc.gnu.org/pipermail/gcc-patches/2022-December/607605.html)
+[AutoFDO #269](https://github.com/google/autofdo/pull/269) — Fix DWARF 5 string-section handling and line-table metadata.
 
-#### MATERIAL SHARE
+[AutoFDO #268](https://github.com/google/autofdo/pull/268) — Read inline call-site discriminators encoded as `DW_FORM_implicit_const`.
 
-+ [QUIC protocol](https://anatasluo.github.io/pdf/quic.pdf)
-+ [FOSDEM 2022 - Seamless Kernel Update](https://fosdem.org/2022/schedule/event/security_seamless_kernel/)
-+ [FOSDEM 2022 - Seamless Kernel Update - PDF](https://fosdem.org/2022/schedule/event/security_seamless_kernel/attachments/slides/5061/export/events/attachments/security_seamless_kernel/slides/5061/Seamless_Kernel_Update.pdf)
-+ [LinuxCon Europe 2022 - Livepatch in Userspace Based on Uprobe](https://www.accelevents.com/e/osseu2022/portal/schedule/271452)
-+ [LinuxCon Europe 2022 - Livepatch in Userspace Based on Uprobe - PDF](https://static.sched.com/hosted_files/osseu2022/19/OSS-EU22-Livepatch-in-Userspace.pdf)
+[AutoFDO #267](https://github.com/google/autofdo/pull/267) — Avoid adding the base address to absolute DWARF 5 ranges.
 
-#### RECENT CHECKLIST
-MOOC:
+[GCC PR127125](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=127125) — Distorted entry-flow inference when the function-head sample count is zero.
 
-+ [MIT 6-172](https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-172-performance-engineering-of-software-systems-fall-2018/lecture-videos/)
+[AutoFDO #266](https://github.com/google/autofdo/pull/266) — Fix indexed-address decoding and operand-width handling.
 
-Blog:
+### DWARF Correctness and Validation
 
-+ [Link History](https://www.airs.com/blog/archives/38)
+[GDB PR34741](https://sourceware.org/bugzilla/show_bug.cgi?id=34741) — Expression lookup can call overridden weak functions. ([RFC](https://sourceware.org/pipermail/gdb/2026-October/052357.html))
 
-Document:
+[GDB patch](https://sourceware.org/pipermail/gdb-patches/2026-October/230961.html) — Filter relocated zero-address markers for discarded variables.
 
-+ [GNU Link Script Example](https://sourceware.org/binutils/docs/ld/index.html#SEC_Contents)
-+ [CMU ELF Document](https://www.cs.cmu.edu/afs/cs/academic/class/15213-f00/docs/elf.pdf)
+[LLVM #230469](https://github.com/llvm/llvm-project/pull/230469) — Filter discarded low-address ranges during compilation-unit lookup.
+
+[LLVM #225358](https://github.com/llvm/llvm-project/pull/225358) — Avoid attributing merged memory accesses to a partial inline frame.
+
+[DWARF proposal](https://lists.dwarfstd.org/pipermail/dwarf-discuss/2026-September/002859.html) — Separate definition-instance addresses from statically selected addresses.
+
+[GCC PR126348](https://inbox.sourceware.org/gcc-patches/20260826075313.22654-1-luolongjuna@gmail.com/T/) — Preserve input-TU DIE references for consistent LTO abstract origins. ([Report](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=126348))
+
+## Earlier Contributions
+
+### kpatch
+
+[#1303](https://github.com/dynup/kpatch/pull/1303) — Detect relocation changes even when section contents match.
+
+[#1301](https://github.com/dynup/kpatch/pull/1301) — Handle relocation sections that disappear after patching.
+
+[openEuler support](https://github.com/dynup/kpatch/commit/6a0dcb0da8e2960559afc33ecefc22ce39e49e2b) — Add openEuler support to kpatch-build.
+
+### CRIU
+
+[x86 assembly](https://github.com/checkpoint-restore/criu/commit/e0da8b895ede46e197e9813dc87b55f4b1a7e93c) — Fix a register-width mismatch in bit operations.
+
+[AArch64 vDSO](https://github.com/checkpoint-restore/criu/commit/2cb1156e6afba4baeab5b945b0c15036af3b3a8c) — Fix a crash during process restoration.
+
+[`proc_smaps`](https://github.com/checkpoint-restore/criu/commit/d203b57357e68447964cad6b6542ebefda832504) — Remove an obsolete nonlinear-mapping check.
+
+### Kernel
+
+[Uprobe handlers](https://www.spinics.net/lists/kernel/msg4516532.html) — Skip single-stepping when a handler changes the program counter.
+
+[Uprobe inspection](https://lore.kernel.org/lkml/eb310620-3913-b673-d35a-cc7d50a74610@huawei.com/T/) — List active uprobes in the system.
+
+[x86 kexec](https://lkml.org/lkml/2020/12/15/486) — Co-develop a CPU-parking path for kexec boot.
+
+[File locking](https://lore.kernel.org/linux-fsdevel/685386c2840b76c49b060bf7dcea1fefacf18176.1614322182.git.luolongjun@huawei.com/) — Print complete lock information.
+
+### Toolchains
+
+[GCC libcpp](https://gcc.gnu.org/pipermail/gcc-patches/2022-December/607605.html) — Allow suppression of `__LINE__` redefinition warnings.
+
+[Binutils/readelf](https://sourceware.org/pipermail/binutils/2021-April/116183.html) — Print section names for section symbols.
+
+### Other System Software
+
+[NuttX tmpfs](https://github.com/apache/nuttx/commit/ab37b149729639fc96a9987f711d18f5286c5541) — Remove duplicated filesystem code.
+
+[Toybox ping](https://github.com/landley/toybox/commit/896fa846b1ec8cd4895f6320b56942f129e54bc9) — Include packet TTL in ping output.
+
+[OpenSSH](https://github.com/openssh/openssh-portable/commit/1050109b4b2884bf50fd1b3aa084c7fd0a42ae90) — Remove a duplicate declaration in `fatal.c`.
+
+[Elixir](https://github.com/bootlin/elixir/commit/514fa38ed8eced5bea900ef3748cd82d2306043b) — Document SELinux and systemd setup.

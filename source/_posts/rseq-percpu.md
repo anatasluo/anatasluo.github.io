@@ -41,7 +41,8 @@ per-cpu会带来内存的浪费，核数越多，这种内存浪费越明显。�
 #### per-cpu如何分配和管理内存？
 
 per-cpu的内存布局如下：
-```
+
+```text
 c0                           c1                         c2
 -------------------          -------------------        ------------
 | u0 | u1 | u2 | u3 |        | u0 | u1 | u2 | u3 |      | u0 | u1 | u
@@ -51,9 +52,11 @@ c0                           c1                         c2
 在同一个NUMA节点中，各个core的per-cpu区域是连续的。但是在NUMA节点之间，内存并不是连续的。也就是说，对于多NUMA节点的机器，需要根据cpu获取到对应的基址和偏移。
 
 根据用途的不同，各个cpu的per-cpu的内存区域分为三部分，如下所示:
-```
+
+```text
 <Static | [Reserved] | Dynamic>
 ```
+
 static用于内核编译阶段所能识别出的per-cpu变量。
 reserved用于内核模块使用到的static per-cpu变量。
 dynamic用于运行过程中的per-cpu变量的申请和释放。
@@ -63,7 +66,8 @@ dynamic用于运行过程中的per-cpu变量的申请和释放。
 在start_kernel阶段，通过调用setup_per_cpu_areas()初始化per-cpu使用到的内存。
 
 arm64下的实现比较简单，setup_per_cpu_areas的实现如下：
-```
+
+```c
 void __init setup_per_cpu_areas(void)
 {
 	unsigned long delta;
@@ -94,7 +98,8 @@ void __init setup_per_cpu_areas(void)
 1. pcpu_base_addr
 pcpu_base_addr 是多个NUMA节点中最小的那个基址
 计算过程为：
-```
+
+```c
 ptr = alloc_fn(cpu, gi->nr_units * ai->unit_size, atom_size);
 ...
 base = min(ptr, base);
@@ -118,7 +123,8 @@ __per_cpu_offset是一个数组，其计算方式为：__per_cpu_offset[cpu] = (
 其结果表示，各个CPU static区域对应__per_cpu_start 的偏移。这一结果非常重要，将后续用于per_cpu变量地址的计算。
 
 这一函数调用结束后，vmlinux中per cpu相关的section会被拷贝到每个CPU对应的static区域。对应代码如下：
-```
+
+```c
 	for (group = 0; group < ai->nr_groups; group++) {
 		struct pcpu_group_info *gi = &ai->groups[group];
 		void *ptr = areas[group];
@@ -135,6 +141,7 @@ __per_cpu_offset是一个数组，其计算方式为：__per_cpu_offset[cpu] = (
 		}
 	}
 ```
+
 #### 如何根据不同的cpu，计算出相应的偏移？(ARM64)
 
 在boot cpu完成per cpu内存的初始化后，在后续初始化过程中，boot cpu将调用smp_prepare_boot_cpu函数，通过set_my_cpu_offset(per_cpu_offset(smp_processor_id()))完成最终设置。
@@ -144,7 +151,8 @@ __per_cpu_offset是一个数组，其计算方式为：__per_cpu_offset[cpu] = (
 per_cpu_offset(x)获取的就是之前所说的__per_cpu_offset[x]的值，即cpu x static区域相对于__per_cpu_start的偏移。 
 
 set_my_cpu_offset的实现如下：
-```
+
+```c
 static inline void set_my_cpu_offset(unsigned long off)
 {
 	asm volatile(ALTERNATIVE("msr tpidr_el1, %0",
@@ -153,6 +161,7 @@ static inline void set_my_cpu_offset(unsigned long off)
 			:: "r" (off) : "memory");
 }
 ```
+
 作用是把之前的偏移值直接写入tpidr_el1或者tpidr_el2寄存器。
 
 > 关于smp_processor_id的处理，smp_processor_id使用到了per cpu特性，其最早是在start_kernel-->boot_cpu_init被调用，要早于setup_per_cpu_areas对per cpu的内存进行初始化。这里的调用不会引起问题吗？答案是不会，在更早的start_kernel-->smp_setup_processor_id中，kernel调用了set_my_cpu_offset(0)。即把当前的per cpu偏移设置为0，后面通过per cpu机制访问到的，直接就是vmlinux中的变量。而此时的cpu_number是0，也就是boot cpu的编号。
@@ -171,7 +180,7 @@ static inline void set_my_cpu_offset(unsigned long off)
 
 ##### 读取一个per-cpu变量
 
-```
+```c
 #define SHIFT_PERCPU_PTR(__p, __offset)					\
 	RELOC_HIDE((typeof(*(__p)) __kernel __force *)(__p), (__offset))
 ...
@@ -182,6 +191,7 @@ static inline void set_my_cpu_offset(unsigned long off)
 })
 
 ```
+
 __verify_pcpu_ptr通过检查地址，确保该指针指向per cpu变量。SHIFT_PERCPU_PTR通过读取寄存器的值，对变量做一个偏移，从而获取到对应cpu的local变量。
 
 为了防止调度导致上下文在不同的cpu上运行，get_cpu_var将关闭调度，put_cpu_var则重新开启调度。
@@ -193,7 +203,8 @@ per cpu变量的管理上可以分为三类，分别为static，reserved，dynam
 在模块编译时，per cpu变量便被放置在了特定命名的区域(.data..percpu)。
 
 其内存分配过程为：
-```
+
+```text
   info->index.pcpu = find_pcpusec(info);
 	 --> find_sec(info, ".data..percpu");
   ...
@@ -230,10 +241,12 @@ chunk内存的管理逻辑本文将不涉及。
 CAS锁的问题在于，其实现需要借助原子变量。体系结构的原子变量实现，通常需要锁总线，这一操作会带来较大的开销。
 
 RSEQ机制源于一种观察，以链表插入为例，通常实现为：
-```
+
+```text
 1. node = head->next;
 2. head->next = node;
 ```
+
 将第一步称为准备区，用于产生最终需要提交的数据。第二步称为提交区，将修改完成的数据提交生效。在第二步执行之前，第一步的重复执行，是不会影响最终的程序结果的。如果线程在准备区开始到提交生效最终之前的执行过程被打断(调度或者信号...)，那么线程只需要从准备区开始位置重新执行即可。rseq机制可以避免原子操作带来的锁总线开销，但是，代价是被打断后重新执行的开销。在临界区(准备区+提交区)比较小或者竞争不激烈的情况下，刚好在这一区域被打断的概率是很低的，已有的数据表明(来自tcmalloc)，rseq的效率是高于CAS的。
 
 

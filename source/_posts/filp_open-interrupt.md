@@ -16,7 +16,8 @@ tags:
 2. 关闭selinux
 
 通过GDB单点跟踪，最后发现filp_open会调用may_lookup，6.1版本的内核源码如下:
-```
+
+```c
 static inline int may_lookup(struct user_namespace *mnt_userns,
 			     struct nameidata *nd)
 {

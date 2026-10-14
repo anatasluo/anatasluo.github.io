@@ -10,7 +10,8 @@ tags:
 ## 原子操作
 
 查看以下C语言代码：
-```
+
+```c
 #include <stdio.h>
 
 int val = 169;
@@ -21,8 +22,10 @@ int main() {
     return 0;
 }
 ```
+
 通过GCC生成的arm64汇编如下:
-```
+
+```armasm
 	.arch armv8-a
 	.file	"main.c"
 	.text
@@ -63,7 +66,8 @@ main:
 ```
 
 在现代计算机体系结构中，对变量的赋值过程是分为三步的，以上文的val为例:
-```
+
+```armasm
 adrp	x0, val
 mov	w1, 275
 str	w1, [x0]
@@ -107,7 +111,7 @@ str	w1, [x0]
 
 在Load/Store-Exclusive的基础上，原子操作可以用如下代码实现(实现来自Linux):
 
-```
+```c
 #define ATOMIC_OP(op, c_op, asm_op)					\
 static inline void atomic_##op(int i, atomic_t *v)			\
 {									\

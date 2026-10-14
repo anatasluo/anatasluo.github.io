@@ -42,7 +42,8 @@ load_bias的计算，只需要任意选取内部的一个锚点，计算理论�
 实际值：记录在auxiliary vector中，对应的type为AT_PHDR。
 
 核心的代码实现参考如下:
-```
+
+```cpp
 const Elf64Phdr* phdr = (const Elf64Phdr*)sysv->auxv[AT_PHDR];
 for (unsigned phdrnum = sysv->auxv[AT_PHNUM]; --phdrnum; ++phdr) {
     if (phdr->type == PT_PHDR) {

@@ -12,11 +12,13 @@ tags:
 
 
 ## Dwarf是什么
+
 Dwarf是当前最广泛使用的标准调测格式，其最初伴随ELF格式一起发布，当前已经独立于ELF发展，支持多种可执行文件格式。Dwarf最新的标准为Dwarf 5，实际使用中，广泛使用的版本包含Dwarf 4和Dwarf 5。本文讨论的实现细节仅限于Dwarf 4和Dwarf 5。
 
 ## 学习Dwarf标准需要具备的前置知识
 
 ### LEB128编码
+
 LEB128，全称是Little Endian Base 128，是一种支持将任意大的整数编码到变长字节流的可变长度编码。LEB128在Dwarf格式和WebAssembly中大量使用。LEB128可以分为Unsigned LEB128以及Signed LEB128。在解码开始前，必须先阅读标准确定对应的数是Unsigned或者Signed(即符号信息本身不会被编码到整数中)。
 
 Unsigned LEB128的编码过程：
@@ -35,14 +37,15 @@ Signed LEB128的编码过程：以N(N%7 == 0)位二进制补码表示需要表�
 
 在Dwarf中，为了节约空间，将.debug_info中每个entry对应的格式信息都存储在.debug_abbrev中。这样在.debug_info中，只需要通过一个Abbrev Number，就可以快速知道某个Entry的格式。比如以下是从某个object文件的.debug_abbrev中读取的部分：
 
-```
+```text
 [9] DW_TAG_variable     DW_CHILDREN_no
         DW_AT_abstract_origin   DW_FORM_ref_addr
         DW_AT_location  DW_FORM_exprloc
 ```
 
 对应的.debug_info使用样例为：
-```
+
+```text
 0x000089c1:     DW_TAG_variable [9]   (0x00008281)
                   DW_AT_abstract_origin [DW_FORM_ref_addr]      (0x0000000000008471)
                   DW_AT_location [DW_FORM_exprloc]      (DW_OP_addr 0x0)
@@ -54,17 +57,20 @@ Signed LEB128的编码过程：以N(N%7 == 0)位二进制补码表示需要表�
 ### object文件的Dwarf信息会存在大量的重定向条目，直接读取出来的信息是不准确的
 
 以上文提到的例子为例，由于object文件还没有经过link阶段，dwarf信息中地址大多都是临时的，只看如下信息没法获得任何结论：
-```
+
+```text
 0x000089c1:     DW_TAG_variable [9]   (0x00008281)
                   DW_AT_abstract_origin [DW_FORM_ref_addr]      (0x0000000000008471)
                   DW_AT_location [DW_FORM_exprloc]      (DW_OP_addr 0x0)
 ```
 
 这时候，如果想要解析对应的信息，就要对照内存偏移和重定向条目来看，对应的重定向条目为:
-```
+
+```text
 00000000000089c2  000001890000000a R_X86_64_32            0000000000000000 rdb.c.0b078eae + 8471
 00000000000089c8  0000007000000001 R_X86_64_64            0000000000000000 .bss.info_updated_time.0 + 0
 ```
+
 这里就能看出，这个entry表示的信息为有一个变量.bss.info_updated_time.0，来自源码文件rdb.c.0b078eae，addend信息猜测是表示行列信息，由于实际实现中，没有使用，未做探究。
 
 至于89c2和89c8的计算过程，则需要结合格式信息来做判断了。
@@ -104,7 +110,8 @@ dwarf info的组织形式是Unit-Entry-Attr的树形方式。
 ## .debug_line信息的计算过程
 
 如上文所述, .debug_line存储的是一个有限状态机的计算过程，最终生成的是一个line table，如下所示：
-```
+
+```text
             Address            Line   Column File   ISA Discriminator OpIndex Flags
             ------------------ ------ ------ ------ --- ------------- ------- -------------
 0x000000d0: 05 DW_LNS_set_column (6)
@@ -118,14 +125,16 @@ dwarf info的组织形式是Unit-Entry-Attr的树形方式。
 ```
 
 .debug_line的最开始一个heder，记录了当前line table的元信息，其中需要关注的是其中包含了一个directory table和file table。每个file table会关联一个directory table表项，从而形成一个完整的路径。此处有一个细节，如果最终的路径是一个相对路径，则需要以irectory table的第0项为base，形成一个绝对路径，Dwarf5标准对这一实现的说明如下:
-```
+
+```text
 The first entry is the current directory of the compilation. Each additional
 path entry is either a full path name or is relative to the current directory of
 the compilation.
 ```
 
 接着header，则是一个针对以下状态机的转化指令数组。
-```
+
+```rust
 struct StateMachineRegisters {
     address: u64,
     view: u32,
@@ -143,6 +152,7 @@ struct StateMachineRegisters {
 当前读到较为清晰的.debug_line实现是gdb中的实现，其中需要关注的细节是，view的变化表示换行。
 
 ## 参考文档
+
 1. [Wiki-Dwarf](https://en.wikipedia.org/wiki/DWARF)
 2. [Wiki-LEB128](https://en.wikipedia.org/wiki/LEB128)
 3. [Dwarf5标准文档](https://dwarfstd.org/dwarf5std.html)

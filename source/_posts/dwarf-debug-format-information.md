@@ -71,7 +71,8 @@ DW_AT_virtuality	->	Is set when it is virtual
 就观察来说，对于一个源码文件编译出来的object文件，有一个CIE，记录了一些全局的信息，包括version，augmentation string等等。FDE则对应每一个函数。
 
 在做热补丁的时候，linker报了一个如下的错误:
-```
+
+```text
 no .eh_frame_hdr table will be created
 ```
 
@@ -80,7 +81,8 @@ no .eh_frame_hdr table will be created
 .eh_frame_hdr简单的说，就是用于.eh_frame检索的概括信息，这些信息最终的用途是实现ELF的Exception Handling机制。(待填坑)
 
 通过阅读binutils-gdb的源码，发现报错来自以下代码：
-```
+
+```c
       ENSURE_NO_RELOCS(buf);
       if ((sec->flags & SEC_LINKER_CREATED) == 0 || cookie->rels != NULL)
       {
@@ -107,6 +109,7 @@ FDE的eh_hdr_id对应的值就是其本身的偏移，CIE的eh_hdr_id是0.
 
 
 ## Reference
+
 + [dwarf-debug-format](https://developer.ibm.com/articles/au-dwarf-debug-format/)
 + [LSB - Exception Frames](https://refspecs.linuxbase.org/LSB_4.0.0/LSB-Core-generic/LSB-Core-generic/ehframechpt.html)
 + [LSB - ehframe_hdr](https://refspecs.linuxfoundation.org/LSB_1.3.0/gLSB/gLSB/ehframehdr.html)

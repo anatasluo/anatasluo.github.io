@@ -15,14 +15,17 @@ tags:
 通过qemu运行linux时，只有两个东西是必须的，分别是编译出来的kernel和rootfs。
 
 kernel直接从源码中，编译生成，编译命令：
-```
+
+```bash
 make -j 8 && make -j 8 modules && make -j 8 modules_install && make -j 8 install
 ```
 
 通过包管理器可以直接生成一个可用的rootfs，以fedora/dnf为例，以下命令可以生成一个rootfs
-```
+
+```bash
 dnf --installroot=$PWD/virtio-fs-root --releasever=36 install system-release vim-minimal systemd passwd dnf rootfiles
 ```
+
 其中，--releasever指明了fedora的版本，--installroot指明了安装目录，可以看需要，添加自己需要的软件到安装列表中。
 rootfs生成后之后，通过chroot和passwd修改登录密码。
 
@@ -36,7 +39,8 @@ virtiofs的运行要求：
 对于第1个要求，kernel编译的时候，打开virtiofs相关的config即可。
 
 对于第2个要求，尝试更新qemu的系统版本，如果无法成功，直接用以下命令编译一个新的qemu
-```
+
+```bash
 git clone https://gitlab.com/virtio-fs/qemu.git
 ../configure --prefix=$PWD --target-list=x86_64-softmmu
 make -j 8
@@ -49,9 +53,11 @@ make -j 8 virtiofsd
 ## 运行virtiofs
 
 1. 运行virtiofsd
-```
+
+```bash
 virtiofsd --socket-path=/tmp/anatasluo -o source=fedora-fs -o cache=none
 ```
+
 其中，fedora-fs是通过virtiofs要挂载给guest的目录
 
 2. 添加kernel启动参数，修改qemu启动参数，完整参数如下:
@@ -74,11 +80,14 @@ virtiofsd --socket-path=/tmp/anatasluo -o source=fedora-fs -o cache=none
 3. 进入guest后，mount操作时，提示"unknown filesystem type 'virtiofs'"
 
 在guest里，运行以下命令
-```
+
+```bash
 cat /proc/filesystems
 ```
+
 查看支持的文件系统中是否有"virtiofs"，没有的话需要修改.config，重新编译内核。
 
 ## Reference
+
 1. [virtio-fs - Standalone virtiofs usage](https://virtio-fs.gitlab.io/howto-qemu.html)
 2. [virtio-fs - How to boot from virtiofs](https://virtio-fs.gitlab.io/howto-boot.html)

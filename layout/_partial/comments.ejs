@@ -1,0 +1,17 @@
+<% const giscus = theme.comments.giscus; %>
+<p class="comments-note">
+  评论使用 GitHub 账号，讨论记录保存在
+  <a href="https://github.com/<%= giscus.repo %>/discussions">GitHub Discussions</a>。
+</p>
+<div class="giscus"
+     data-repo="<%= giscus.repo %>"
+     data-repo-id="<%= giscus.repo_id %>"
+     data-category="<%= giscus.category %>"
+     data-category-id="<%= giscus.category_id %>"
+     data-mapping="<%= giscus.mapping %>"
+     data-strict="<%= giscus.strict %>"
+     data-reactions-enabled="<%= giscus.reactions_enabled %>"
+     data-input-position="<%= giscus.input_position %>"
+     data-lang="<%= giscus.lang %>"
+     data-loading="lazy"></div>
+<script defer src="<%= url_for('js/comments.js') %>"></script>

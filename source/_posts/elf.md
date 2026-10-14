@@ -18,7 +18,7 @@ Three types:
 
 **Linking View**
 
-```
+```text
 ELF header
 -------------------------------
 Program header table optional
@@ -41,7 +41,7 @@ Sections hold the bulk of object file information for linking view: instructions
 
 **Execution View**
 
-```
+```text
 ELF header
 -------------------------------
 Program header table
@@ -54,6 +54,7 @@ Segment 2
 -------------------------------
 Section header table optional
 ```
+
 Segment是从在ELF执行时看到的内存视图，此时的Segment跟权限有关。ARM下是两个Segment，X86下是四个，mprotect在修改权限的过程中，会导致新Segment的出现(本质是split vma)。
 
 在ELF规范中，仅有ELF header是有固定位置的，其余的信息被ELF header描述。program header的作用是告诉内核如何创建process，section header table的作用是在linking阶段用于描述一个section。
@@ -208,7 +209,8 @@ Global offset table redirects position-independent address calculations to absol
 Procedure linkage table redirects position-independent function calls to absolute locations.
 
 **Steps of the dynamic linker**
-```
+
+```x86asm
 .PLT0:pushl 4(%ebx)
 	jmp *8(%ebx)
 	nop; nop
@@ -243,12 +245,14 @@ nbucket/nchain
 C library包含的符号列表(略)。
 
 ## ELF需要处理的核心问题
+
 1. 内存如何分配
 3. 如何保证安全性
 	+ 对内存设置最小权限，比如text段通常不具备写权限。
 	+ SHT_HASH的存在
 
 ## Q&A
+
 1. API和ABI的区别
 API的函数调用的规范，开发者在代码开发时，需要知道这一信息，应该传递哪些参数，以及应当获得什么样的结果，以及对错误结果的说明。
 

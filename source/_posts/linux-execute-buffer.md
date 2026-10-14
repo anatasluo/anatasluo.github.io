@@ -13,7 +13,8 @@ linux中，存在一个系统调用mprotect，可以修改一段内存的权限�
 两个源码文件，分别为main.c和test.S
 
 test.S的内容为：
-```
+
+```x86asm
 .code64
 .align 0x1000
 .text
@@ -29,7 +30,8 @@ test:
 ```
 
 main.c的内容为
-```
+
+```c
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -72,7 +74,8 @@ int main()
 ```
 
 编译用的cmake文件为:
-```
+
+```cmake
 cmake_minimum_required(VERSION 3.16)
 project(ACM C ASM)
 set(CMAKE_C_STANDARD 99)
@@ -81,12 +84,14 @@ add_executable(ACM main.c test.S)
 ```
 
 运行结果如下:
-```
+
+```text
 execute assembly successfully
 execute buffer successfully, end here
 ```
 
 gdb调试可以加入以下指令，进行查看:
-```
+
+```text
 display /20i $pc
 ```

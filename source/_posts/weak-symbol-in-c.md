@@ -11,7 +11,7 @@ tags:
 
 *weak symbol*是二进制文件里的一种符号类型，与之相对的，是*strong symbol*。符号的类型跟代码中的声明和实现有关，查看以下代码：
 
-```
+```cpp
 #include <cstdio>
 
 # define weak_alias(name, aliasname) _weak_alias (name, aliasname)
@@ -40,6 +40,7 @@ int main() {
     return 0;
 }
 ```
+
 通过以下命令得到对应的符号类型
 > g++ -c main.cpp
 > nm main.o

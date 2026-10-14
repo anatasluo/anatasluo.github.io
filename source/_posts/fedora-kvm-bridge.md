@@ -18,7 +18,8 @@ date: 2024-01-24 18:34:36
 ### 添加bridge设备
 
 运行以下代码：
-```
+
+```bash
 yum -y install bridge-utils
 yum -y groupinstall "Virtualization Tools"
 export MAIN_CONN=enp8s0
@@ -46,16 +47,18 @@ EOS
 
 ### 设置防火墙规则
 
-```
+```bash
 iptables -I FORWARD -i br0 -j ACCEPT
 iptables -I FORWARD -o br0 -j ACCEPT
 ```
+
 其中，br0为bridge设备名称。
 
 ## Guest配置
 
 网卡类型配置为bridge，如果开机后，dhcp没有运行，通过ip命令静态配置ip地址:
-```
+
+```bash
 ip link set <device name> up
 ip addr add <ip addr>/<length> dev <device name>
 ip route add default via <ip addr>

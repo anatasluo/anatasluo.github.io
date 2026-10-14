@@ -23,7 +23,8 @@ syscall的执行过程大体上可以分为三步：
 如果是X86的架构，堆栈的切换实现在./arch/x86/entry/entry_64.S下，对应函数为entry_SYSCALL_64。
 
 此处实现的要点为，用户态的寄存器上下文被存储到了栈中，而后，栈中的某一处地址被处理成struct pt_regs，作为调用参数，传给了syscall的处理函数，因此，以mprotect为例，可以看到如下实现:
-```
+
+```c
 SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
 		unsigned long, prot)
 {
@@ -32,7 +33,8 @@ SYSCALL_DEFINE3(mprotect, unsigned long, start, size_t, len,
 ```
 
 展开的结果为:
-```
+
+```c
 static long __se_sys_mprotect(__typeof(__builtin_choose_expr((__builtin_types_compatible_p(typeof((unsigned long)0), typeof(0LL)) || __builtin_types_compatible_p(typeof((unsigned long)0), typeof(0ULL))), 0LL, 0L)) start, __typeof(__builtin_choose_expr((__builtin_types_compatible_p(typeof((size_t)0), typeof(0LL)) || __builtin_types_compatible_p(typeof((size_t)0), typeof(0ULL))), 0LL, 0L)) len, __typeof(__builtin_choose_expr((__builtin_types_compatible_p(typeof((unsigned long)0), typeof(0LL)) || __builtin_types_compatible_p(typeof((unsigned long)0), typeof(0ULL))), 0LL, 0L)) prot);
 static inline __attribute__((__gnu_inline__)) __attribute__((__unused__)) __attribute__((no_instrument_function)) long __do_sys_mprotect(unsigned long start, size_t len, unsigned long prot);
 long __x64_sys_mprotect(const struct pt_regs *regs);
@@ -64,7 +66,8 @@ static inline __attribute__((__gnu_inline__)) __attribute__((__unused__)) __attr
 上面的实现调用顺序为:__x64_sys_mprotect -> __se_sys_mprotect -> __do_sys_mprotect -> do_mprotect_pkey
 
 对vmlinux进行汇编，可以得到如下的结果：
-```
+
+```text
 <__x64_sys_mprotect>:
 f3 0f 1e fa             endbr64 
 48 8b 57 60             mov    0x60(%rdi),%rdx
@@ -87,7 +90,8 @@ e9 a3 a3 c0 00          jmp    ffffffff81e23684 <__x86_return_thunk>
 ### 如何在linux kernel module中调用syscall
 
 按照上面所说，调用的办法如下:
-```
+
+```c
 static long (*orig_mprotect) (const struct pt_regs *regs);
 
 static long krun_mprotect(unsigned long start, size_t len, unsigned long prot)

@@ -16,13 +16,13 @@ tags:
 
 剥离二进制文件命令:
 
-```
+```bash
 strip --strip-all a.out
 ```
 
 使用objdump反汇编二进制文件命令:
 
-```
+```bash
 objdump -M intel -d a.out
 ```
 
@@ -58,13 +58,13 @@ PE格式为了保证对MS-DOS格式的兼容，每个PE文件以MS-DOS头开始�
 
 使用xdd查看文件内容的命令:
 
-```
+```bash
 xdd a.out | head -n 15
 ```
 
 使用nm对C++ namespace符号进行demangle:
 
-```
+```bash
 nm -D --demangle xxx.so
 ```
 
@@ -102,11 +102,12 @@ ltrace可以追踪二进制执行时的库文件调用。
 
 glibc-2.22中一种利用重叠指令来实现功能的实例(手写汇编):
 
-```
+```text
 7b05a: cmp   DWORD PTR fs:0x18,0x0
 7b063: je    7b066
 7b065: lock cmpxchg QWORD PTR [rip+0x3230fa], rcx
 ```
+
 通过条件跳转来决定是否跳过lock前缀字节。
 
 自定义反汇编的原因:
@@ -115,7 +116,7 @@ glibc-2.22中一种利用重叠指令来实现功能的实例(手写汇编):
 
 objdump可以从指定地址开始进行反汇编:
 
-```
+```bash
 objdump -M intel --start-address=0x400612 -d a.out
 ```
 
@@ -130,6 +131,7 @@ ROP程序的生成过程:
 2. Dynamic Binary Instrumentation(DBI 动态二进制插桩)
 
 ### 静态二进制插桩方法
+
 + int3方法
 通过int3，通过中断处理函数，触发插桩逻辑的处理。在实践中，int3虽然只有一个字节，但是也会破坏一条指令，因此需要对原有的指令进行记录，在执行插桩逻辑前，需要对该指令进行执行，必要时，需要进行分析和模拟。
 

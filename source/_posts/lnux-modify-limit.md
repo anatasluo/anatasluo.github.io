@@ -22,7 +22,8 @@ ebpf运行显示没有权限，查阅log后发现是因为lock memory大小的�
 第一种办法，就是在程序内部，通过syscall自己修改自己的limit。
 
 代码如下:
-```
+
+```c
 static int setup_env()
 {
     struct rlimit lck_mem = {};
